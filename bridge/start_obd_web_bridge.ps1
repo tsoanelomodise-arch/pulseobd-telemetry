@@ -26,7 +26,7 @@ param(
     [bool]$EnableCloudStream = $true,
     [ValidateSet('auto','ntfy','firebase','supabase','webhook')]
     [string]$CloudProvider = 'auto',
-    [string]$CloudChannel = 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b',
+    [string]$CloudChannel = 'AAVZZZ6RZHU112564',
     [string]$CloudUrl = '',
     [string]$SupabaseTable = 'pulseobd_telemetry',
     [string]$CloudApiKey = '',
@@ -90,13 +90,24 @@ function Add-FirebaseAuthQuery {
 }
 
 if ($CloudProvider -eq 'ntfy') {
-    $ResolvedCloudUrl = "https://ntfy.sh/$([Uri]::EscapeDataString($CloudChannel))"
+    $ntfyTopic = if ($CloudChannel -match '^(?i)pulseobd-') { $CloudChannel } else { "pulseobd-$CloudChannel" }
+    $ResolvedCloudUrl = "https://ntfy.sh/$([Uri]::EscapeDataString($ntfyTopic))"
     $ResolvedCloudMethod = 'POST'
 } elseif ($CloudProvider -eq 'firebase') {
     $fbBase = $CloudUrl.TrimEnd('/')
     if ($fbBase) {
         $safeCh = [Uri]::EscapeDataString($CloudChannel)
-        $prefix = if ($fbBase.EndsWith('.json')) { $fbBase.Substring(0, $fbBase.Length - 5) } else { "$fbBase/pulseobd/$safeCh" }
+        if ($fbBase.EndsWith('/latest.json')) {
+            $prefix = $fbBase.Substring(0, $fbBase.Length - 12)
+        } elseif ($fbBase.EndsWith('.json')) {
+            $prefix = $fbBase.Substring(0, $fbBase.Length - 5)
+        } elseif ($fbBase -match '/vehicles/[^/]+$' -or $fbBase -match '/pulseobd/[^/]+$') {
+            $prefix = $fbBase
+        } elseif ($fbBase -match '/vehicles$') {
+            $prefix = "$fbBase/$safeCh"
+        } else {
+            $prefix = "$fbBase/vehicles/$safeCh"
+        }
         $FirebaseLatestUrl = Add-FirebaseAuthQuery -Url "$prefix/latest.json" -Auth $CloudApiKey
         $FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/frames.json" -Auth $CloudApiKey
         $FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/meta.json" -Auth $CloudApiKey
@@ -222,10 +233,23 @@ function Read-AllLiveTelemetry {
     $b46 = $bytesMap['0146']; $b47 = $bytesMap['0147']; $b49 = $bytesMap['0149']
     $b4A = $bytesMap['014A']; $b4C = $bytesMap['014C']; $b56 = $bytesMap['0156']
 
+    $rpmVal = if ($b0C.Count -ge 2) { [Math]::Round((256 * $b0C[0] + $b0C[1]) / 4.0, 1) } else { 0 }
+    $ecuAwake = ($b0C.Count -ge 2 -or $b42.Count -ge 2 -or $b05.Count -ge 1)
+    $engineRunning = ($rpmVal -ge 50)
+    $atrvVolt = 0.0
+    if ($atrv -match '(\d+(?:\.\d+)?)\s*V') {
+        try { $atrvVolt = [double]$Matches[1] } catch { $atrvVolt = 0.0 }
+    }
+    $voltVal = if ($b42.Count -ge 2) { [Math]::Round((256 * $b42[0] + $b42[1]) / 1000.0, 3) } else { [Math]::Round($atrvVolt, 3) }
+    $fuelSysLabel = if ($engineRunning) { 'Closed loop (using O2 sensor)' } elseif ($ecuAwake) { 'Open loop — Engine Off' } else { 'Open loop — Engine/ECU Off' }
+
     $payload = [ordered]@{
-        timestamp  = (Get-Date).ToUniversalTime().ToString('o')
-        readOnly   = $true
-        atrv       = $atrv
+        timestamp     = (Get-Date).ToUniversalTime().ToString('o')
+        readOnly      = $true
+        ecuAwake      = $ecuAwake
+        engineRunning = $engineRunning
+        fuelSys1      = $fuelSysLabel
+        atrv          = $atrv
         milOn      = if ($b01.Count -ge 1) { ($b01[0] -band 0x80) -ne 0 } else { $false }
         dtcCount   = if ($b01.Count -ge 1) { ($b01[0] -band 0x7F) } else { 0 }
         load       = if ($b04.Count -ge 1) { [Math]::Round($b04[0] * 100.0 / 255.0, 1) } else { 0 }
@@ -233,7 +257,7 @@ function Read-AllLiveTelemetry {
         stft       = if ($b06.Count -ge 1) { [Math]::Round(($b06[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
         ltft       = if ($b07.Count -ge 1) { [Math]::Round(($b07[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
         map        = if ($b0B.Count -ge 1) { $b0B[0] } else { 0 }
-        rpm        = if ($b0C.Count -ge 2) { [Math]::Round((256 * $b0C[0] + $b0C[1]) / 4.0, 1) } else { 0 }
+        rpm        = $rpmVal
         spd        = if ($b0D.Count -ge 1) { $b0D[0] } else { 0 }
         timing     = if ($b0E.Count -ge 1) { [Math]::Round($b0E[0] / 2.0 - 64.0, 1) } else { 0 }
         iat        = if ($b0F.Count -ge 1) { $b0F[0] - 40 } else { 0 }
@@ -250,7 +274,7 @@ function Read-AllLiveTelemetry {
         distClear  = if ($b31.Count -ge 2) { 256 * $b31[0] + $b31[1] } else { 0 }
         baro       = if ($b33.Count -ge 1) { $b33[0] } else { 83 }
         cat        = if ($b3C.Count -ge 2) { [Math]::Round((256 * $b3C[0] + $b3C[1]) / 10.0 - 40.0, 1) } else { 0 }
-        volt       = if ($b42.Count -ge 2) { [Math]::Round((256 * $b42[0] + $b42[1]) / 1000.0, 3) } else { 0 }
+        volt       = $voltVal
         absLoad    = if ($b43.Count -ge 2) { [Math]::Round((256 * $b43[0] + $b43[1]) * 100.0 / 255.0, 1) } else { 0 }
         lambda     = if ($b44.Count -ge 2) { [Math]::Round(2.0 / 65536.0 * (256 * $b44[0] + $b44[1]), 4) } else { 1.0 }
         relThr     = if ($b45.Count -ge 1) { [Math]::Round($b45[0] * 100.0 / 255.0, 1) } else { 0 }
@@ -510,9 +534,12 @@ try {
                     distMilOn  = $latestPayload.distMilOn
                     warmups    = $latestPayload.warmups
                     distClear  = $latestPayload.distClear
-                    milOn      = $latestPayload.milOn
-                    dtcCount   = $latestPayload.dtcCount
-                    atrv       = $latestPayload.atrv
+                    milOn         = $latestPayload.milOn
+                    dtcCount      = $latestPayload.dtcCount
+                    engineRunning = $latestPayload.engineRunning
+                    ecuAwake      = $latestPayload.ecuAwake
+                    fuelSys1      = $latestPayload.fuelSys1
+                    atrv          = $latestPayload.atrv
                 }
 
                 $packetObj = [ordered]@{

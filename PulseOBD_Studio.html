@@ -281,6 +281,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <select id="source-select" onchange="changeDataSource(this.value)" aria-label="Telemetry Source" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3 py-1.5 font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 flex-1 sm:flex-initial">
             <option value="snap1">16:43 Dump (Warm Idle 98°C)</option>
             <option value="snap2">17:10 Dump (Follow-up 87°C)</option>
+            <option value="parked_off">Vehicle Off / Parked (KOEO &amp; 12V Battery)</option>
             <option value="sim_city">Live Drive Sim: Urban</option>
             <option value="sim_highway">Live Drive Sim: Highway (Cat Warmup)</option>
             <option value="sim_boost">Live Drive Sim: TSI Boost Pull</option>
@@ -372,6 +373,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- TAB 1: COCKPIT (LIVE DRIVE VIEW)                                    -->
       <!-- =================================================================== -->
       <section id="tab-cockpit" class="space-y-4">
+
+        <!-- Authentic Stopped / Engine-Off Telemetry Truthfulness Banner -->
+        <div id="cockpit-stopped-banner" class="rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+            <span id="stopped-banner-pill" class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto">STATIC CAPTURE · 0 km/h</span>
+            <p id="stopped-banner-active" class="text-[#222222] font-medium leading-snug">
+              <strong class="text-[#047857]">Authentically Active:</strong> Idle RPM (774) · Closed-Loop O2/STFT · 13.74V Charging · Thermal &amp; Rail Sensors
+            </p>
+          </div>
+          <p id="stopped-banner-off" class="text-[#5A5F6A] font-mono-num leading-snug shrink-0">
+            Stopped: Wheel Speed 0 km/h · Static Frozen Trace (No Fake Motion)
+          </p>
+        </div>
 
         <!-- Smart Notification Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -599,7 +613,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <div class="my-1.5">
                 <div class="flex items-baseline gap-1.5">
                   <span id="tile-volt" class="text-2xl font-bold tabular text-[#222222]">13.74V</span>
-                  <span class="text-xs text-[#047857] font-bold">Charging</span>
+                  <span id="tile-volt-status" class="text-xs text-[#047857] font-bold">Charging</span>
                 </div>
                 <div class="mt-1.5 space-y-1 text-xs">
                   <div class="flex justify-between gap-1">
@@ -608,7 +622,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   </div>
                   <div class="flex justify-between gap-1">
                     <span class="text-[#5A5F6A] truncate">Baro (0133)</span>
-                    <span class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">83 kPa (~1680m)</span>
+                    <span id="tile-baro" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">83 kPa (~1680m)</span>
                   </div>
                   <div class="flex justify-between gap-1">
                     <span class="text-[#5A5F6A] truncate">Clear / MIL</span>
@@ -628,8 +642,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="acro-card rounded-2xl p-3 sm:p-3.5">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 min-w-0">
+              <div class="flex items-center gap-2 min-w-0 flex-wrap">
                 <h2 class="text-sm font-bold text-[#222222] shrink-0">Real-Time Drive Telemetry Stream</h2>
+                <span id="cockpit-stream-status" class="text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold whitespace-nowrap shrink-0">STATIC CAPTURE</span>
                 <span id="cockpit-stream-readout" class="text-xs font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#222222] font-semibold whitespace-nowrap truncate">774 RPM · 0 km/h · 270.6°C</span>
               </div>
               <p class="telemetry-readout-line text-xs text-[#5A5F6A] mt-0.5">
@@ -657,11 +672,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="acro-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
           <div class="min-w-0">
             <h2 class="text-sm sm:text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs</h2>
-            <p class="text-xs text-[#5A5F6A]">Compact fixed-size dynamic Mode 01 charts with full-variable CSV export</p>
+            <p class="text-xs text-[#5A5F6A]">Stopped/off subsystems stay truthfully flat; only active sensors &amp; live drives animate</p>
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
             <button onclick="changeDataSource('snap1')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">16:43 Idle</button>
             <button onclick="changeDataSource('snap2')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">17:10 Idle</button>
+            <button onclick="changeDataSource('parked_off')" class="text-xs px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] font-semibold hover:bg-[#FDE68A]/70 transition whitespace-nowrap">Engine Off</button>
             <button onclick="changeDataSource('sim_city')" class="text-xs px-3 py-1 rounded-full bg-[#EFF6FF] text-[#1473E6] border border-[#BFDBFE] font-semibold hover:bg-[#DBEAFE] transition whitespace-nowrap">Urban Sim</button>
             <button onclick="changeDataSource('sim_highway')" class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] font-semibold hover:bg-[#D1FAE5] transition whitespace-nowrap">Highway Sim</button>
             <button onclick="changeDataSource('sim_boost')" class="text-xs px-3 py-1 rounded-full bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8] font-semibold hover:bg-[#FCE7F3] transition whitespace-nowrap">TSI Boost Sim</button>
@@ -677,7 +693,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">1. Engine RPM, Speed &amp; Loads</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">010C·0D·04·43</span>
+                <span id="g1-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#047857] font-bold shrink-0">STATIC · 0 km/h</span>
               </div>
               <span id="g1-readout" class="telemetry-readout-line font-mono-num text-xs text-[#1473E6] font-bold">774 RPM · 0 km/h · Calc 16.5% · Abs 16.1%</span>
             </div>
@@ -688,7 +704,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">2. Thermal: Coolant, IAT, Ambient &amp; Catalyst</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0105·0F·46·3C</span>
+                <span id="g2-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold shrink-0">SENSORS LIVE</span>
               </div>
               <span id="g2-readout" class="telemetry-readout-line font-mono-num text-xs text-[#C2410C] font-bold">Cool 98°C · IAT 69°C · Amb 33°C · Cat 271°C</span>
             </div>
@@ -699,7 +715,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">3. Fuel Trims (STFT/LTFT/Sec) &amp; O2</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0106·07·56·14·15</span>
+                <span id="g3-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold shrink-0">CLOSED LOOP</span>
               </div>
               <span id="g3-readout" class="telemetry-readout-line font-mono-num text-xs text-[#047857] font-bold">STFT +2.34% · LTFT +1.56% · Sec -0.78%</span>
             </div>
@@ -710,7 +726,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">4. TSI Fuel Rail, Intake MAP &amp; Timing</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0123·0B·0E</span>
+                <span id="g4-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#1473E6] font-bold shrink-0">ACTIVE</span>
               </div>
               <span id="g4-readout" class="telemetry-readout-line font-mono-num text-xs text-[#4F46E5] font-bold">Rail 12.04 MPa · MAP 27 kPa · Adv -3.0°</span>
             </div>
@@ -721,7 +737,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">5. Throttle &amp; Pedal 6-Sensor Correlation</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0111·45·47·49·4C</span>
+                <span id="g5-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#1473E6] font-bold shrink-0">SENSORS LIVE</span>
               </div>
               <span id="g5-readout" class="telemetry-readout-line font-mono-num text-xs text-[#1473E6] font-bold">Pedal D/E 14.9% · Thr A/B 13.3% · Rel 3.5% · Act 3.9%</span>
             </div>
@@ -732,7 +748,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">6. ECU Voltage, Fuel Tank, EVAP &amp; Flow</h3>
-                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0142·2F·2E·L/h</span>
+                <span id="g6-state" class="text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold shrink-0">BATT &amp; TANK LIVE</span>
               </div>
               <span id="g6-readout" class="telemetry-readout-line font-mono-num text-xs text-[#047857] font-bold">13.74V · Fuel 8.2% · EVAP 2.4% · 0.62 L/h</span>
             </div>
@@ -1115,8 +1131,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 </div>
 
                 <div id="channel-id-group">
-                  <label class="text-[#5A5F6A] block mb-1 font-semibold">Private Vehicle Channel ID</label>
-                  <input id="cloud-channel-id" type="text" oninput="saveCloudConfig()" value="pulseobd-polo-aavzzz6rzhu112564-7d4e9b" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <label class="text-[#5A5F6A] block mb-1 font-semibold">Vehicle VIN / Firebase Key</label>
+                  <input id="cloud-channel-id" type="text" oninput="onCloudEndpointInput()" value="AAVZZZ6RZHU112564" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
 
                 <div id="custom-url-group" class="space-y-2">
@@ -1125,8 +1141,41 @@ Check your Browserslist config to be sure that your targets are set up correctly
                     <input id="cloud-custom-url" type="text" oninput="onCloudEndpointInput()" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <div id="firebase-setup-hint" class="acro-well rounded-xl p-2.5 text-[11px] text-[#4A4E57]">
-                    <span id="firebase-url-status-text">Paste your Firebase RTDB URL above to start saving live frames &amp; trip history automatically whenever online.</span>
+                    <span id="firebase-url-status-text">Apply your VIN-based Firebase RTDB URL below or paste your Firebase Console RTDB URL to start saving live frames &amp; trip history automatically whenever online.</span>
                   </div>
+
+                  <!-- Dedicated VIN-Based Firebase URL Generator -->
+                  <div id="vin-firebase-box" class="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 p-3 space-y-2 text-[11px]">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-bold text-[#1473E6] uppercase tracking-wider">VIN Firebase URL</span>
+                      <span class="font-mono-num font-bold text-[#222222]">AAVZZZ6RZHU112564</span>
+                    </div>
+                    <div class="bg-white border border-[#D7DFF6] rounded-xl p-2 font-mono-num text-[#222222] space-y-1">
+                      <div class="text-[10px] text-[#5A5F6A]">Dedicated Vehicle Endpoint:</div>
+                      <div id="vin-firebase-preview" class="font-bold text-[#1473E6] break-all select-all">Loading VIN URL...</div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                      <button id="btn-apply-vin-fb" type="button" onclick="applySuggestedVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-full bg-[#1473E6] hover:bg-[#0F5CC0] text-white font-semibold transition">
+                        Apply VIN Firebase URL
+                      </button>
+                      <button type="button" onclick="copyVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
+                        Copy VIN URL
+                      </button>
+                      <button type="button" onclick="downloadBridgeFirebaseConfig()" class="px-2.5 py-1.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
+                        Download bridge/firebase.local.json
+                      </button>
+                    </div>
+                    <details class="text-[#4A4E57]">
+                      <summary class="cursor-pointer font-semibold text-[#222222]">Activate free DB in Firebase Console (4 steps)</summary>
+                      <ol class="mt-1.5 list-decimal list-inside space-y-0.5 text-[11px]">
+                        <li>Open <span class="font-mono-num text-[#222222]">console.firebase.google.com</span> → <strong>Create project</strong> named <code class="font-mono-num font-bold text-[#1473E6]">pulseobd-aavzzz6rzhu112564</code>.</li>
+                        <li>Go to <strong>Build → Realtime Database → Create Database</strong> (pick closest region).</li>
+                        <li>Set Rules for <code class="font-mono-num">vehicles/AAVZZZ6RZHU112564</code> to <code class="font-mono-num">read: true, write: true</code> (or paste DB Secret above).</li>
+                        <li>Click <strong>Apply VIN Firebase URL</strong> above — auto-sync &amp; <code class="font-mono-num">/history</code> activate immediately.</li>
+                      </ol>
+                    </details>
+                  </div>
+
                   <div id="supabase-table-group" class="hidden">
                     <label class="text-[#5A5F6A] block mb-1 font-semibold">Supabase Table Name</label>
                     <input id="cloud-supabase-table" type="text" oninput="saveCloudConfig()" value="pulseobd_telemetry" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
@@ -1173,7 +1222,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               </div>
               <h3 class="text-base font-bold text-[#222222] mt-0.5">Auto-Save Live &amp; Trip History</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Streams all 124 variables to <span class="font-mono-num text-[#222222]">latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
+                Streams all 124 variables to <span class="font-mono-num text-[#222222]">/vehicles/AAVZZZ6RZHU112564/latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
               </p>
 
               <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
@@ -1266,13 +1315,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div>
               <h3 class="text-sm font-bold text-[#222222]">Live Cloud &amp; Firebase Sync Log</h3>
-              <p class="text-xs text-[#5A5F6A]">Real-time log of auto-connect events, Firebase <span class="font-mono-num">TX</span> (<span class="font-mono-num">latest</span> + <span class="font-mono-num">history</span>), offline flushes, and <span class="font-mono-num">RX</span></p>
+              <p class="text-xs text-[#5A5F6A]">Real-time log of auto-connect events, Firebase <span class="font-mono-num">TX</span> (<span class="font-mono-num">/vehicles/AAVZZZ6RZHU112564/latest</span> + <span class="font-mono-num">history</span>), offline flushes, and <span class="font-mono-num">RX</span></p>
             </div>
             <button onclick="clearCloudLog()" class="text-xs px-3 py-1 acro-pill-secondary">Clear Log</button>
           </div>
           <div id="cloud-log" class="acro-well rounded-2xl p-3.5 h-44 overflow-y-auto font-mono-num text-xs space-y-1">
-            <div class="text-[#1473E6] font-semibold">[CLOUD] Firebase Smart Auto-Connect ready. Channel: pulseobd-polo-aavzzz6rzhu112564-7d4e9b</div>
-            <div class="text-[#5A5F6A]">[INFO] Paste your Firebase Realtime Database URL once to persist on this device and auto-save live + history whenever online.</div>
+            <div class="text-[#1473E6] font-semibold">[CLOUD] Firebase VIN Channel ready: AAVZZZ6RZHU112564 (/vehicles/AAVZZZ6RZHU112564/latest.json)</div>
+            <div class="text-[#5A5F6A]">[INFO] Click "Apply VIN Firebase URL" or paste your Firebase Console RTDB URL to persist privately and auto-sync whenever online.</div>
           </div>
         </div>
 
@@ -1552,7 +1601,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // =========================================================================
     const SNAPSHOTS = {
       snap1: {
-        label: 'VW Polo 1.2 TSI · 16:43 Idle',
+        label: 'VW Polo 1.2 TSI · 16:43 Idle (Static Capture)',
+        staticMode: true,
         milOn: false, dtcCount: 0, ignitionType: 'Spark',
         fuelSys1: 'Closed loop (using O2 sensor)', fuelSys2: 'Off (0)',
         rpm: 774.0, spd: 0, load: 16.5, absLoad: 16.1,
@@ -1567,7 +1617,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         atrv: '13.8V → 13.9V'
       },
       snap2: {
-        label: 'VW Polo 1.2 TSI · 17:10 Idle',
+        label: 'VW Polo 1.2 TSI · 17:10 Idle (Static Capture)',
+        staticMode: true,
         milOn: false, dtcCount: 0, ignitionType: 'Spark',
         fuelSys1: 'Closed loop (using O2 sensor)', fuelSys2: 'Off (0)',
         rpm: 771.0, spd: 0, load: 16.1, absLoad: 15.8,
@@ -1580,6 +1631,22 @@ Check your Browserslist config to be sure that your targets are set up correctly
         evap: 2.4, fuel: 6.3, warmups: 255, distClear: 65535,
         volt: 13.499, lambda: 1.0000, fuelType: 'Gasoline / Petrol (1)',
         atrv: '13.6V'
+      },
+      parked_off: {
+        label: 'VW Polo 1.2 TSI · Engine Off (12V Battery & Sensors Only)',
+        staticMode: true,
+        milOn: false, dtcCount: 0, ignitionType: 'Spark',
+        fuelSys1: 'Open loop — Engine Off', fuelSys2: 'Off (0)',
+        rpm: 0.0, spd: 0, load: 0.0, absLoad: 0.0,
+        coolant: 54, iat: 38, amb: 33, cat: 92.0,
+        stft: 0.00, ltft: 1.56, secO2Trim: 0.00,
+        map: 83, baro: 83, rail: 0.40,
+        timing: 0.0, thr: 0.0, thrB: 0.0, relThr: 0.0, pedalD: 14.9, pedalE: 14.9, actThr: 0.0,
+        o2Present: 'B1S1, B1S2', o2s1: 0.000, o2s1Trim: 0.00, o2s2: 0.000, o2s2Trim: 'Inactive (Heater Off)',
+        obdStd: '5 (VW EOBD)', runtime: 0, distMilOn: 0,
+        evap: 0.0, fuel: 8.2, warmups: 255, distClear: 65535,
+        volt: 12.520, lambda: 1.0000, fuelType: 'Gasoline / Petrol (1)',
+        atrv: '12.5V (Battery Resting)'
       }
     };
 
@@ -1707,20 +1774,27 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // 3. PHYSICS / DERIVED VARIABLE CALCULATOR
     // =========================================================================
     function computeDerivedMetrics(d) {
-      const iatK = (d.iat || 40) + 273.15;
+      const engineRunning = (d.rpm || 0) >= 50;
+      const iatVal = d.iat !== undefined && d.iat !== null ? d.iat : 33;
+      const ambVal = d.amb !== undefined && d.amb !== null ? d.amb : 33;
+      const mapVal = d.map !== undefined && d.map !== null ? d.map : (d.baro || 83);
+      const baroVal = d.baro !== undefined && d.baro !== null ? d.baro : 83;
+      const fuelVal = d.fuel !== undefined && d.fuel !== null ? d.fuel : 0;
+
+      const iatK = iatVal + 273.15;
       const ve = d.spd > 5 ? 0.86 : 0.72;
-      const imap = ((d.rpm || 774) * (d.map || 27)) / iatK / 2;
-      const mafGps = (imap / 60) * ve * 1.197 * 28.97 / 8.314;
+      const imap = engineRunning ? (((d.rpm || 0) * mapVal) / iatK / 2) : 0;
+      const mafGps = engineRunning ? ((imap / 60) * ve * 1.197 * 28.97 / 8.314) : 0;
       const afr = 14.7 * (d.lambda || 1.0);
-      const fuelGps = mafGps / afr;
-      const fuelLh = Math.max(0.45, (fuelGps * 3600) / 745);
-      const l100km = d.spd > 3 ? Math.min(25, (fuelLh / d.spd) * 100) : 0;
-      const boostKpa = (d.map || 27) - (d.baro || 83);
-      const totalTrim = (d.stft || 0) + (d.ltft || 0);
-      const heatSoak = (d.iat || 69) - (d.amb || 33);
-      const fuelLiters = ((d.fuel || 8.2) / 100) * 45.0;
+      const fuelGps = engineRunning ? (mafGps / afr) : 0;
+      const fuelLh = engineRunning ? Math.max(0.45, (fuelGps * 3600) / 745) : 0;
+      const l100km = (engineRunning && d.spd > 3) ? Math.min(25, (fuelLh / d.spd) * 100) : 0;
+      const boostKpa = mapVal - baroVal;
+      const totalTrim = engineRunning ? ((d.stft || 0) + (d.ltft || 0)) : 0;
+      const heatSoak = iatVal - ambVal;
+      const fuelLiters = (fuelVal / 100) * 45.0;
       const estRangeKm = (fuelLiters / 6.2) * 100;
-      return { fuelLh, l100km, boostKpa, totalTrim, heatSoak, fuelLiters, estRangeKm };
+      return { engineRunning, fuelLh, l100km, boostKpa, totalTrim, heatSoak, fuelLiters, estRangeKm };
     }
 
     // =========================================================================
@@ -1818,9 +1892,27 @@ Check your Browserslist config to be sure that your targets are set up correctly
       } catch (_) {}
     }
 
+    const VEHICLE_VIN = 'AAVZZZ6RZHU112564';
+    const VIN_FIREBASE_PROJECT = 'pulseobd-' + VEHICLE_VIN.toLowerCase();
+    const VIN_FIREBASE_HOST = [VIN_FIREBASE_PROJECT + '-default-rtdb', 'firebaseio', 'com'].join('.');
+
+    function getSuggestedVinFirebaseRootUrl() {
+      return 'https://' + VIN_FIREBASE_HOST;
+    }
+
+    function getSuggestedVinFirebaseEndpointUrl() {
+      const ch = (document.getElementById('cloud-channel-id')?.value || VEHICLE_VIN).trim() || VEHICLE_VIN;
+      return `${getSuggestedVinFirebaseRootUrl()}/vehicles/${encodeURIComponent(ch)}`;
+    }
+
+    function getNtfyTopicPath(ch) {
+      const clean = (ch || VEHICLE_VIN).trim() || VEHICLE_VIN;
+      return clean.toLowerCase().startsWith('pulseobd-') ? clean : `pulseobd-${clean}`;
+    }
+
     function getCloudEndpointConfig() {
       const prov = document.getElementById('cloud-provider')?.value || 'firebase';
-      const channel = (document.getElementById('cloud-channel-id')?.value || 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b').trim();
+      const channel = (document.getElementById('cloud-channel-id')?.value || VEHICLE_VIN).trim() || VEHICLE_VIN;
       const customUrl = (document.getElementById('cloud-custom-url')?.value || '').trim();
       const supabaseTable = (document.getElementById('cloud-supabase-table')?.value || 'pulseobd_telemetry').trim() || 'pulseobd_telemetry';
       const apiKey = (document.getElementById('cloud-api-key')?.value || '').trim();
@@ -1851,7 +1943,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (!raw) return;
         const cfg = JSON.parse(raw);
         if (cfg.prov && document.getElementById('cloud-provider')) document.getElementById('cloud-provider').value = cfg.prov;
-        if (cfg.channel && document.getElementById('cloud-channel-id')) document.getElementById('cloud-channel-id').value = cfg.channel;
+        const rawCh = (cfg.channel || '').trim();
+        if (rawCh && document.getElementById('cloud-channel-id')) {
+          document.getElementById('cloud-channel-id').value = (rawCh === 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b' && !cfg.customUrl) ? VEHICLE_VIN : rawCh;
+        }
         if (cfg.customUrl !== undefined && document.getElementById('cloud-custom-url')) document.getElementById('cloud-custom-url').value = cfg.customUrl;
         if (cfg.supabaseTable && document.getElementById('cloud-supabase-table')) document.getElementById('cloud-supabase-table').value = cfg.supabaseTable;
         if (cfg.apiKey !== undefined && document.getElementById('cloud-api-key')) document.getElementById('cloud-api-key').value = cfg.apiKey;
@@ -1887,8 +1982,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const rxProto = document.getElementById('cloud-rx-proto');
       const fbHint = document.getElementById('firebase-setup-hint');
       const fbStatusText = document.getElementById('firebase-url-status-text');
+      const vinBox = document.getElementById('vin-firebase-box');
+      const vinPreview = document.getElementById('vin-firebase-preview');
+      const btnApplyVin = document.getElementById('btn-apply-vin-fb');
 
       chGroup?.classList.remove('hidden');
+      vinBox?.classList.toggle('hidden', prov !== 'firebase');
+
+      const suggestedEndpoint = getSuggestedVinFirebaseEndpointUrl();
+      if (vinPreview) vinPreview.textContent = suggestedEndpoint;
 
       if (prov === 'ntfy') {
         urlGroup?.classList.add('hidden');
@@ -1906,13 +2008,22 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (keyLabel) keyLabel.textContent = 'Firebase Database Auth / Secret (Optional)';
         if (keyInput) keyInput.placeholder = 'Leave blank if RTDB rules allow channel read/write';
         if (rxProto) rxProto.textContent = 'Firebase SSE Stream + REST';
+        const isVinApplied = (cfg.customUrl || '').replace(/\/+$/, '').toLowerCase() === suggestedEndpoint.toLowerCase();
+        if (btnApplyVin) {
+          btnApplyVin.textContent = isVinApplied ? 'VIN Firebase URL Active ✓' : 'Apply VIN Firebase URL';
+          btnApplyVin.className = isVinApplied
+            ? 'px-2.5 py-1.5 rounded-full bg-[#047857] text-white font-semibold transition'
+            : 'px-2.5 py-1.5 rounded-full bg-[#1473E6] hover:bg-[#0F5CC0] text-white font-semibold transition';
+        }
         if (fbStatusText && fbHint) {
           if (isCloudEndpointConfigured(cfg)) {
             fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-medium';
-            fbStatusText.textContent = 'Firebase RTDB URL saved privately on this device. Auto-connect & history sync armed whenever online.';
+            fbStatusText.textContent = appState.cloud.firebaseReachable
+              ? `VIN Firebase endpoint reachable & live (/vehicles/${cfg.channel}/latest.json + /history).`
+              : `VIN Firebase URL saved locally (/vehicles/${cfg.channel}). Auto-sync armed — create DB in Firebase Console if not yet active.`;
           } else {
             fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-medium';
-            fbStatusText.textContent = 'Paste your Firebase RTDB URL above once (saved only on this device) so data automatically uploads when online.';
+            fbStatusText.textContent = 'Click "Apply VIN Firebase URL" below or paste your Firebase Console RTDB URL to start auto-saving live & trip history.';
           }
         }
       } else if (prov === 'supabase') {
@@ -1938,6 +2049,51 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
 
+    function applySuggestedVinFirebaseUrl() {
+      const provEl = document.getElementById('cloud-provider');
+      const chEl = document.getElementById('cloud-channel-id');
+      const urlEl = document.getElementById('cloud-custom-url');
+      if (provEl) provEl.value = 'firebase';
+      if (chEl && !chEl.value.trim()) chEl.value = VEHICLE_VIN;
+      const endpoint = getSuggestedVinFirebaseEndpointUrl();
+      if (urlEl) urlEl.value = endpoint;
+      saveCloudConfig();
+      updateCloudProviderUi();
+      updateCloudBadges();
+      logCloud(`[VIN FIREBASE] Applied VIN endpoint: ${endpoint} (live at /latest.json & drives at /history).`, 'text-[#1473E6] font-bold');
+      logCloud(`[SETUP NOTE] Activate free Realtime Database for project "${VIN_FIREBASE_PROJECT}" in console.firebase.google.com if not created yet.`, 'text-[#5A5F6A]');
+      evaluateAutoCloudConnection('url-updated');
+    }
+
+    function copyVinFirebaseUrl() {
+      const endpoint = getSuggestedVinFirebaseEndpointUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(endpoint).catch(() => {});
+      }
+      logCloud(`[VIN FIREBASE] Copied VIN endpoint URL: ${endpoint}`, 'text-[#1473E6] font-semibold');
+    }
+
+    function downloadBridgeFirebaseConfig() {
+      const cfg = getCloudEndpointConfig();
+      const ch = cfg.channel || VEHICLE_VIN;
+      const urlToUse = (cfg.prov === 'firebase' && isCloudEndpointConfigured(cfg))
+        ? cfg.customUrl.replace(/\/+$/, '')
+        : getSuggestedVinFirebaseEndpointUrl();
+      const payload = {
+        provider: 'firebase',
+        vin: VEHICLE_VIN,
+        channel: ch,
+        url: urlToUse,
+        auth: cfg.apiKey || ''
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'firebase.local.json';
+      a.click();
+      logCloud(`[BRIDGE CONFIG] Downloaded firebase.local.json for VIN ${ch}. Place it inside bridge/ on Windows to auto-connect COM3 → Firebase.`, 'text-[#047857] font-semibold');
+    }
+
     function buildFirebasePaths(cfg, sessionId) {
       let base = (cfg.customUrl || '').replace(/\/+$/, '');
       if (!base) {
@@ -1948,9 +2104,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (!authQ) return u;
         return u + (u.includes('?') ? '&' : '?') + authQ;
       };
+      const safeSess = encodeURIComponent(sessionId || 'live_session');
+      if (base.endsWith('/latest.json')) {
+        const prefix = base.slice(0, -12);
+        return {
+          latestUrl: appendAuth(`${prefix}/latest.json`),
+          rootLegacyUrl: appendAuth(`${prefix}.json`),
+          historyFramesUrl: appendAuth(`${prefix}/history/${safeSess}/frames.json`),
+          historyMetaUrl: appendAuth(`${prefix}/history/${safeSess}/meta.json`),
+          historyRootUrl: appendAuth(`${prefix}/history.json`)
+        };
+      }
       if (base.endsWith('.json')) {
         const prefix = base.slice(0, -5);
-        const safeSess = encodeURIComponent(sessionId || 'live_session');
         return {
           latestUrl: appendAuth(`${prefix}/latest.json`),
           rootLegacyUrl: appendAuth(base),
@@ -1959,8 +2125,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
           historyRootUrl: appendAuth(`${prefix}/history.json`)
         };
       }
-      const rootPath = `${base}/pulseobd/${encodeURIComponent(cfg.channel)}`;
-      const safeSess = encodeURIComponent(sessionId || 'live_session');
+      const ch = encodeURIComponent((cfg.channel || VEHICLE_VIN).trim() || VEHICLE_VIN);
+      let rootPath;
+      if (/\/vehicles\/[^/]+$/i.test(base) || /\/pulseobd\/[^/]+$/i.test(base)) {
+        rootPath = base;
+      } else if (/\/vehicles$/i.test(base)) {
+        rootPath = `${base}/${ch}`;
+      } else {
+        rootPath = `${base}/vehicles/${ch}`;
+      }
       return {
         latestUrl: appendAuth(`${rootPath}/latest.json`),
         rootLegacyUrl: appendAuth(`${rootPath}.json`),
@@ -2030,8 +2203,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
           distClear: d.distClear !== undefined ? d.distClear : 65535,
           milOn: Boolean(d.milOn),
           dtcCount: d.dtcCount || 0,
+          engineRunning: drv.engineRunning,
           ignitionType: d.ignitionType || 'Spark',
-          fuelSys1: d.fuelSys1 || 'Closed loop (using O2 sensor)',
+          fuelSys1: d.fuelSys1 || (drv.engineRunning ? 'Closed loop (using O2 sensor)' : 'Open loop — Engine Off'),
           fuelSys2: d.fuelSys2 || 'Off (0)',
           o2Present: d.o2Present || 'B1S1, B1S2',
           obdStd: d.obdStd || '5 (VW EOBD)',
@@ -2039,6 +2213,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           atrv: d.atrv || `${d.volt.toFixed(1)}V`
         },
         derived: {
+          engineRunning: drv.engineRunning,
           fuelLh: Number(drv.fuelLh.toFixed(2)),
           l100km: Number(drv.l100km.toFixed(1)),
           boostKpa: Number(drv.boostKpa.toFixed(0)),
@@ -2197,7 +2372,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       let bodyPayload = packet;
 
       if (cfg.prov === 'ntfy') {
-        targetUrl = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}`;
+        targetUrl = `https://ntfy.sh/${encodeURIComponent(getNtfyTopicPath(cfg.channel))}`;
         method = 'POST';
       } else if (cfg.prov === 'firebase') {
         const paths = buildFirebasePaths(cfg, packet.sessionId || passiveState.activeSessionId);
@@ -2307,6 +2482,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     async function pushSingleCloudFrameNow() {
+      setRememberedDeviceRole('sender');
       const cfg = getCloudEndpointConfig();
       const includeFull = (cfg.prov !== 'ntfy');
       const packet = buildCloudPacket(includeFull);
@@ -2389,6 +2565,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
 
       const merged = { ...appState.current, ...pkt.metrics };
+      if ((merged.rpm || 0) < 50) {
+        if (!pkt.metrics.fuelSys1) merged.fuelSys1 = 'Open loop — Engine Off';
+        if (!pkt.metrics.atrv && merged.volt) merged.atrv = `${merged.volt.toFixed(1)}V (Battery Resting)`;
+      }
       const derived = computeDerivedMetrics(merged);
       appState.current = { ...merged, ...derived };
       appState.history.push({ ...appState.current });
@@ -2406,7 +2586,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!updateNetworkBadgeUi()) return null;
       try {
         if (cfg.prov === 'ntfy') {
-          const url = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}/json?poll=1&since=30m`;
+          const url = `https://ntfy.sh/${encodeURIComponent(getNtfyTopicPath(cfg.channel))}/json?poll=1&since=30m`;
           const res = await fetch(url);
           const text = await res.text();
           const lines = text.trim().split('\n').filter(Boolean);
@@ -2492,7 +2672,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         appState.cloud.sseSource = null;
       }
       if (cfg.prov === 'ntfy') {
-        const sseUrl = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}/sse`;
+        const sseUrl = `https://ntfy.sh/${encodeURIComponent(getNtfyTopicPath(cfg.channel))}/sse`;
         logCloud(`[RX SSE] Subscribed to live Server-Sent Events stream: ${sseUrl}`, 'text-[#047857] font-bold');
         try {
           const es = new EventSource(sseUrl);
@@ -2738,8 +2918,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
             if (res.ok) {
               const latest = await res.json();
               appState.cloud.firebaseReachable = true;
+              updateCloudProviderUi();
               updateCloudBadges();
-              if (latest && latest.metrics && latest.ts) {
+              if (remembered === 'sender' || appState.cloud.txCount > 0) {
+                logCloud('[SMART AUTO] Firebase RTDB connected in Sender mode — queue synced cleanly (click Watch Remote Stream to monitor RX).', 'text-[#047857] font-semibold');
+              } else if (latest && latest.metrics && latest.ts) {
                 const ageMs = Date.now() - Date.parse(latest.ts);
                 if (!Number.isNaN(ageMs) && ageMs >= 0 && ageMs < 180000) {
                   logCloud('[SMART AUTO] Active remote car stream detected on Firebase — connecting RX live!', 'text-[#047857] font-bold');
@@ -2750,9 +2933,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
               } else {
                 logCloud('[SMART AUTO] Firebase RTDB reachable & ready — offline queue and future OBD drives will auto-save online.', 'text-[#047857] font-semibold');
               }
+            } else {
+              appState.cloud.firebaseReachable = false;
+              updateCloudProviderUi();
+              logCloud(`[FIREBASE CHECK] HTTP ${res.status} at ${paths.latestUrl} — create DB "${VIN_FIREBASE_PROJECT}" + open RTDB rules in Firebase Console (4 steps above). Frames stay queued safely offline.`, 'text-[#B45309]');
             }
           }
-        } catch (_) {}
+        } catch (_) {
+          appState.cloud.firebaseReachable = false;
+          updateCloudProviderUi();
+        }
       }
     }
 
@@ -2869,7 +3059,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         heroBtn.textContent = src.startsWith('sim_') ? 'Return to Real 16:43 Dump' : 'Simulate Live Drive';
       }
       const badge = document.getElementById('conn-badge');
-      if (src === 'snap1' || src === 'snap2') {
+      if (src === 'snap1' || src === 'snap2' || src === 'parked_off') {
         appState.current = { ...SNAPSHOTS[src] };
         seedHistory(SNAPSHOTS[src]);
         if (badge) badge.textContent = SNAPSHOTS[src].label;
@@ -2895,9 +3085,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     // =========================================================================
-    // 7. UPDATE COCKPIT & GRAPH READOUTS (ALL VARIABLES)
+    // 7. UPDATE COCKPIT & GRAPH READOUTS (ALL VARIABLES + STOPPED TRUTHFULNESS)
     // =========================================================================
     function estimateGear(rpm, spd) {
+      if ((rpm || 0) < 50) return 'OFF';
       if (spd < 2) return 'N';
       const ratio = spd / Math.max(800, rpm);
       if (ratio < 0.011) return '1';
@@ -2915,8 +3106,26 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return `${hh}:${mm}:${ss}`;
     }
 
+    function setBadgeState(id, text, cls) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      if (cls) el.className = cls;
+    }
+
+    function getTelemetryActivityState(d) {
+      const isStatic = ['snap1', 'snap2', 'parked_off'].includes(appState.source) && !appState.cloud.rxActive;
+      const engineRunning = (d.rpm || 0) >= 50;
+      const moving = (d.spd || 0) >= 1;
+      if (!engineRunning) return { kind: 'off', isStatic, engineRunning: false, moving: false };
+      if (isStatic) return { kind: 'static_idle', isStatic: true, engineRunning: true, moving: false };
+      if (!moving) return { kind: 'idling_stopped', isStatic: false, engineRunning: true, moving: false };
+      return { kind: 'driving', isStatic: false, engineRunning: true, moving: true };
+    }
+
     function updateDomMetrics(d) {
       const drv = computeDerivedMetrics(d);
+      const act = getTelemetryActivityState(d);
 
       document.getElementById('cockpit-rpm').textContent = Math.round(d.rpm);
       document.getElementById('cockpit-spd').textContent = Math.round(d.spd);
@@ -2951,7 +3160,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
       document.getElementById('cockpit-rail-bar').style.width = Math.min(100, (d.rail / 20) * 100) + '%';
 
       document.getElementById('tile-coolant').textContent = Math.round(d.coolant) + '°C';
-      document.getElementById('tile-iat').textContent = `${Math.round(d.iat)}°C (+${Math.round(drv.heatSoak)}°)`;
+      const soakSign = drv.heatSoak >= 0 ? '+' : '';
+      document.getElementById('tile-iat').textContent = `${Math.round(d.iat)}°C (${soakSign}${Math.round(drv.heatSoak)}°)`;
       document.getElementById('tile-cat').textContent = d.cat.toFixed(1) + '°C';
       document.getElementById('tile-amb').textContent = Math.round(d.amb) + '°C';
 
@@ -2960,36 +3170,142 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const secStr = (d.secO2Trim >= 0 ? '+' : '') + d.secO2Trim.toFixed(2) + '%';
       document.getElementById('tile-stft').textContent = stftStr;
       document.getElementById('tile-ltft').textContent = `${ltftStr} / ${secStr}`;
-      document.getElementById('tile-lambda').textContent = d.lambda.toFixed(4);
-      document.getElementById('tile-o2').textContent = `${d.o2s1.toFixed(2)}V / ${d.o2s2.toFixed(2)}V`;
-      document.getElementById('tile-total-trim').textContent = (drv.totalTrim >= 0 ? '+' : '') + drv.totalTrim.toFixed(2) + '%';
+      document.getElementById('tile-lambda').textContent = act.engineRunning ? d.lambda.toFixed(4) : '— (Off)';
+      document.getElementById('tile-o2').textContent = act.engineRunning ? `${d.o2s1.toFixed(2)}V / ${d.o2s2.toFixed(2)}V` : '0.00V (Off)';
+      document.getElementById('tile-total-trim').textContent = act.engineRunning
+        ? ((drv.totalTrim >= 0 ? '+' : '') + drv.totalTrim.toFixed(2) + '%')
+        : '0.00% (Off)';
 
       document.getElementById('tile-fuel').textContent = d.fuel.toFixed(1) + '%';
       document.getElementById('tile-fuel-liters').textContent = `~${drv.fuelLiters.toFixed(1)} L left`;
       document.getElementById('tile-fuel-bar').style.width = d.fuel + '%';
-      document.getElementById('tile-evap').textContent = d.evap.toFixed(1) + '%';
-      document.getElementById('tile-flow').textContent = d.spd > 3
-        ? `${drv.l100km.toFixed(1)} L/100km (${drv.fuelLh.toFixed(1)} L/h)`
-        : `${drv.fuelLh.toFixed(2)} L/h (Idle)`;
+      document.getElementById('tile-evap').textContent = act.engineRunning ? (d.evap.toFixed(1) + '%') : '0.0% (Off)';
+      document.getElementById('tile-flow').textContent = !act.engineRunning
+        ? '0.00 L/h (Engine Off)'
+        : (d.spd > 3
+            ? `${drv.l100km.toFixed(1)} L/100km (${drv.fuelLh.toFixed(1)} L/h)`
+            : `${drv.fuelLh.toFixed(2)} L/h (Idle)`);
       document.getElementById('adv-fuel-val').textContent = `${d.fuel.toFixed(1)}% · ${drv.fuelLiters.toFixed(1)} L · ${Math.round(drv.estRangeKm)} km`;
       document.getElementById('adv-fuel-rate').textContent = `${drv.fuelLh.toFixed(2)} L/h`;
       document.getElementById('adv-cat-temp').textContent = `Cat ${d.cat.toFixed(1)}°C`;
 
       document.getElementById('tile-volt').textContent = d.volt.toFixed(2) + 'V';
       document.getElementById('tile-atrv').textContent = d.atrv;
-      document.getElementById('runtime-badge').textContent = `Run: ${formatDuration(d.runtime)} (${Math.round(d.runtime)}s)`;
+      const baroKpa = d.baro || 83;
+      const estAltM = Math.round(Math.max(0, (101.325 - baroKpa) * 91.5));
+      const baroEl = document.getElementById('tile-baro');
+      if (baroEl) baroEl.textContent = `${baroKpa} kPa (~${estAltM}m)`;
+
+      const voltStatusEl = document.getElementById('tile-volt-status');
+      if (voltStatusEl) {
+        if (act.engineRunning && d.volt >= 13.1) {
+          voltStatusEl.textContent = 'Charging';
+          voltStatusEl.className = 'text-xs text-[#047857] font-bold';
+        } else if (d.volt >= 12.1) {
+          voltStatusEl.textContent = 'Battery Resting';
+          voltStatusEl.className = 'text-xs text-[#1473E6] font-bold';
+        } else {
+          voltStatusEl.textContent = 'Low Battery';
+          voltStatusEl.className = 'text-xs text-[#D92B2B] font-bold';
+        }
+      }
+
+      const loopPill = document.getElementById('loop-pill');
+      if (loopPill) {
+        if (!act.engineRunning) {
+          loopPill.textContent = 'Engine Off (Bus / Pin 16 Active)';
+          loopPill.className = 'text-xs px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-semibold whitespace-nowrap shrink-0';
+        } else {
+          loopPill.textContent = 'Closed Loop';
+          loopPill.className = 'text-xs px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold whitespace-nowrap shrink-0';
+        }
+      }
+
+      document.getElementById('runtime-badge').textContent = act.engineRunning
+        ? `Run: ${formatDuration(d.runtime)} (${Math.round(d.runtime)}s)`
+        : 'Engine Off · 0s Run';
 
       const csr = document.getElementById('cockpit-stream-readout');
-      if (csr) csr.textContent = `${Math.round(d.rpm)} RPM · ${Math.round(d.spd)} km/h · ${d.cat.toFixed(1)}°C`;
+      if (csr) csr.textContent = `${Math.round(d.rpm)} RPM · ${Math.round(d.spd)} km/h · ${d.volt.toFixed(2)}V · ${d.cat.toFixed(1)}°C`;
+
+      // Update Authentic Stopped / Running Banner + Graph Subsystem Badges
+      const bannerEl = document.getElementById('cockpit-stopped-banner');
+      const heroLine = document.getElementById('hero-status-line');
+      const pillLiveCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold shrink-0';
+      const pillBlueCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold shrink-0';
+      const pillOffCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-bold shrink-0';
+      const pillWarnCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-bold shrink-0';
+
+      if (act.kind === 'off') {
+        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        setBadgeState('stopped-banner-pill', 'ENGINE OFF · 0 RPM', 'px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold shrink-0 self-start sm:self-auto');
+        const activeP = document.getElementById('stopped-banner-active');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active:</strong> Pin 16 Battery (${d.volt.toFixed(2)}V) · Baro/MAP (${baroKpa} kPa) · Fuel Tank (${d.fuel.toFixed(1)}%) · Thermal · KOEO / BT / Firebase`;
+        setBadgeState('stopped-banner-off', 'Stopped: 0 RPM · 0 km/h · Alternator Off · Closed-Loop O2 Off · Burn 0.00 L/h', 'text-[#92400E] font-mono-num leading-snug shrink-0');
+        setBadgeState('cockpit-stream-status', act.isStatic ? 'ENGINE OFF · FROZEN' : 'ENGINE OFF · 12V & BUS LIVE', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-bold whitespace-nowrap shrink-0');
+        if (heroLine) heroLine.textContent = `Engine Off · Only Pin 16 Battery (${d.volt.toFixed(2)}V), Baro, Fuel Level & Thermal Sensors Active`;
+        setBadgeState('g1-state', 'STOPPED · 0 RPM · 0 km/h', pillOffCls);
+        setBadgeState('g2-state', act.isStatic ? 'STATIC COOLING THERMAL' : 'THERMAL SENSORS LIVE', pillLiveCls);
+        setBadgeState('g3-state', 'INACTIVE (ENGINE OFF)', pillOffCls);
+        setBadgeState('g4-state', `MAP AT BARO (${baroKpa} kPa) · HPFP OFF`, pillWarnCls);
+        setBadgeState('g5-state', 'KOEO PEDAL / THR OFF', pillBlueCls);
+        setBadgeState('g6-state', 'PIN 16 BATT & TANK LIVE', pillLiveCls);
+      } else if (act.kind === 'static_idle') {
+        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        setBadgeState('stopped-banner-pill', 'STATIC CAPTURE · 0 km/h', 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto');
+        const activeP = document.getElementById('stopped-banner-active');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active in Capture:</strong> Idle (${Math.round(d.rpm)} RPM) · Closed-Loop O2/STFT · ${d.volt.toFixed(2)}V Charging · Thermal &amp; HPFP`;
+        setBadgeState('stopped-banner-off', 'Stopped: Wheel Speed 0 km/h · Trace Frozen (No Fake Sine Movement)', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
+        setBadgeState('cockpit-stream-status', 'STATIC CAPTURE · FROZEN', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-bold whitespace-nowrap shrink-0');
+        if (heroLine) heroLine.textContent = 'Viewing recorded stationary capture — traces frozen without simulated motion';
+        setBadgeState('g1-state', 'STATIC IDLE · 0 km/h', pillOffCls);
+        setBadgeState('g2-state', 'STATIC THERMAL', pillLiveCls);
+        setBadgeState('g3-state', 'STATIC CLOSED LOOP', pillLiveCls);
+        setBadgeState('g4-state', 'STATIC IDLE VAC', pillBlueCls);
+        setBadgeState('g5-state', 'STATIC IDLE', pillOffCls);
+        setBadgeState('g6-state', 'STATIC CHARGE & TANK', pillLiveCls);
+      } else if (act.kind === 'idling_stopped') {
+        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        setBadgeState('stopped-banner-pill', 'VEHICLE STOPPED · IDLING', 'px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 self-start sm:self-auto');
+        const activeP = document.getElementById('stopped-banner-active');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active:</strong> Engine Idle (${Math.round(d.rpm)} RPM) · Alternator ${d.volt.toFixed(2)}V · Closed-Loop O2/STFT · Thermal &amp; HPFP`;
+        setBadgeState('stopped-banner-off', 'Stopped: Wheel Speed 0 km/h · Drivetrain Stationary', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
+        setBadgeState('cockpit-stream-status', 'LIVE IDLE · 0 km/h', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold whitespace-nowrap shrink-0');
+        if (heroLine) heroLine.textContent = 'Vehicle stationary with engine idling — speed 0 km/h, engine & charging live';
+        setBadgeState('g1-state', 'IDLING · 0 km/h', pillBlueCls);
+        setBadgeState('g2-state', 'LIVE THERMAL', pillLiveCls);
+        setBadgeState('g3-state', 'LIVE CLOSED LOOP', pillLiveCls);
+        setBadgeState('g4-state', 'LIVE VAC / RAIL', pillBlueCls);
+        setBadgeState('g5-state', 'LIVE IDLE PEDAL', pillBlueCls);
+        setBadgeState('g6-state', 'ALT CHARGING & TANK', pillLiveCls);
+      } else {
+        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        setBadgeState('stopped-banner-pill', `LIVE TELEMETRY · ${Math.round(d.spd)} km/h`, 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto');
+        const activeP = document.getElementById('stopped-banner-active');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">All Systems Running:</strong> ${Math.round(d.rpm)} RPM · Turbo/MAP ${Math.round(d.map)} kPa · ${d.volt.toFixed(2)}V Charging · Closed-Loop Fuel`;
+        setBadgeState('stopped-banner-off', '124 Variables Active · Strictly Read-Only', 'text-[#047857] font-mono-num leading-snug shrink-0');
+        setBadgeState('cockpit-stream-status', 'LIVE STREAM', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold whitespace-nowrap shrink-0');
+        if (heroLine) heroLine.textContent = 'PulseOBD cloud streaming & all 124 ECU variables ready!';
+        setBadgeState('g1-state', 'LIVE DRIVING', pillLiveCls);
+        setBadgeState('g2-state', 'LIVE THERMAL', pillLiveCls);
+        setBadgeState('g3-state', 'CLOSED LOOP', pillLiveCls);
+        setBadgeState('g4-state', 'LIVE BOOST / RAIL', pillBlueCls);
+        setBadgeState('g5-state', 'LIVE PEDAL / THR', pillBlueCls);
+        setBadgeState('g6-state', 'ALT & FLOW LIVE', pillLiveCls);
+      }
 
       const g1 = document.getElementById('g1-readout');
       if (g1) g1.textContent = `${Math.round(d.rpm)} RPM · ${Math.round(d.spd)} km/h · Calc ${d.load.toFixed(1)}% · Abs ${d.absLoad.toFixed(1)}%`;
       const g2 = document.getElementById('g2-readout');
       if (g2) g2.textContent = `Cool ${Math.round(d.coolant)}°C · IAT ${Math.round(d.iat)}°C · Amb ${Math.round(d.amb)}°C · Cat ${d.cat.toFixed(0)}°C`;
       const g3 = document.getElementById('g3-readout');
-      if (g3) g3.textContent = `STFT ${stftStr} · LTFT ${ltftStr} · Sec ${secStr}`;
+      if (g3) g3.textContent = act.engineRunning
+        ? `STFT ${stftStr} · LTFT ${ltftStr} · Sec ${secStr}`
+        : `STFT 0.00% (Off) · LTFT ${ltftStr} (Stored) · O2 Heaters Off`;
       const g4 = document.getElementById('g4-readout');
-      if (g4) g4.textContent = `Rail ${d.rail.toFixed(2)} MPa · MAP ${Math.round(d.map)} kPa · Adv ${d.timing.toFixed(1)}°`;
+      if (g4) g4.textContent = act.engineRunning
+        ? `Rail ${d.rail.toFixed(2)} MPa · MAP ${Math.round(d.map)} kPa · Adv ${d.timing.toFixed(1)}°`
+        : `Residual Rail ${d.rail.toFixed(2)} MPa · MAP ${Math.round(d.map)} kPa (Baro) · Timing 0.0°`;
       const g5 = document.getElementById('g5-readout');
       if (g5) g5.textContent = `Pedal D/E ${d.pedalD.toFixed(1)}% · Thr A/B ${d.thr.toFixed(1)}% · Rel ${d.relThr.toFixed(1)}% · Act ${d.actThr.toFixed(1)}%`;
       const g6 = document.getElementById('g6-readout');
@@ -3099,23 +3415,23 @@ Check your Browserslist config to be sure that your targets are set up correctly
       _chartRafId = null;
       if (appState.activeTab === 'cockpit') {
         drawMultiLineCanvas('cockpit-stream-canvas', [
-          { key: 'rpm', color: '#1473E6', min: 500, max: 5500, width: 2.2 },
+          { key: 'rpm', color: '#1473E6', min: 0, max: 5500, width: 2.2 },
           { key: 'spd', color: '#059669', min: 0, max: 140, width: 2.1 },
-          { key: 'cat', color: '#F25F3A', min: 200, max: 680, width: 1.8 }
+          { key: 'cat', color: '#F25F3A', min: 0, max: 680, width: 1.8 }
         ], 0, 100);
       } else if (appState.activeTab === 'graphs') {
         drawMultiLineCanvas('chart-dynamics', [
-          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.2 },
+          { key: 'rpm', color: '#1473E6', min: 0, max: 6000, width: 2.2 },
           { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.1 },
           { key: 'load', color: '#F25F3A', min: 0, max: 100, width: 1.7 },
           { key: 'absLoad', color: '#E13C7A', min: 0, max: 100, width: 1.4 }
         ], 0, 100);
 
         drawMultiLineCanvas('chart-thermal', [
-          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 2.2 },
-          { key: 'iat', color: '#F59E0B', min: 20, max: 85, width: 1.9 },
+          { key: 'coolant', color: '#D92B2B', min: 0, max: 115, width: 2.2 },
+          { key: 'iat', color: '#F59E0B', min: 0, max: 85, width: 1.9 },
           { key: 'amb', color: '#059669', min: 0, max: 50, width: 1.4 },
-          { key: 'cat', color: '#1473E6', min: 200, max: 700, width: 1.9 }
+          { key: 'cat', color: '#1473E6', min: 0, max: 700, width: 1.9 }
         ], 0, 100);
 
         drawMultiLineCanvas('chart-trims', [
@@ -3126,8 +3442,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         ], -12, 12);
 
         drawMultiLineCanvas('chart-boost', [
-          { key: 'rail', color: '#4F46E5', min: 8, max: 21, width: 2.2 },
-          { key: 'map', color: '#1473E6', min: 20, max: 190, width: 2.1 },
+          { key: 'rail', color: '#4F46E5', min: 0, max: 21, width: 2.2 },
+          { key: 'map', color: '#1473E6', min: 0, max: 190, width: 2.1 },
           { key: 'timing', color: '#F25F3A', min: -15, max: 35, width: 1.5 }
         ], 0, 200);
 
@@ -3139,16 +3455,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
         ], 0, 100);
 
         drawMultiLineCanvas('chart-aux', [
-          { key: 'volt', color: '#1473E6', min: 11.5, max: 15.0, width: 2.2 },
+          { key: 'volt', color: '#1473E6', min: 11.0, max: 15.0, width: 2.2 },
           { key: 'fuel', color: '#D97706', min: 0, max: 100, width: 1.9 },
           { key: 'evap', color: '#059669', min: 0, max: 100, width: 1.5 },
           { key: 'fuelLh', color: '#E13C7A', min: 0, max: 18, width: 1.7 }
         ], 0, 100);
       } else if (appState.activeTab === 'history' && historyInspectSamples.length >= 2) {
         drawMultiLineCanvas('history-inspect-canvas', [
-          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.2 },
+          { key: 'rpm', color: '#1473E6', min: 0, max: 6000, width: 2.2 },
           { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.1 },
-          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 1.7 }
+          { key: 'coolant', color: '#D92B2B', min: 0, max: 115, width: 1.7 }
         ], 0, 100, historyInspectSamples);
       }
     }
@@ -3163,53 +3479,57 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // =========================================================================
     function buildCompleteVariableCatalog(d) {
       const drv = computeDerivedMetrics(d);
+      const engOn = drv.engineRunning;
+      const offOrLive = engOn ? 'Live' : 'Engine Off';
+      const sensorActive = engOn ? 'Live' : 'Sensor Live';
+      const voltState = (engOn && d.volt >= 13.1) ? 'Charging' : (d.volt >= 12.1 ? 'Battery Resting' : 'Low Battery');
       const list = [
         { id: '0100', cat: 'MODE01', name: 'Supported PIDs [01–20] Bitmask', val: 'BE 3E B8 13 (17 PIDs)', raw: '7E8 06 41 00 BE 3E B8 13', status: 'Bitmask' },
         { id: '0120', cat: 'MODE01', name: 'Supported PIDs [21–40] Bitmask', val: 'A0 07 A0 11 (9 PIDs)', raw: '7E8 06 41 20 A0 07 A0 11', status: 'Bitmask' },
         { id: '0140', cat: 'MODE01', name: 'Supported PIDs [41–60] Bitmask', val: 'FE D0 84 00 (13 PIDs)', raw: '7E8 06 41 40 FE D0 84 00', status: 'Bitmask' },
         { id: '0101', cat: 'MODE01', name: 'Monitor Status Since DTCs Cleared', val: `MIL: ${d.milOn ? 'ON' : 'OFF'} · DTCs: ${d.dtcCount} · ${d.ignitionType} · 6/7 Ready`, raw: '7E8 06 41 01 00 07 E1 01', status: 'Healthy' },
-        { id: '0103', cat: 'MODE01', name: 'Fuel System 1 & 2 Control Status', val: `Sys1: ${d.fuelSys1} | Sys2: ${d.fuelSys2}`, raw: '7E8 04 41 03 02 00', status: 'Closed Loop' },
-        { id: '0104', cat: 'MODE01', name: 'Calculated Engine Load', val: `${d.load.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '0105', cat: 'MODE01', name: 'Engine Coolant Temperature', val: `${Math.round(d.coolant)} °C`, raw: 'A - 40', status: 'Live' },
-        { id: '0106', cat: 'MODE01', name: 'Short Term Fuel Trim (Bank 1)', val: `${(d.stft >= 0 ? '+' : '') + d.stft.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: 'Live' },
-        { id: '0107', cat: 'MODE01', name: 'Long Term Fuel Trim (Bank 1)', val: `${(d.ltft >= 0 ? '+' : '') + d.ltft.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: 'Live' },
-        { id: '010B', cat: 'MODE01', name: 'Intake Manifold Absolute Pressure (MAP)', val: `${Math.round(d.map)} kPa`, raw: 'A kPa', status: 'Live' },
-        { id: '010C', cat: 'MODE01', name: 'Engine RPM', val: `${d.rpm.toFixed(1)} rpm`, raw: '(256*A + B) / 4', status: 'Live' },
-        { id: '010D', cat: 'MODE01', name: 'Vehicle Speed', val: `${Math.round(d.spd)} km/h`, raw: 'A km/h', status: 'Live' },
-        { id: '010E', cat: 'MODE01', name: 'Timing Advance (Cylinder #1)', val: `${d.timing.toFixed(1)} ° BTDC`, raw: 'A / 2 - 64', status: 'Live' },
-        { id: '010F', cat: 'MODE01', name: 'Intake Air Temperature (IAT)', val: `${Math.round(d.iat)} °C`, raw: 'A - 40', status: 'Live' },
-        { id: '0111', cat: 'MODE01', name: 'Absolute Throttle Position', val: `${d.thr.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
+        { id: '0103', cat: 'MODE01', name: 'Fuel System 1 & 2 Control Status', val: `Sys1: ${d.fuelSys1} | Sys2: ${d.fuelSys2}`, raw: '7E8 04 41 03 02 00', status: engOn ? 'Closed Loop' : 'Engine Off' },
+        { id: '0104', cat: 'MODE01', name: 'Calculated Engine Load', val: `${d.load.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
+        { id: '0105', cat: 'MODE01', name: 'Engine Coolant Temperature', val: `${Math.round(d.coolant)} °C`, raw: 'A - 40', status: sensorActive },
+        { id: '0106', cat: 'MODE01', name: 'Short Term Fuel Trim (Bank 1)', val: `${(d.stft >= 0 ? '+' : '') + d.stft.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: engOn ? 'Live' : 'Inactive' },
+        { id: '0107', cat: 'MODE01', name: 'Long Term Fuel Trim (Bank 1)', val: `${(d.ltft >= 0 ? '+' : '') + d.ltft.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: 'Stored' },
+        { id: '010B', cat: 'MODE01', name: 'Intake Manifold Absolute Pressure (MAP)', val: `${Math.round(d.map)} kPa`, raw: 'A kPa', status: engOn ? 'Live' : 'At Baro' },
+        { id: '010C', cat: 'MODE01', name: 'Engine RPM', val: `${d.rpm.toFixed(1)} rpm`, raw: '(256*A + B) / 4', status: engOn ? 'Live' : '0 RPM (Off)' },
+        { id: '010D', cat: 'MODE01', name: 'Vehicle Speed', val: `${Math.round(d.spd)} km/h`, raw: 'A km/h', status: d.spd > 0 ? 'Moving' : 'Stationary' },
+        { id: '010E', cat: 'MODE01', name: 'Timing Advance (Cylinder #1)', val: `${d.timing.toFixed(1)} ° BTDC`, raw: 'A / 2 - 64', status: offOrLive },
+        { id: '010F', cat: 'MODE01', name: 'Intake Air Temperature (IAT)', val: `${Math.round(d.iat)} °C`, raw: 'A - 40', status: sensorActive },
+        { id: '0111', cat: 'MODE01', name: 'Absolute Throttle Position', val: `${d.thr.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
         { id: '0113', cat: 'MODE01', name: 'Oxygen Sensors Present (Bank/Sensor)', val: d.o2Present, raw: '7E8 03 41 13 03', status: '2 Sensors' },
-        { id: '0114', cat: 'MODE01', name: 'O2 Sensor B1S1 Voltage & STFT', val: `${d.o2s1.toFixed(3)} V | ${(d.o2s1Trim >= 0 ? '+' : '') + d.o2s1Trim.toFixed(2)}%`, raw: 'A/200 V, (B-128)*100/128 %', status: 'Live' },
-        { id: '0115', cat: 'MODE01', name: 'O2 Sensor B1S2 Voltage & STFT', val: `${d.o2s2.toFixed(3)} V | ${d.o2s2Trim}`, raw: 'A/200 V, B=0xFF', status: 'Live' },
+        { id: '0114', cat: 'MODE01', name: 'O2 Sensor B1S1 Voltage & STFT', val: `${d.o2s1.toFixed(3)} V | ${(d.o2s1Trim >= 0 ? '+' : '') + d.o2s1Trim.toFixed(2)}%`, raw: 'A/200 V, (B-128)*100/128 %', status: engOn ? 'Live' : 'Heater Off' },
+        { id: '0115', cat: 'MODE01', name: 'O2 Sensor B1S2 Voltage & STFT', val: `${d.o2s2.toFixed(3)} V | ${d.o2s2Trim}`, raw: 'A/200 V, B=0xFF', status: engOn ? 'Live' : 'Heater Off' },
         { id: '011C', cat: 'MODE01', name: 'OBD Compliance Standard', val: d.obdStd, raw: '7E8 03 41 1C 05', status: 'Verified' },
-        { id: '011F', cat: 'MODE01', name: 'Run Time Since Engine Start', val: `${Math.round(d.runtime)} s (${formatDuration(d.runtime)})`, raw: '256*A + B sec', status: 'Live' },
+        { id: '011F', cat: 'MODE01', name: 'Run Time Since Engine Start', val: `${Math.round(d.runtime)} s (${formatDuration(d.runtime)})`, raw: '256*A + B sec', status: offOrLive },
         { id: '0121', cat: 'MODE01', name: 'Distance Traveled with MIL On', val: `${d.distMilOn} km`, raw: '256*A + B km', status: '0 km' },
-        { id: '0123', cat: 'MODE01', name: 'Fuel Rail Gauge Pressure (Direct Inj.)', val: `${Math.round(d.rail * 1000)} kPa (${d.rail.toFixed(2)} MPa / ${(d.rail * 10).toFixed(1)} bar)`, raw: '10 * (256*A + B) kPa', status: 'Live' },
-        { id: '012E', cat: 'MODE01', name: 'Commanded Evaporative Purge', val: `${d.evap.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '012F', cat: 'MODE01', name: 'Fuel Tank Level Input', val: `${d.fuel.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Low Reserve' },
+        { id: '0123', cat: 'MODE01', name: 'Fuel Rail Gauge Pressure (Direct Inj.)', val: `${Math.round(d.rail * 1000)} kPa (${d.rail.toFixed(2)} MPa / ${(d.rail * 10).toFixed(1)} bar)`, raw: '10 * (256*A + B) kPa', status: engOn ? 'Live' : 'Residual' },
+        { id: '012E', cat: 'MODE01', name: 'Commanded Evaporative Purge', val: `${d.evap.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
+        { id: '012F', cat: 'MODE01', name: 'Fuel Tank Level Input', val: `${d.fuel.toFixed(1)} %`, raw: 'A * 100 / 255', status: d.fuel <= 12 ? 'Low Reserve' : 'Sensor Live' },
         { id: '0130', cat: 'MODE01', name: 'Warm-ups Since Codes Cleared', val: `${d.warmups} cycles`, raw: '7E8 03 41 30 FF', status: 'Saturated' },
         { id: '0131', cat: 'MODE01', name: 'Distance Traveled Since Codes Cleared', val: `${d.distClear} km`, raw: '7E8 04 41 31 FF FF', status: 'Saturated' },
         { id: '0133', cat: 'MODE01', name: 'Absolute Barometric Pressure', val: `${d.baro} kPa`, raw: '7E8 03 41 33 53', status: 'Highveld' },
-        { id: '013C', cat: 'MODE01', name: 'Catalyst Temperature (Bank 1 Sensor 1)', val: `${d.cat.toFixed(1)} °C`, raw: '(256*A + B)/10 - 40', status: 'Live' },
-        { id: '0141', cat: 'MODE01', name: 'Monitor Status This Drive Cycle', val: '00 07 E1 E1 (Cont Ready)', raw: '7E8 06 41 41 00 07 E1 E1', status: 'Active' },
-        { id: '0142', cat: 'MODE01', name: 'Control Module Voltage (ECM)', val: `${d.volt.toFixed(3)} V`, raw: '(256*A + B) / 1000 V', status: 'Charging' },
-        { id: '0143', cat: 'MODE01', name: 'Absolute Load Value', val: `${d.absLoad.toFixed(1)} %`, raw: '(256*A + B)*100 / 255', status: 'Live' },
-        { id: '0144', cat: 'MODE01', name: 'Commanded Equivalence Ratio (Lambda)', val: d.lambda.toFixed(4), raw: '2/65536 * (256*A + B)', status: 'Stoich' },
-        { id: '0145', cat: 'MODE01', name: 'Relative Throttle Position', val: `${d.relThr.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '0146', cat: 'MODE01', name: 'Ambient Air Temperature', val: `${Math.round(d.amb)} °C`, raw: 'A - 40', status: 'Live' },
-        { id: '0147', cat: 'MODE01', name: 'Absolute Throttle Position B', val: `${d.thrB.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '0149', cat: 'MODE01', name: 'Accelerator Pedal Position D', val: `${d.pedalD.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '014A', cat: 'MODE01', name: 'Accelerator Pedal Position E', val: `${d.pedalE.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
-        { id: '014C', cat: 'MODE01', name: 'Commanded Throttle Actuator', val: `${d.actThr.toFixed(1)} %`, raw: 'A * 100 / 255', status: 'Live' },
+        { id: '013C', cat: 'MODE01', name: 'Catalyst Temperature (Bank 1 Sensor 1)', val: `${d.cat.toFixed(1)} °C`, raw: '(256*A + B)/10 - 40', status: sensorActive },
+        { id: '0141', cat: 'MODE01', name: 'Monitor Status This Drive Cycle', val: '00 07 E1 E1 (Cont Ready)', raw: '7E8 06 41 41 00 07 E1 E1', status: engOn ? 'Active' : 'Standby' },
+        { id: '0142', cat: 'MODE01', name: 'Control Module Voltage (ECM)', val: `${d.volt.toFixed(3)} V`, raw: '(256*A + B) / 1000 V', status: voltState },
+        { id: '0143', cat: 'MODE01', name: 'Absolute Load Value', val: `${d.absLoad.toFixed(1)} %`, raw: '(256*A + B)*100 / 255', status: offOrLive },
+        { id: '0144', cat: 'MODE01', name: 'Commanded Equivalence Ratio (Lambda)', val: engOn ? d.lambda.toFixed(4) : '— (Engine Off)', raw: '2/65536 * (256*A + B)', status: engOn ? 'Stoich' : 'Inactive' },
+        { id: '0145', cat: 'MODE01', name: 'Relative Throttle Position', val: `${d.relThr.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
+        { id: '0146', cat: 'MODE01', name: 'Ambient Air Temperature', val: `${Math.round(d.amb)} °C`, raw: 'A - 40', status: sensorActive },
+        { id: '0147', cat: 'MODE01', name: 'Absolute Throttle Position B', val: `${d.thrB.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
+        { id: '0149', cat: 'MODE01', name: 'Accelerator Pedal Position D', val: `${d.pedalD.toFixed(1)} %`, raw: 'A * 100 / 255', status: engOn ? 'Live' : 'KOEO Active' },
+        { id: '014A', cat: 'MODE01', name: 'Accelerator Pedal Position E', val: `${d.pedalE.toFixed(1)} %`, raw: 'A * 100 / 255', status: engOn ? 'Live' : 'KOEO Active' },
+        { id: '014C', cat: 'MODE01', name: 'Commanded Throttle Actuator', val: `${d.actThr.toFixed(1)} %`, raw: 'A * 100 / 255', status: offOrLive },
         { id: '0151', cat: 'MODE01', name: 'Fuel Type Coding', val: d.fuelType, raw: '7E8 03 41 51 01', status: 'Petrol' },
-        { id: '0156', cat: 'MODE01', name: 'Long Term Secondary O2 Sensor Trim B1', val: `${d.secO2Trim.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: 'Live' },
+        { id: '0156', cat: 'MODE01', name: 'Long Term Secondary O2 Sensor Trim B1', val: `${d.secO2Trim.toFixed(2)} %`, raw: '(A - 128) * 100 / 128', status: engOn ? 'Live' : 'Inactive' },
 
-        { id: 'DRV-BOOST', cat: 'DERIVED', name: 'Relative Boost / Vacuum (MAP - Baro)', val: `${drv.boostKpa >= 0 ? '+' : ''}${drv.boostKpa.toFixed(0)} kPa (${(drv.boostKpa/100).toFixed(2)} bar)`, raw: 'PID 010B - PID 0133', status: 'Computed' },
-        { id: 'DRV-TRIM', cat: 'DERIVED', name: 'Total Combined Fuel Trim (STFT + LTFT)', val: `${drv.totalTrim >= 0 ? '+' : ''}${drv.totalTrim.toFixed(2)} %`, raw: 'PID 0106 + PID 0107', status: 'Computed' },
-        { id: 'DRV-SOAK', cat: 'DERIVED', name: 'Intake Heat Soak Delta (IAT - Ambient)', val: `+${drv.heatSoak.toFixed(0)} °C`, raw: 'PID 010F - PID 0146', status: 'Computed' },
-        { id: 'DRV-FLOW', cat: 'DERIVED', name: 'Estimated Instantaneous Fuel Flow', val: `${drv.fuelLh.toFixed(2)} L/h`, raw: '1.197L Speed-Density (RPM·MAP/IAT·λ)', status: 'Computed' },
-        { id: 'DRV-ECO', cat: 'DERIVED', name: 'Estimated Instantaneous Fuel Economy', val: d.spd > 3 ? `${drv.l100km.toFixed(1)} L/100km` : 'Stationary (Idle L/h)', raw: '(L/h ÷ km/h) × 100', status: 'Computed' },
+        { id: 'DRV-BOOST', cat: 'DERIVED', name: 'Relative Boost / Vacuum (MAP - Baro)', val: `${drv.boostKpa >= 0 ? '+' : ''}${drv.boostKpa.toFixed(0)} kPa (${(drv.boostKpa/100).toFixed(2)} bar)`, raw: 'PID 010B - PID 0133', status: engOn ? 'Computed' : 'Baro Equiv' },
+        { id: 'DRV-TRIM', cat: 'DERIVED', name: 'Total Combined Fuel Trim (STFT + LTFT)', val: `${drv.totalTrim >= 0 ? '+' : ''}${drv.totalTrim.toFixed(2)} %`, raw: 'PID 0106 + PID 0107', status: engOn ? 'Computed' : 'Engine Off' },
+        { id: 'DRV-SOAK', cat: 'DERIVED', name: 'Intake Heat Soak Delta (IAT - Ambient)', val: `${drv.heatSoak >= 0 ? '+' : ''}${drv.heatSoak.toFixed(0)} °C`, raw: 'PID 010F - PID 0146', status: 'Computed' },
+        { id: 'DRV-FLOW', cat: 'DERIVED', name: 'Estimated Instantaneous Fuel Flow', val: `${drv.fuelLh.toFixed(2)} L/h`, raw: '1.197L Speed-Density (RPM·MAP/IAT·λ)', status: engOn ? 'Computed' : '0.00 L/h (Off)' },
+        { id: 'DRV-ECO', cat: 'DERIVED', name: 'Estimated Instantaneous Fuel Economy', val: !engOn ? 'Engine Off (0.00 L/h)' : (d.spd > 3 ? `${drv.l100km.toFixed(1)} L/100km` : 'Stationary (Idle L/h)'), raw: '(L/h ÷ km/h) × 100', status: 'Computed' },
         { id: 'DRV-RANGE', cat: 'DERIVED', name: 'Estimated Fuel Volume & Driving Range', val: `${drv.fuelLiters.toFixed(1)} L (~${Math.round(drv.estRangeKm)} km)`, raw: 'PID 012F × 45L Tank', status: 'Computed' },
 
         { id: 'Mode 03', cat: 'READINESS', name: 'Stored Diagnostic Trouble Codes', val: '0 Stored DTCs', raw: '7E8 02 43 00', status: 'Clean' },
@@ -3260,7 +3580,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
         });
       });
 
-      UDS_AND_AT_VARS.forEach(u => list.push(u));
+      UDS_AND_AT_VARS.forEach(u => {
+        if (u.id === 'ATRV') {
+          list.push({
+            ...u,
+            val: `${d.atrv} (${d.volt.toFixed(2)}V Pin 16 Live)`,
+            status: voltState
+          });
+        } else {
+          list.push(u);
+        }
+      });
       return list;
     }
 
@@ -3339,7 +3669,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (!q) return true;
         return v.id.toLowerCase().includes(q) || v.name.toLowerCase().includes(q) || String(v.val).toLowerCase().includes(q);
       });
-      tbody.innerHTML = filtered.map(v => `
+      tbody.innerHTML = filtered.map(v => {
+        const stLower = String(v.status || '').toLowerCase();
+        const badgeCls = (stLower.includes('off') || stLower === 'inactive' || stLower === 'heater off' || stLower === 'residual')
+          ? 'px-2.5 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-bold'
+          : (stLower.includes('resting') || stLower.includes('koeo') || stLower.includes('baro'))
+            ? 'px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold'
+            : (stLower.includes('low battery'))
+              ? 'px-2.5 py-0.5 rounded-full bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] font-bold'
+              : 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold';
+        return `
         <tr class="hover:bg-[#F7F8FA] transition">
           <td class="py-2.5 px-3 font-mono-num font-bold text-[#1473E6] whitespace-nowrap">${v.id}</td>
           <td class="py-2.5 px-3 text-[#5A5F6A] font-medium whitespace-nowrap">${v.cat}</td>
@@ -3347,10 +3686,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <td class="py-2.5 px-3 font-mono-num font-bold text-[#222222]">${v.val}</td>
           <td class="py-2.5 px-3 font-mono-num text-[#6B7280]">${v.raw}</td>
           <td class="py-2.5 px-3 whitespace-nowrap">
-            <span class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold">${v.status}</span>
+            <span class="${badgeCls}">${v.status}</span>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // =========================================================================
@@ -3409,12 +3749,31 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const m = (rawResp || '').match(/(\d+(?:\.\d+)?)\s*V/i);
         if (m) {
           const v = parseFloat(m[1]);
-          next.atrv = `${v.toFixed(1)}V`;
-          if (!next.volt || next.volt < 5) next.volt = v;
+          next.atrv = (next.rpm || 0) < 50 ? `${v.toFixed(1)}V (Pin 16)` : `${v.toFixed(1)}V`;
+          if ((next.rpm || 0) < 50 || !next.volt || next.volt < 5) next.volt = v;
         }
       } else {
         const b = parseElmCanBytes(rawResp);
-        if (b.length === 0) return false;
+        if (b.length === 0) {
+          if (clean === '010C' && /NO\s*DATA|UNABLE\s*TO\s*CONNECT|STOPPED|BUS\s*INIT|ERROR|7F\s*01/i.test(rawResp || '')) {
+            next.rpm = 0;
+            next.spd = 0;
+            next.load = 0;
+            next.absLoad = 0;
+            next.stft = 0;
+            next.secO2Trim = 0;
+            next.o2s1 = 0;
+            next.o2s2 = 0;
+            next.evap = 0;
+            next.timing = 0;
+            next.runtime = 0;
+            next.fuelSys1 = 'Open loop — Engine/ECU Off';
+            const derived = computeDerivedMetrics(next);
+            appState.current = { ...next, ...derived };
+            return true;
+          }
+          return false;
+        }
         const A = b[0] ?? 0, B = b[1] ?? 0, C = b[2] ?? 0, D = b[3] ?? 0;
         switch (clean) {
           case '0101': next.milOn = (A & 0x80) !== 0; next.dtcCount = (A & 0x7F); break;
@@ -3451,6 +3810,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           case '0156': next.secO2Trim = ((A - 128) * 100) / 128; break;
           default: break;
         }
+        if ((next.rpm || 0) >= 50) next.fuelSys1 = 'Closed loop (using O2 sensor)';
       }
       const derived = computeDerivedMetrics(next);
       appState.current = { ...next, ...derived };
@@ -3761,7 +4121,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const samples = await getSessionSamples(targetId);
       if (!samples.length) return;
       appState.paused = true;
-      appState.history = samples.slice(-80).map(s => ({ ...SNAPSHOTS.snap1, ...s, ...computeDerivedMetrics(s) }));
+      appState.history = samples.slice(-80).map(s => ({
+        ...((s.rpm || 0) < 50 ? SNAPSHOTS.parked_off : SNAPSHOTS.snap1),
+        ...s,
+        ...computeDerivedMetrics(s)
+      }));
       appState.current = { ...appState.history[appState.history.length - 1] };
       updateDomMetrics(appState.current);
       renderAllCharts();
@@ -3802,13 +4166,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
         exportFullJsonSnapshot();
         return;
       }
+      const lastSample = samples[samples.length - 1];
+      const baseSnap = (lastSample.rpm || 0) < 50 ? SNAPSHOTS.parked_off : SNAPSHOTS.snap1;
       const payload = {
         exportedAt: new Date().toISOString(),
         sessionId: targetId,
         vin: 'AAVZZZ6RZHU112564',
         readOnlyEnforced: true,
         frameCount: samples.length,
-        latest124Variables: buildCompleteVariableCatalog({ ...SNAPSHOTS.snap1, ...samples[samples.length - 1] }),
+        latest124Variables: buildCompleteVariableCatalog({ ...baseSnap, ...lastSample }),
         samples
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -3883,7 +4249,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           const el = document.getElementById(id);
           if (el) el.textContent = '—';
         });
-        drawMultiLineCanvas('history-inspect-canvas', [{ key: 'rpm', color: '#1473E6', min: 500, max: 6000 }], 0, 100, []);
+        drawMultiLineCanvas('history-inspect-canvas', [{ key: 'rpm', color: '#1473E6', min: 0, max: 6000 }], 0, 100, []);
         return;
       }
 
@@ -3923,7 +4289,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!sessionId) return;
       const samples = await getSessionSamples(sessionId);
       historyInspectSessionId = sessionId;
-      historyInspectSamples = samples.map(s => ({ ...SNAPSHOTS.snap1, ...s, ...computeDerivedMetrics(s) }));
+      historyInspectSamples = samples.map(s => ({
+        ...((s.rpm || 0) < 50 ? SNAPSHOTS.parked_off : SNAPSHOTS.snap1),
+        ...s,
+        ...computeDerivedMetrics(s)
+      }));
 
       const sessions = await getAllStoredSessions();
       const meta = sessions.find(s => s.id === sessionId);
@@ -3943,9 +4313,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
       if (historyInspectSamples.length >= 2) {
         drawMultiLineCanvas('history-inspect-canvas', [
-          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.3 },
+          { key: 'rpm', color: '#1473E6', min: 0, max: 6000, width: 2.3 },
           { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.2 },
-          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 1.8 }
+          { key: 'coolant', color: '#D92B2B', min: 0, max: 115, width: 1.8 }
         ], 0, 100, historyInspectSamples);
       }
       scrubHistoryFrame(Math.max(0, historyInspectSamples.length - 1));
@@ -4809,24 +5179,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // 11. REAL-TIME SIMULATION & ALL-VARIABLE UPDATE LOOP
     // =========================================================================
     setInterval(() => {
-      if (appState.paused || appState.source === 'remote_cloud' || appState.source === 'live_obd') return;
+      if (appState.paused || ['snap1', 'snap2', 'parked_off', 'remote_cloud', 'live_obd'].includes(appState.source)) return;
       appState.t += 0.16;
       const t = appState.t;
 
       let live;
-      if (appState.source === 'snap1' || appState.source === 'snap2') {
-        const base = SNAPSHOTS[appState.source];
-        const o2Wave = 0.22 + (Math.sin(t * 3.2) + 1) * 0.28;
-        const stftWave = base.stft + Math.sin(t * 1.4) * 0.15;
-        live = {
-          ...base,
-          rpm: base.rpm + Math.sin(t * 2.7) * 3.5,
-          stft: stftWave,
-          o2s1: o2Wave,
-          o2s1Trim: stftWave,
-          runtime: base.runtime + Math.floor(t)
-        };
-      } else if (appState.source === 'sim_city') {
+      if (appState.source === 'sim_city') {
         const wave = (Math.sin(t * 0.45) + 1) / 2;
         const gearWave = (Math.sin(t * 0.9) + 1) / 2;
         const spd = Math.max(0, 18 + wave * 56 + Math.sin(t * 0.22) * 8);
@@ -4956,7 +5314,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         updateCloudBadges();
         renderConnectedBtDevicesUi();
 
-        if (srcParam && ['snap1', 'snap2', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
+        if (srcParam && ['snap1', 'snap2', 'parked_off', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
           changeDataSource(srcParam);
         }
         if (tabParam && ['cockpit', 'graphs', 'history', 'infographics', 'passport', 'cloud', 'bluetooth'].includes(tabParam)) {

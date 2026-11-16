@@ -4,10 +4,11 @@
 
 ## Features
 - **Strictly Read-Only Safety Firewall:** Permanently blocks `Mode 04` / `14`, ECU resets, coding, adaptations, and write commands across both Web Bluetooth/Serial JS and [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1).
-- **Smart Auto-Connect Firebase Telemetry & History:**
-  - **Firebase Realtime Database (Default):** Automatically connects whenever internet is available, saves live telemetry (`latest.json`) and timestamped trip logs (`history/<sessionId>/frames.json`), buffers frames offline in IndexedDB `cloudQueue`, and auto-flushes as soon as mobile signal returns.
-  - **Private Endpoint Handling:** Paste your Firebase RTDB URL once in the **Cloud** tab — it saves privately in `localStorage` on your device and is never stored in public GitHub or Google Drive files. On Windows, you can alternatively place a gitignored `bridge/firebase.local.json` file or set `PULSEOBD_FIREBASE_URL`.
-  - **Fallbacks:** Instant `ntfy.sh` HTTPS/SSE, Supabase REST table, or Custom HTTPS Webhook.
+- **Authentic Stopped & Engine-Off Telemetry:** Static captures and stopped/engine-off states stay frozen without fake sine motion and clearly separate active sensors (`ATRV` Pin 16 battery voltage, barometric/resting MAP, fuel tank level, thermal sensors, KOEO pedal, BT/Firebase) from stopped engine subsystems (`0 RPM`, `0 km/h`, `0.00 L/h` fuel flow, alternator off, closed-loop O2 off).
+- **Smart Auto-Connect VIN-Based Firebase Telemetry & History:**
+  - **Firebase Realtime Database (Default):** Automatically connects whenever internet is available, routes live telemetry (`/vehicles/<VIN>/latest.json`) and trip logs (`/vehicles/<VIN>/history/<sessionId>/frames.json`), buffers frames offline in IndexedDB `cloudQueue`, and auto-flushes as soon as signal returns.
+  - **One-Click VIN Endpoint & Private Storage:** Use **Apply VIN Firebase URL** in the **Cloud** tab or paste your Firebase RTDB URL once — it saves privately in `localStorage` and is never stored in public GitHub or Google Drive files. On Windows, click **Download `bridge/firebase.local.json`** or set `PULSEOBD_FIREBASE_URL`.
+  - **Fallbacks:** Instant `ntfy.sh` HTTPS/SSE (`pulseobd-<VIN>`), Supabase REST table, or Custom HTTPS Webhook.
 - **Bluetooth RF Coexistence & Multi-Device Support:** Uses `writeValueWithoutResponse`, cooperative inter-PID gaps (`Coexist` / `Audio Priority`), and a 15-second **Pairing Yield** button so your phone stays connected to car stereo audio (A2DP), hands-free calls (HFP), earbuds, smartwatch, or extra BLE sensors alongside OBD-II.
 - **Synchronized Multi-View Deployment:** Run `./sync_all_views.sh` to validate JS, rebuild offline standalone `PulseOBD_Studio.html` & `index.html`, update Google Drive HTML + PowerShell bridge scripts, and deploy to GitHub Pages.
 
@@ -16,9 +17,9 @@
 # 1. Auto Mode (uses private bridge/firebase.local.json or PULSEOBD_FIREBASE_URL if present, else ntfy.sh)
 .\bridge\start_obd_web_bridge.ps1
 
-# 2. Explicit Firebase Realtime Database Stream (Live + /history/frames)
-.\bridge\start_obd_web_bridge.ps1 -CloudProvider firebase -CloudUrl "https://your-project-default-rtdb.firebaseio.com" -CloudChannel "pulseobd-polo-aavzzz6rzhu112564-7d4e9b"
+# 2. Explicit VIN Firebase Realtime Database Stream (/vehicles/AAVZZZ6RZHU112564/latest.json + /history/)
+.\bridge\start_obd_web_bridge.ps1 -CloudProvider firebase -CloudUrl "https://your-project-default-rtdb.firebaseio.com" -CloudChannel "AAVZZZ6RZHU112564"
 
 # 3. Supabase Table Stream
-.\bridge\start_obd_web_bridge.ps1 -CloudProvider supabase -CloudUrl "https://your-ref.supabase.co" -SupabaseTable "pulseobd_telemetry" -CloudApiKey "<SUPABASE_ANON_KEY>" -CloudChannel "my-polo-stream"
+.\bridge\start_obd_web_bridge.ps1 -CloudProvider supabase -CloudUrl "https://your-ref.supabase.co" -SupabaseTable "pulseobd_telemetry" -CloudApiKey "<SUPABASE_ANON_KEY>" -CloudChannel "AAVZZZ6RZHU112564"
 ```

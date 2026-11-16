@@ -3,7 +3,7 @@ title PulseOBD — VW Polo 1.2 TSI Read-Only Telemetry & Firebase Cloud Bridge
 echo ============================================================================
 echo   PulseOBD — Read-Only OBD-II Telemetry Studio + Firebase Cloud Relay
 echo   Adapter: OBDII (00:10:CC:4F:36:03) on COM3 @ 38400 baud (Strictly Read-Only)
-echo   Channel: pulseobd-polo-aavzzz6rzhu112564-7d4e9b (Auto Firebase / ntfy)
+echo   VIN / Channel: AAVZZZ6RZHU112564 (Firebase /vehicles/^<VIN^> or Auto ntfy)
 echo ============================================================================
 echo.
 echo [1] Opening PulseOBD_Studio.html in your default browser...
