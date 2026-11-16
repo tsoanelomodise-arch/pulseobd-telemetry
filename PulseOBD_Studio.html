@@ -91,11 +91,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
 /*! https://mths.be/cssesc v3.0.0 by @mathias */
 </script>
   <style>
-    html, body {
-      overflow-x: hidden;
+    html {
+      scrollbar-gutter: stable;
+      overflow-x: clip;
       -webkit-tap-highlight-color: transparent;
     }
     body {
+      overflow-x: clip;
       font-family: "Adobe Clean", "Source Sans 3", "Source Sans Pro", "Myriad Pro", "Segoe UI Variable", "Segoe UI", "DejaVu Sans", "Liberation Sans", -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: #FFFFFF;
       color: #222222;
@@ -129,12 +131,40 @@ Check your Browserslist config to be sure that your targets are set up correctly
       background-color: #F7F8FA;
       border: 1px solid #ECEEF2;
     }
+    /* Immutable shortened graph box — identical fixed height on mobile & web */
+    .telemetry-chart-box {
+      position: relative;
+      width: 100%;
+      height: 108px !important;
+      min-height: 108px !important;
+      max-height: 108px !important;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      overflow: hidden;
+      contain: strict;
+    }
+    .telemetry-chart-canvas {
+      display: block;
+      width: 100% !important;
+      height: 94px !important;
+      min-height: 94px !important;
+      max-height: 94px !important;
+    }
+    .telemetry-readout-line {
+      display: block;
+      width: 100%;
+      height: 18px;
+      line-height: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .acro-pill-primary {
       background-color: #222222;
       color: #FFFFFF;
       border-radius: 9999px;
       font-weight: 600;
-      transition: background-color 0.15s ease, transform 0.1s ease;
+      transition: background-color 0.15s ease;
     }
     .acro-pill-primary:hover { background-color: #111111; }
     .acro-pill-secondary {
@@ -158,6 +188,37 @@ Check your Browserslist config to be sure that your targets are set up correctly
       overflow: hidden;
       background-color: #FFFFFF;
     }
+    #app-shell.phone-frame-wrapper {
+      padding-bottom: 0 !important;
+    }
+    #app-shell.phone-frame-wrapper #desktop-nav {
+      display: none !important;
+    }
+    #app-shell.phone-frame-wrapper #mobile-nav {
+      display: block !important;
+      position: sticky !important;
+      bottom: 0 !important;
+    }
+    #app-shell.phone-frame-wrapper #header-actions-bar {
+      width: 100% !important;
+      flex-wrap: wrap !important;
+      justify-content: space-between !important;
+    }
+    #app-shell.phone-frame-wrapper #source-select {
+      flex: 1 1 100% !important;
+      max-width: 100% !important;
+    }
+    #app-shell.phone-frame-wrapper .md\:grid-cols-2,
+    #app-shell.phone-frame-wrapper .md\:grid-cols-3,
+    #app-shell.phone-frame-wrapper .lg\:grid-cols-12,
+    #app-shell.phone-frame-wrapper .lg\:grid-cols-2,
+    #app-shell.phone-frame-wrapper .lg\:grid-cols-3 {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    #app-shell.phone-frame-wrapper .lg\:col-span-7,
+    #app-shell.phone-frame-wrapper .lg\:col-span-5 {
+      grid-column: span 1 / span 1 !important;
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(34, 34, 34, 0.18); border-radius: 9999px; }
@@ -170,11 +231,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
 </head>
 <body class="bg-white text-[#222222] selection:bg-rose-500/15">
 
-  <div id="app-shell" class="flex flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-8 transition-all duration-300 bg-white overflow-x-hidden">
+  <div id="app-shell" class="flex flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-8 bg-white overflow-x-clip">
 
     <!-- Top Minimal Sticky Navigation Bar -->
-    <header class="sticky top-0 z-30 bg-white/88 acro-glass border-b border-[#ECEEF2] px-3 sm:px-6 py-2.5">
-      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
+    <header class="sticky top-0 z-30 bg-white/88 acro-glass border-b border-[#ECEEF2] px-3 sm:px-6 py-2">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-[#D92B2B] flex items-center justify-center text-white shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
@@ -214,7 +275,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </nav>
 
         <!-- Quick Action Pills -->
-        <div class="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
+        <div id="header-actions-bar" class="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
           <select id="source-select" onchange="changeDataSource(this.value)" aria-label="Telemetry Source" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3 py-1.5 font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 flex-1 sm:flex-initial">
             <option value="snap1">16:43 Dump (Warm Idle 98°C)</option>
             <option value="snap2">17:10 Dump (Follow-up 87°C)</option>
@@ -225,7 +286,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <option value="remote_cloud">Remote Cloud Stream (Live Online)</option>
           </select>
 
-          <button id="btn-phone-view" onclick="togglePhoneFrame()" title="Toggle Mobile Phone / Full Web Layout" class="text-xs px-3 py-1.5 acro-pill-secondary hidden sm:flex items-center gap-1.5 whitespace-nowrap">
+          <button id="btn-phone-view" onclick="togglePhoneFrame()" title="Toggle Mobile Phone / Full Web Layout" class="text-xs px-3 py-1.5 acro-pill-secondary hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <svg class="w-3.5 h-3.5 text-[#222222]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <rect x="6" y="2" width="12" height="20" rx="2" />
               <line x1="12" y1="18" x2="12.01" y2="18" />
@@ -269,9 +330,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <rect width="1440" height="310" fill="url(#acro-hero-fade)" />
       </svg>
 
-      <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-7 pb-6 text-center">
+      <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-4 sm:pt-5 sm:pb-5 text-center">
         <!-- Mini Centered Eyebrow Badge (Matching image.png) -->
-        <div class="inline-flex items-center justify-center gap-2 mb-3">
+        <div class="inline-flex items-center justify-center gap-2 mb-2">
           <span class="w-5 h-5 rounded-md bg-[#D92B2B] text-white inline-flex items-center justify-center shadow-sm">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -283,19 +344,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <!-- Crisp Bold Humanist Display Headline -->
-        <h2 class="text-2xl sm:text-[36px] font-bold tracking-[-0.03em] leading-[1.15] text-[#222222]">
+        <h2 class="text-xl sm:text-[34px] font-bold tracking-[-0.03em] leading-[1.15] text-[#222222]">
           Live drive telemetry &amp; cloud health
         </h2>
-        <p class="mt-2 text-xs sm:text-sm text-[#4A4E57] max-w-xl mx-auto leading-relaxed">
+        <p class="mt-1.5 text-xs sm:text-sm text-[#4A4E57] max-w-xl mx-auto leading-relaxed">
           Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and real-time online streaming for your VW Polo 1.2L TSI.
         </p>
 
         <!-- Signature Dual Pill CTAs -->
-        <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-          <button onclick="switchTab('cloud')" class="acro-pill-primary px-5 py-2.5 text-xs sm:text-sm shadow-sm">
+        <div class="mt-3.5 flex flex-wrap items-center justify-center gap-2.5">
+          <button onclick="switchTab('cloud')" class="acro-pill-primary px-5 py-2 text-xs sm:text-sm shadow-sm">
             Open Cloud Stream
           </button>
-          <button id="hero-sim-btn" onclick="toggleHeroDriveSim()" class="acro-pill-secondary px-5 py-2.5 text-xs sm:text-sm">
+          <button id="hero-sim-btn" onclick="toggleHeroDriveSim()" class="acro-pill-secondary px-5 py-2 text-xs sm:text-sm">
             Simulate Live Drive
           </button>
         </div>
@@ -303,7 +364,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     </section>
 
     <!-- Main Pure White Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 space-y-5 bg-white">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4 bg-white">
 
       <!-- =================================================================== -->
       <!-- TAB 1: COCKPIT (LIVE DRIVE VIEW)                                    -->
@@ -312,125 +373,121 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- Smart Notification Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="acro-card rounded-2xl p-3.5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-[#FFF4ED] border border-[#FED7AA] text-[#C2410C] flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div class="acro-card rounded-2xl p-3 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#FFF4ED] border border-[#FED7AA] text-[#C2410C] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-[#B45309]">Low Fuel Reserve (012F)</span>
-                <span id="adv-fuel-val" class="text-xs font-bold font-mono-num text-[#B45309]">8.2% (~3.7 L / 36 km)</span>
+                <span class="text-xs font-bold text-[#B45309] truncate">Low Fuel (012F)</span>
+                <span id="adv-fuel-val" class="text-xs font-bold font-mono-num text-[#B45309] whitespace-nowrap shrink-0">8.2% (~3.7 L / 36 km)</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Dropped 8.2% → 6.3% across idle · Est. burn <span id="adv-fuel-rate" class="font-mono-num font-semibold text-[#222222]">0.62 L/h</span></p>
+              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Dropped 8.2% → 6.3% · Est. burn <span id="adv-fuel-rate" class="font-mono-num font-semibold text-[#222222]">0.62 L/h</span></p>
             </div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3.5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div class="acro-card rounded-2xl p-3 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-[#047857]">Engine &amp; ECU Healthy</span>
-                <span class="text-xs font-bold font-mono-num text-[#047857]">0 DTCs · MIL OFF</span>
+                <span class="text-xs font-bold text-[#047857] truncate">Engine &amp; ECU Healthy</span>
+                <span class="text-xs font-bold font-mono-num text-[#047857] whitespace-nowrap shrink-0">0 DTCs · MIL OFF</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Modes 03/07/0A clean · 18/18 Mode 06 tests pass · 65,535+ km</p>
+              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Modes 03/07/0A clean · 18/18 Mode 06 pass</p>
             </div>
           </div>
 
-          <div onclick="switchTab('cloud')" class="cursor-pointer acro-card hover:border-[#1473E6]/40 rounded-2xl p-3.5 flex items-center gap-3 transition">
-            <div class="w-10 h-10 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <div onclick="switchTab('cloud')" class="cursor-pointer acro-card hover:border-[#1473E6]/40 rounded-2xl p-3 flex items-center gap-3 transition">
+            <div class="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-[#1473E6]">Online Remote Telemetry</span>
-                <span id="adv-cloud-state" class="text-xs font-bold font-mono-num text-[#1473E6]">Tap to Stream</span>
+                <span class="text-xs font-bold text-[#1473E6] truncate">Online Telemetry</span>
+                <span id="adv-cloud-state" class="text-xs font-bold font-mono-num text-[#1473E6] whitespace-nowrap shrink-0">Tap to Stream</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Broadcast live from car or watch anywhere · <span id="adv-cat-temp" class="font-mono-num font-semibold text-[#222222]">Cat 270.6°C</span></p>
+              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Broadcast live or watch remotely · <span id="adv-cat-temp" class="font-mono-num font-semibold text-[#222222]">Cat 270.6°C</span></p>
             </div>
           </div>
         </div>
 
         <!-- Primary Dual Radial Instrument Cluster + 4 Detail Tiles -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
 
           <!-- Left + Right Radial Clusters (7 cols) -->
-          <div class="lg:col-span-7 acro-card rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Live Instrument Cluster</span>
-                <span id="loop-pill" class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Closed Loop (O2)</span>
+          <div class="lg:col-span-7 acro-card rounded-3xl p-4 sm:p-5 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2 mb-2 min-w-0">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A] truncate">Instrument Cluster</span>
+                <span id="loop-pill" class="text-xs px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold whitespace-nowrap shrink-0">Closed Loop</span>
               </div>
-              <span id="runtime-badge" class="text-xs font-mono-num text-[#5A5F6A] font-medium">Run Time (011F): 00:19:24 (1,164s)</span>
+              <span id="runtime-badge" class="text-xs font-mono-num text-[#5A5F6A] font-medium whitespace-nowrap truncate">Run: 00:19:24 (1164s)</span>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 items-center my-2">
+            <div class="grid grid-cols-2 gap-3 items-center my-1.5">
               <!-- TACHOMETER (010C) -->
-              <div class="relative flex flex-col items-center">
-                <svg class="w-40 h-40 sm:w-48 sm:h-48 -rotate-90" viewBox="0 0 120 120">
+              <div class="relative flex flex-col items-center min-w-0">
+                <svg class="w-36 h-36 sm:w-44 sm:h-44 -rotate-90" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#ECEEF3" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#D92B2B" stroke-width="9" class="opacity-25" stroke-dasharray="36 314.2" stroke-dashoffset="-199.6" stroke-linecap="round" />
                   <circle id="cockpit-rpm-arc" cx="60" cy="60" r="50" fill="none" stroke="#1473E6" stroke-width="9" stroke-linecap="round" class="gauge-arc" stroke-dasharray="235.6 314.2" stroke-dashoffset="208" />
                 </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Tachometer</span>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#5A5F6A]">Tachometer</span>
                   <span id="cockpit-rpm" class="text-3xl sm:text-4xl font-bold tabular tracking-[-0.03em] text-[#222222] my-0.5">774</span>
                   <div class="flex items-center gap-1.5">
                     <span class="text-xs text-[#5A5F6A] font-semibold">RPM</span>
                     <span id="cockpit-gear" class="text-xs px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold font-mono-num">N</span>
                   </div>
                 </div>
-                <div class="mt-1 flex flex-wrap justify-center items-center gap-2 text-xs text-[#5A5F6A] tabular">
-                  <span>Calc Load: <strong id="cockpit-load" class="text-[#222222]">16.5%</strong></span>
-                  <span>Abs: <strong id="cockpit-abs-load" class="text-[#222222]">16.1%</strong></span>
-                  <span>Adv: <strong id="cockpit-timing" class="text-[#222222]">-3.0°</strong></span>
+                <div class="mt-1 telemetry-readout-line text-center text-xs text-[#5A5F6A] tabular">
+                  Load <strong id="cockpit-load" class="text-[#222222]">16.5%</strong> · Abs <strong id="cockpit-abs-load" class="text-[#222222]">16.1%</strong> · <strong id="cockpit-timing" class="text-[#222222]">-3.0°</strong>
                 </div>
               </div>
 
               <!-- SPEEDOMETER (010D) -->
-              <div class="relative flex flex-col items-center">
-                <svg class="w-40 h-40 sm:w-48 sm:h-48 -rotate-90" viewBox="0 0 120 120">
+              <div class="relative flex flex-col items-center min-w-0">
+                <svg class="w-36 h-36 sm:w-44 sm:h-44 -rotate-90" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#ECEEF3" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
                   <circle id="cockpit-spd-arc" cx="60" cy="60" r="50" fill="none" stroke="#10B981" stroke-width="9" stroke-linecap="round" class="gauge-arc" stroke-dasharray="235.6 314.2" stroke-dashoffset="235.6" />
                 </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Speed</span>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#5A5F6A]">Speed</span>
                   <span id="cockpit-spd" class="text-3xl sm:text-4xl font-bold tabular tracking-[-0.03em] text-[#222222] my-0.5">0</span>
                   <span class="text-xs text-[#5A5F6A] font-semibold">km/h</span>
                 </div>
-                <div class="mt-1 flex flex-wrap justify-center items-center gap-2 text-xs text-[#5A5F6A] tabular">
-                  <span>Pedal D/E: <strong id="cockpit-pedal" class="text-[#222222]">14.9%</strong></span>
-                  <span>Thr A/B: <strong id="cockpit-thr" class="text-[#222222]">13.3%</strong></span>
-                  <span>Rel/Act: <strong id="cockpit-rel-thr" class="text-[#222222]">3.5%/3.9%</strong></span>
+                <div class="mt-1 telemetry-readout-line text-center text-xs text-[#5A5F6A] tabular">
+                  Pedal <strong id="cockpit-pedal" class="text-[#222222]">14.9%</strong> · Thr <strong id="cockpit-thr" class="text-[#222222]">13.3%</strong> · <strong id="cockpit-rel-thr" class="text-[#222222]">3.5%/3.9%</strong>
                 </div>
               </div>
             </div>
 
             <!-- Bottom Sub-Bar: TSI Induction & Direct Injection Live Bars -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3.5 border-t border-[#ECEEF2]">
-              <div>
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-[#5A5F6A] font-medium">Intake MAP (<span class="font-mono-num">010B</span>) vs Baro (<span class="font-mono-num">83 kPa</span>)</span>
-                  <span id="cockpit-map-label" class="font-bold font-mono-num text-[#1473E6]">27 kPa (-0.56 bar vac)</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#ECEEF2]">
+              <div class="min-w-0">
+                <div class="flex items-center justify-between gap-2 text-xs mb-1">
+                  <span class="text-[#5A5F6A] font-medium truncate">MAP (<span class="font-mono-num">010B</span>) / 83 kPa</span>
+                  <span id="cockpit-map-label" class="font-bold font-mono-num text-[#1473E6] whitespace-nowrap shrink-0">27 kPa (-0.56 bar)</span>
                 </div>
-                <div class="w-full h-2.5 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE]">
-                  <div id="cockpit-map-bar" class="h-full bg-gradient-to-r from-[#FF7CA3] via-[#6366F1] to-[#1473E6] transition-all duration-200" style="width: 15%"></div>
+                <div class="w-full h-2 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE]">
+                  <div id="cockpit-map-bar" class="h-full bg-gradient-to-r from-[#FF7CA3] via-[#6366F1] to-[#1473E6]" style="width: 15%"></div>
                 </div>
               </div>
-              <div>
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                  <span class="text-[#5A5F6A] font-medium">TSI High-Pressure Fuel Rail (<span class="font-mono-num">0123</span>)</span>
-                  <span id="cockpit-rail-label" class="font-bold font-mono-num text-[#4F46E5]">12.04 MPa (120.4 bar)</span>
+              <div class="min-w-0">
+                <div class="flex items-center justify-between gap-2 text-xs mb-1">
+                  <span class="text-[#5A5F6A] font-medium truncate">TSI Fuel Rail (<span class="font-mono-num">0123</span>)</span>
+                  <span id="cockpit-rail-label" class="font-bold font-mono-num text-[#4F46E5] whitespace-nowrap shrink-0">12.04 MPa (120 bar)</span>
                 </div>
-                <div class="w-full h-2.5 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE]">
-                  <div id="cockpit-rail-bar" class="h-full bg-gradient-to-r from-[#6366F1] to-[#F25F3A] transition-all duration-200" style="width: 60%"></div>
+                <div class="w-full h-2 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE]">
+                  <div id="cockpit-rail-bar" class="h-full bg-gradient-to-r from-[#6366F1] to-[#F25F3A]" style="width: 60%"></div>
                 </div>
               </div>
             </div>
@@ -440,150 +497,152 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <div class="lg:col-span-5 grid grid-cols-2 gap-3">
 
             <!-- Thermal Profile Card -->
-            <div class="acro-card rounded-3xl p-4 flex flex-col justify-between">
-              <div class="flex items-center justify-between">
+            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+              <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#F25F3A] uppercase tracking-wider">Thermal</span>
-                <span class="text-xs font-mono-num text-[#6B7280]">0105·0F·3C·46</span>
+                <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0105·0F·3C</span>
               </div>
-              <div class="my-2">
+              <div class="my-1.5">
                 <div class="flex items-baseline gap-1.5">
                   <span id="tile-coolant" class="text-2xl font-bold tabular text-[#222222]">98°C</span>
                   <span class="text-xs text-[#5A5F6A] font-medium">Coolant</span>
                 </div>
-                <div class="mt-2 space-y-1.5 text-xs">
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Intake Air (010F)</span>
-                    <span id="tile-iat" class="font-semibold tabular text-[#C2410C]">69°C (+36° soak)</span>
+                <div class="mt-1.5 space-y-1 text-xs">
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Intake (010F)</span>
+                    <span id="tile-iat" class="font-semibold tabular text-[#C2410C] whitespace-nowrap shrink-0">69°C (+36°)</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Catalyst B1S1 (013C)</span>
-                    <span id="tile-cat" class="font-semibold tabular text-[#222222]">270.6°C</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Catalyst (013C)</span>
+                    <span id="tile-cat" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">270.6°C</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Ambient Air (0146)</span>
-                    <span id="tile-amb" class="font-semibold tabular text-[#222222]">33°C</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Ambient (0146)</span>
+                    <span id="tile-amb" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">33°C</span>
                   </div>
                 </div>
               </div>
-              <div class="text-xs text-[#6B7280] border-t border-[#ECEEF2] pt-2">
-                Normal VW 1.2 TSI idle target: 90–102°C
+              <div class="text-[11px] text-[#6B7280] border-t border-[#ECEEF2] pt-1.5 truncate">
+                Target idle: 90–102°C
               </div>
             </div>
 
             <!-- Fuel Trim & Mixture Card -->
-            <div class="acro-card rounded-3xl p-4 flex flex-col justify-between">
-              <div class="flex items-center justify-between">
+            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+              <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#047857] uppercase tracking-wider">Fuel &amp; O2</span>
-                <span class="text-xs font-mono-num text-[#6B7280]">0106·07·14·15·44·56</span>
+                <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0106·07·14</span>
               </div>
-              <div class="my-2">
+              <div class="my-1.5">
                 <div class="flex items-baseline gap-1.5">
                   <span id="tile-stft" class="text-2xl font-bold tabular text-[#047857]">+2.34%</span>
                   <span class="text-xs text-[#5A5F6A] font-medium">STFT</span>
                 </div>
-                <div class="mt-2 space-y-1 text-xs">
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">LTFT (0107) / Sec (0156)</span>
-                    <span id="tile-ltft" class="font-semibold tabular text-[#222222]">+1.56% / -0.78%</span>
+                <div class="mt-1.5 space-y-1 text-xs">
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">LTFT / Sec</span>
+                    <span id="tile-ltft" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">+1.56% / -0.78%</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Commanded λ (0144)</span>
-                    <span id="tile-lambda" class="font-semibold tabular text-[#222222]">1.0000</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Lambda (0144)</span>
+                    <span id="tile-lambda" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">1.0000</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">O2 B1S1 / B1S2 (0114/15)</span>
-                    <span id="tile-o2" class="font-semibold tabular text-[#222222]">0.22V / 0.77V</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">O2 S1 / S2</span>
+                    <span id="tile-o2" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">0.22V / 0.77V</span>
                   </div>
                 </div>
               </div>
-              <div class="text-xs text-[#5A5F6A] border-t border-[#ECEEF2] pt-2">
-                Combined Trim: <strong id="tile-total-trim" class="text-[#047857] font-mono-num">+3.90%</strong>
+              <div class="text-[11px] text-[#5A5F6A] border-t border-[#ECEEF2] pt-1.5 truncate">
+                Total Trim: <strong id="tile-total-trim" class="text-[#047857] font-mono-num">+3.90%</strong>
               </div>
             </div>
 
             <!-- Fuel Tank, EVAP & Derived Flow Card -->
-            <div class="acro-card rounded-3xl p-4 flex flex-col justify-between">
-              <div class="flex items-center justify-between">
+            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+              <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#B45309] uppercase tracking-wider">Fuel &amp; Flow</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-bold">RESERVE</span>
+                <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-bold shrink-0">RESERVE</span>
               </div>
-              <div class="my-2">
+              <div class="my-1.5">
                 <div class="flex items-baseline gap-1.5">
                   <span id="tile-fuel" class="text-2xl font-bold tabular text-[#D97706]">8.2%</span>
-                  <span id="tile-fuel-liters" class="text-xs text-[#5A5F6A] font-medium">~3.7 L left</span>
+                  <span id="tile-fuel-liters" class="text-xs text-[#5A5F6A] font-medium whitespace-nowrap">~3.7 L left</span>
                 </div>
-                <div class="w-full h-2 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE] my-2">
-                  <div id="tile-fuel-bar" class="h-full bg-[#F59E0B] transition-all duration-300" style="width: 8.2%"></div>
+                <div class="w-full h-1.5 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE] my-1.5">
+                  <div id="tile-fuel-bar" class="h-full bg-[#F59E0B]" style="width: 8.2%"></div>
                 </div>
                 <div class="space-y-1 text-xs">
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Est. Flow / Economy</span>
-                    <span id="tile-flow" class="font-semibold tabular text-[#1473E6]">0.62 L/h (Idle)</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Est. Flow</span>
+                    <span id="tile-flow" class="font-semibold tabular text-[#1473E6] whitespace-nowrap truncate">0.62 L/h</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">EVAP Purge (012E)</span>
-                    <span id="tile-evap" class="font-semibold tabular text-[#222222]">2.4%</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">EVAP (012E)</span>
+                    <span id="tile-evap" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">2.4%</span>
                   </div>
                 </div>
               </div>
-              <div class="text-xs text-[#B45309] font-medium border-t border-[#ECEEF2] pt-2">
-                Fuel Type (0151): Petrol · 45L Tank
+              <div class="text-[11px] text-[#B45309] font-medium border-t border-[#ECEEF2] pt-1.5 truncate">
+                Petrol · 45L Tank (0151)
               </div>
             </div>
 
             <!-- Electrical, Altitude & Distance Card -->
-            <div class="acro-card rounded-3xl p-4 flex flex-col justify-between">
-              <div class="flex items-center justify-between">
+            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+              <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#1473E6] uppercase tracking-wider">Electrical</span>
-                <span class="text-xs font-mono-num text-[#6B7280]">0142 · ATRV</span>
+                <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0142 · ATRV</span>
               </div>
-              <div class="my-2">
+              <div class="my-1.5">
                 <div class="flex items-baseline gap-1.5">
                   <span id="tile-volt" class="text-2xl font-bold tabular text-[#222222]">13.74V</span>
                   <span class="text-xs text-[#047857] font-bold">Charging</span>
                 </div>
-                <div class="mt-2 space-y-1 text-xs">
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">ELM327 Pin 16 (ATRV)</span>
-                    <span id="tile-atrv" class="font-semibold tabular text-[#222222]">13.8V → 13.9V</span>
+                <div class="mt-1.5 space-y-1 text-xs">
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Pin 16 (ATRV)</span>
+                    <span id="tile-atrv" class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">13.8V → 13.9V</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Barometric (0133)</span>
-                    <span class="font-semibold tabular text-[#222222]">83 kPa (~1,680m)</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Baro (0133)</span>
+                    <span class="font-semibold tabular text-[#222222] whitespace-nowrap shrink-0">83 kPa (~1680m)</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-[#5A5F6A]">Clear Dist (0131) / MIL (0121)</span>
-                    <span class="font-semibold font-mono-num text-[#222222]">65,535 / 0 km</span>
+                  <div class="flex justify-between gap-1">
+                    <span class="text-[#5A5F6A] truncate">Clear / MIL</span>
+                    <span class="font-semibold font-mono-num text-[#222222] whitespace-nowrap shrink-0">65,535 / 0 km</span>
                   </div>
                 </div>
               </div>
-              <div class="text-xs text-[#5A5F6A] border-t border-[#ECEEF2] pt-2">
-                Warm-ups since clear (0130): <strong class="text-[#222222]">255+</strong>
+              <div class="text-[11px] text-[#5A5F6A] border-t border-[#ECEEF2] pt-1.5 truncate">
+                Warm-ups (0130): <strong class="text-[#222222]">255+</strong>
               </div>
             </div>
 
           </div>
         </div>
 
-        <!-- Live Cockpit Multi-Trace Strip -->
-        <div class="acro-card rounded-3xl p-4 sm:p-5">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-sm font-bold text-[#222222]">Real-Time Drive Telemetry Stream</h2>
-                <span id="cockpit-stream-readout" class="text-xs font-mono-num px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#222222] font-semibold">774 RPM · 0 km/h · 270.6°C</span>
+        <!-- Live Cockpit Multi-Trace Strip (Fixed Shortened Height) -->
+        <div class="acro-card rounded-2xl p-3 sm:p-3.5">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 min-w-0">
+                <h2 class="text-sm font-bold text-[#222222] shrink-0">Real-Time Drive Telemetry Stream</h2>
+                <span id="cockpit-stream-readout" class="text-xs font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#222222] font-semibold whitespace-nowrap truncate">774 RPM · 0 km/h · 270.6°C</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] mt-0.5">Smooth synchronized trace: Engine RPM (<span class="text-[#1473E6] font-semibold">Cobalt</span>), Vehicle Speed (<span class="text-[#059669] font-semibold">Emerald</span>), and Catalyst Temp (<span class="text-[#F25F3A] font-semibold">Coral</span>)</p>
+              <p class="telemetry-readout-line text-xs text-[#5A5F6A] mt-0.5">
+                RPM (<span class="text-[#1473E6] font-semibold">Cobalt</span>) · Speed (<span class="text-[#059669] font-semibold">Emerald</span>) · Catalyst (<span class="text-[#F25F3A] font-semibold">Coral</span>)
+              </p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <button onclick="togglePauseStream()" id="btn-pause-stream" class="text-xs px-3 py-1.5 acro-pill-secondary">Pause Stream</button>
-              <button onclick="switchTab('history')" class="text-xs px-3 py-1.5 acro-pill-secondary">Drive History</button>
-              <button onclick="switchTab('graphs')" class="text-xs px-3.5 py-1.5 acro-pill-secondary">6-Channel Analyzer →</button>
-              <button onclick="switchTab('cloud')" class="text-xs px-3.5 py-1.5 acro-pill-primary">Cloud Stream →</button>
+            <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+              <button onclick="togglePauseStream()" id="btn-pause-stream" class="text-xs px-2.5 py-1 acro-pill-secondary whitespace-nowrap">Pause</button>
+              <button onclick="switchTab('history')" class="text-xs px-2.5 py-1 acro-pill-secondary whitespace-nowrap">History</button>
+              <button onclick="switchTab('graphs')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">6 Graphs →</button>
+              <button onclick="switchTab('cloud')" class="text-xs px-3 py-1 acro-pill-primary whitespace-nowrap">Cloud →</button>
             </div>
           </div>
-          <div class="acro-well rounded-2xl p-2.5 sm:p-3 overflow-hidden">
-            <canvas id="cockpit-stream-canvas" height="145" style="height: 145px; width: 100%;" class="w-full block"></canvas>
+          <div class="acro-well rounded-xl telemetry-chart-box">
+            <canvas id="cockpit-stream-canvas" height="94" class="telemetry-chart-canvas"></canvas>
           </div>
         </div>
 
@@ -592,90 +651,90 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- =================================================================== -->
       <!-- TAB 2: 6 SYNCHRONIZED LIVE TELEMETRY GRAPHS                         -->
       <!-- =================================================================== -->
-      <section id="tab-graphs" class="hidden space-y-4">
-        <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs (All Dynamic Variables)</h2>
-            <p class="text-xs text-[#5A5F6A]">Every dynamic Mode 01 sensor group plotted in real time with full-variable CSV export</p>
+      <section id="tab-graphs" class="hidden space-y-3">
+        <div class="acro-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
+          <div class="min-w-0">
+            <h2 class="text-sm sm:text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs</h2>
+            <p class="text-xs text-[#5A5F6A]">Compact fixed-size dynamic Mode 01 charts with full-variable CSV export</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="changeDataSource('snap1')" class="text-xs px-3.5 py-1.5 acro-pill-secondary">16:43 Warm Idle</button>
-            <button onclick="changeDataSource('snap2')" class="text-xs px-3.5 py-1.5 acro-pill-secondary">17:10 Follow-up</button>
-            <button onclick="changeDataSource('sim_city')" class="text-xs px-3.5 py-1.5 rounded-full bg-[#EFF6FF] text-[#1473E6] border border-[#BFDBFE] font-semibold hover:bg-[#DBEAFE] transition">Simulate Urban Drive</button>
-            <button onclick="changeDataSource('sim_highway')" class="text-xs px-3.5 py-1.5 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] font-semibold hover:bg-[#D1FAE5] transition">Simulate Highway Cruise</button>
-            <button onclick="changeDataSource('sim_boost')" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8] font-semibold hover:bg-[#FCE7F3] transition">Simulate TSI Boost Pull</button>
-            <button onclick="exportTelemetryCsv()" class="text-xs px-4 py-1.5 acro-pill-primary flex items-center gap-1.5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button onclick="changeDataSource('snap1')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">16:43 Idle</button>
+            <button onclick="changeDataSource('snap2')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">17:10 Idle</button>
+            <button onclick="changeDataSource('sim_city')" class="text-xs px-3 py-1 rounded-full bg-[#EFF6FF] text-[#1473E6] border border-[#BFDBFE] font-semibold hover:bg-[#DBEAFE] transition whitespace-nowrap">Urban Sim</button>
+            <button onclick="changeDataSource('sim_highway')" class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] font-semibold hover:bg-[#D1FAE5] transition whitespace-nowrap">Highway Sim</button>
+            <button onclick="changeDataSource('sim_boost')" class="text-xs px-3 py-1 rounded-full bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8] font-semibold hover:bg-[#FCE7F3] transition whitespace-nowrap">TSI Boost Sim</button>
+            <button onclick="exportTelemetryCsv()" class="text-xs px-3.5 py-1 acro-pill-primary flex items-center gap-1 shadow-sm whitespace-nowrap">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              Export All Variables CSV
+              Export CSV
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">1. Engine RPM, Speed, Calc Load &amp; Abs Load</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">010C</span> (RPM) · <span class="font-mono-num">010D</span> (km/h) · <span class="font-mono-num">0104</span> (Calc %) · <span class="font-mono-num">0143</span> (Abs %)</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">1. Engine RPM, Speed &amp; Loads</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">010C·0D·04·43</span>
               </div>
-              <span id="g1-readout" class="font-mono-num text-xs text-[#1473E6] font-bold text-right">774 RPM · 0 km/h · 16.5%</span>
+              <span id="g1-readout" class="telemetry-readout-line font-mono-num text-xs text-[#1473E6] font-bold">774 RPM · 0 km/h · Calc 16.5% · Abs 16.1%</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-dynamics" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-dynamics" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">2. Thermal: Coolant, IAT, Ambient &amp; Catalyst B1S1</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">0105</span> (Coolant) · <span class="font-mono-num">010F</span> (IAT) · <span class="font-mono-num">0146</span> (Amb) · <span class="font-mono-num">013C</span> (Cat)</p>
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">2. Thermal: Coolant, IAT, Ambient &amp; Catalyst</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0105·0F·46·3C</span>
               </div>
-              <span id="g2-readout" class="font-mono-num text-xs text-[#C2410C] font-bold text-right">98°C · IAT 69°C · Cat 270.6°C</span>
+              <span id="g2-readout" class="telemetry-readout-line font-mono-num text-xs text-[#C2410C] font-bold">Cool 98°C · IAT 69°C · Amb 33°C · Cat 271°C</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-thermal" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-thermal" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">3. Fuel Trims (STFT/LTFT/Sec) &amp; O2 Voltages</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">0106</span> · <span class="font-mono-num">0107</span> · <span class="font-mono-num">0156</span> · <span class="font-mono-num">0114</span> (B1S1) · <span class="font-mono-num">0115</span> (B1S2)</p>
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">3. Fuel Trims (STFT/LTFT/Sec) &amp; O2</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0106·07·56·14·15</span>
               </div>
-              <span id="g3-readout" class="font-mono-num text-xs text-[#047857] font-bold text-right">STFT +2.34% · LTFT +1.56%</span>
+              <span id="g3-readout" class="telemetry-readout-line font-mono-num text-xs text-[#047857] font-bold">STFT +2.34% · LTFT +1.56% · Sec -0.78%</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-trims" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-trims" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">4. TSI Fuel Rail, Intake MAP &amp; Timing Advance</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">0123</span> (MPa) · <span class="font-mono-num">010B</span> (MAP kPa) · <span class="font-mono-num">010E</span> (Timing °)</p>
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">4. TSI Fuel Rail, Intake MAP &amp; Timing</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0123·0B·0E</span>
               </div>
-              <span id="g4-readout" class="font-mono-num text-xs text-[#4F46E5] font-bold text-right">12.04 MPa · 27 kPa · -3.0°</span>
+              <span id="g4-readout" class="telemetry-readout-line font-mono-num text-xs text-[#4F46E5] font-bold">Rail 12.04 MPa · MAP 27 kPa · Adv -3.0°</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-boost" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-boost" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">5. Throttle &amp; Pedal 6-Sensor Track Correlation</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">0111</span> (Thr A) · <span class="font-mono-num">0147</span> (Thr B) · <span class="font-mono-num">0145</span> (Rel) · <span class="font-mono-num">014C</span> (Act) · <span class="font-mono-num">0149/4A</span> (Pedal D/E)</p>
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">5. Throttle &amp; Pedal 6-Sensor Correlation</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0111·45·47·49·4C</span>
               </div>
-              <span id="g5-readout" class="font-mono-num text-xs text-[#1473E6] font-bold text-right">Pedal 14.9% · Thr 13.3% · Act 3.9%</span>
+              <span id="g5-readout" class="telemetry-readout-line font-mono-num text-xs text-[#1473E6] font-bold">Pedal D/E 14.9% · Thr A/B 13.3% · Rel 3.5% · Act 3.9%</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-throttle" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-throttle" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-4 sm:p-5">
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div>
-                <h3 class="text-sm font-bold text-[#222222]">6. ECU Voltage, Fuel Tank, EVAP Purge &amp; Fuel Flow</h3>
-                <p class="text-xs text-[#5A5F6A]">PIDs <span class="font-mono-num">0142</span> (ECU V) · <span class="font-mono-num">012F</span> (Fuel %) · <span class="font-mono-num">012E</span> (EVAP %) · Derived <span class="font-mono-num">L/h</span></p>
+          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+            <div class="mb-1.5 min-w-0">
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">6. ECU Voltage, Fuel Tank, EVAP &amp; Flow</h3>
+                <span class="text-[11px] font-mono-num text-[#6B7280] shrink-0">0142·2F·2E·L/h</span>
               </div>
-              <span id="g6-readout" class="font-mono-num text-xs text-[#047857] font-bold text-right">13.74V · Fuel 8.2% · EVAP 2.4%</span>
+              <span id="g6-readout" class="telemetry-readout-line font-mono-num text-xs text-[#047857] font-bold">13.74V · Fuel 8.2% · EVAP 2.4% · 0.62 L/h</span>
             </div>
-            <div class="acro-well rounded-2xl p-2"><canvas id="chart-aux" height="165" class="w-full block"></canvas></div>
+            <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-aux" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
         </div>
       </section>
@@ -721,7 +780,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- 2-Column Layout: Saved Sessions List + Trip Timeline Inspector -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 flex flex-col">
+          <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 flex flex-col min-w-0">
             <div class="flex items-center justify-between gap-2 mb-3">
               <h3 class="text-sm font-bold text-[#222222]">Recorded Drive Sessions</h3>
               <button onclick="refreshHistoryTab()" class="text-xs px-2.5 py-1 acro-pill-secondary">Refresh</button>
@@ -731,43 +790,43 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="lg:col-span-7 acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="lg:col-span-7 acro-card rounded-2xl p-3 sm:p-4 space-y-2.5 min-w-0">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 id="hist-inspect-title" class="text-sm font-bold text-[#222222]">Trip Timeline Inspector</h3>
-                <p id="hist-inspect-meta" class="text-xs text-[#5A5F6A]">Select a drive session to inspect RPM (Cobalt), Speed (Emerald), and Coolant (Red).</p>
+              <div class="min-w-0">
+                <h3 id="hist-inspect-title" class="text-sm font-bold text-[#222222] truncate">Trip Timeline Inspector</h3>
+                <p id="hist-inspect-meta" class="text-xs text-[#5A5F6A] truncate">Select a drive session to inspect RPM (Cobalt), Speed (Emerald), and Coolant (Red).</p>
               </div>
-              <button onclick="replayInspectedDriveInCockpit()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Load into Cockpit &amp; 6 Graphs</button>
+              <button onclick="replayInspectedDriveInCockpit()" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap shrink-0">Load into Cockpit →</button>
             </div>
 
-            <div class="acro-well rounded-2xl p-2.5 overflow-hidden">
-              <canvas id="history-inspect-canvas" height="165" style="height: 165px; width: 100%;" class="w-full block"></canvas>
+            <div class="acro-well rounded-xl telemetry-chart-box">
+              <canvas id="history-inspect-canvas" height="94" class="telemetry-chart-canvas"></canvas>
             </div>
 
             <div class="acro-well rounded-2xl p-3 space-y-2">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-[#222222]">Frame Scrubber</span>
-                <span id="hist-scrubber-label" class="font-mono-num text-[#5A5F6A]">Frame 0 / 0</span>
+                <span id="hist-scrubber-label" class="font-mono-num text-[#5A5F6A] truncate">Frame 0 / 0</span>
               </div>
               <input id="hist-scrubber" type="range" min="0" max="0" value="0" oninput="scrubHistoryFrame(this.value)" class="w-full accent-[#222222] cursor-pointer" />
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-              <div class="acro-well rounded-xl p-2.5">
+              <div class="acro-well rounded-xl p-2.5 min-w-0">
                 <span class="text-[#5A5F6A] block">RPM / Speed</span>
-                <strong id="hscr-rpm-spd" class="font-mono-num text-sm font-bold text-[#222222]">—</strong>
+                <strong id="hscr-rpm-spd" class="font-mono-num text-sm font-bold text-[#222222] truncate block">—</strong>
               </div>
-              <div class="acro-well rounded-xl p-2.5">
+              <div class="acro-well rounded-xl p-2.5 min-w-0">
                 <span class="text-[#5A5F6A] block">Coolant / Cat</span>
-                <strong id="hscr-temp" class="font-mono-num text-sm font-bold text-[#D92B2B]">—</strong>
+                <strong id="hscr-temp" class="font-mono-num text-sm font-bold text-[#D92B2B] truncate block">—</strong>
               </div>
-              <div class="acro-well rounded-xl p-2.5">
+              <div class="acro-well rounded-xl p-2.5 min-w-0">
                 <span class="text-[#5A5F6A] block">MAP / Rail</span>
-                <strong id="hscr-boost" class="font-mono-num text-sm font-bold text-[#1473E6]">—</strong>
+                <strong id="hscr-boost" class="font-mono-num text-sm font-bold text-[#1473E6] truncate block">—</strong>
               </div>
-              <div class="acro-well rounded-xl p-2.5">
+              <div class="acro-well rounded-xl p-2.5 min-w-0">
                 <span class="text-[#5A5F6A] block">STFT / Volts</span>
-                <strong id="hscr-trim" class="font-mono-num text-sm font-bold text-[#047857]">—</strong>
+                <strong id="hscr-trim" class="font-mono-num text-sm font-bold text-[#047857] truncate block">—</strong>
               </div>
             </div>
           </div>
@@ -2167,7 +2226,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // =========================================================================
     function switchTab(tabId) {
       appState.activeTab = tabId;
-      ['cockpit', 'graphs', 'infographics', 'passport', 'cloud', 'bluetooth'].forEach(id => {
+      ['cockpit', 'graphs', 'history', 'infographics', 'passport', 'cloud', 'bluetooth'].forEach(id => {
         const sec = document.getElementById('tab-' + id);
         if (sec) sec.classList.toggle('hidden', id !== tabId);
 
@@ -2180,12 +2239,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const mbtn = document.getElementById('mtab-' + id);
         if (mbtn) {
           mbtn.className = (id === tabId)
-            ? 'flex flex-col items-center py-1 rounded-xl text-[#222222] font-bold text-xs'
-            : 'flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-xs';
+            ? 'flex flex-col items-center py-1 rounded-xl text-[#222222] font-bold text-[10px]'
+            : 'flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]';
         }
       });
       if (tabId === 'passport') renderAllVariablesTable();
-      requestAnimationFrame(renderAllCharts);
+      if (tabId === 'history') refreshHistoryTab();
+      renderAllChartsNow();
     }
 
     function togglePhoneFrame() {
@@ -2199,7 +2259,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         shell.classList.remove('phone-frame-wrapper');
         if (lbl) lbl.textContent = 'Mobile View';
       }
-      setTimeout(renderAllCharts, 150);
+      renderAllChartsNow();
     }
 
     function toggleHeroDriveSim() {
@@ -2254,7 +2314,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     function togglePauseStream() {
       appState.paused = !appState.paused;
       const btn = document.getElementById('btn-pause-stream');
-      if (btn) btn.textContent = appState.paused ? 'Resume Stream' : 'Pause Stream';
+      if (btn) btn.textContent = appState.paused ? 'Resume' : 'Pause';
     }
 
     // =========================================================================
@@ -2305,16 +2365,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
       const relBar = (drv.boostKpa / 100).toFixed(2);
       const mapText = drv.boostKpa >= 0
-        ? `${Math.round(d.map)} kPa (+${relBar} bar boost)`
-        : `${Math.round(d.map)} kPa (${relBar} bar vac)`;
+        ? `${Math.round(d.map)} kPa (+${relBar} bar)`
+        : `${Math.round(d.map)} kPa (${relBar} bar)`;
       document.getElementById('cockpit-map-label').textContent = mapText;
       document.getElementById('cockpit-map-bar').style.width = Math.min(100, (d.map / 190) * 100) + '%';
 
-      document.getElementById('cockpit-rail-label').textContent = `${d.rail.toFixed(2)} MPa (${(d.rail * 10).toFixed(1)} bar)`;
+      document.getElementById('cockpit-rail-label').textContent = `${d.rail.toFixed(2)} MPa (${(d.rail * 10).toFixed(0)} bar)`;
       document.getElementById('cockpit-rail-bar').style.width = Math.min(100, (d.rail / 20) * 100) + '%';
 
       document.getElementById('tile-coolant').textContent = Math.round(d.coolant) + '°C';
-      document.getElementById('tile-iat').textContent = `${Math.round(d.iat)}°C (+${Math.round(drv.heatSoak)}° soak)`;
+      document.getElementById('tile-iat').textContent = `${Math.round(d.iat)}°C (+${Math.round(drv.heatSoak)}°)`;
       document.getElementById('tile-cat').textContent = d.cat.toFixed(1) + '°C';
       document.getElementById('tile-amb').textContent = Math.round(d.amb) + '°C';
 
@@ -2332,15 +2392,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
       document.getElementById('tile-fuel-bar').style.width = d.fuel + '%';
       document.getElementById('tile-evap').textContent = d.evap.toFixed(1) + '%';
       document.getElementById('tile-flow').textContent = d.spd > 3
-        ? `${drv.l100km.toFixed(1)} L/100km (${drv.fuelLh.toFixed(2)} L/h)`
+        ? `${drv.l100km.toFixed(1)} L/100km (${drv.fuelLh.toFixed(1)} L/h)`
         : `${drv.fuelLh.toFixed(2)} L/h (Idle)`;
-      document.getElementById('adv-fuel-val').textContent = `${d.fuel.toFixed(1)}% (~${drv.fuelLiters.toFixed(1)} L / ${Math.round(drv.estRangeKm)} km)`;
+      document.getElementById('adv-fuel-val').textContent = `${d.fuel.toFixed(1)}% · ${drv.fuelLiters.toFixed(1)} L · ${Math.round(drv.estRangeKm)} km`;
       document.getElementById('adv-fuel-rate').textContent = `${drv.fuelLh.toFixed(2)} L/h`;
       document.getElementById('adv-cat-temp').textContent = `Cat ${d.cat.toFixed(1)}°C`;
 
       document.getElementById('tile-volt').textContent = d.volt.toFixed(2) + 'V';
       document.getElementById('tile-atrv').textContent = d.atrv;
-      document.getElementById('runtime-badge').textContent = `Run Time (011F): ${formatDuration(d.runtime)} (${Math.round(d.runtime)}s)`;
+      document.getElementById('runtime-badge').textContent = `Run: ${formatDuration(d.runtime)} (${Math.round(d.runtime)}s)`;
 
       const csr = document.getElementById('cockpit-stream-readout');
       if (csr) csr.textContent = `${Math.round(d.rpm)} RPM · ${Math.round(d.spd)} km/h · ${d.cat.toFixed(1)}°C`;
@@ -2360,21 +2420,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     // =========================================================================
-    // 8. 6-CHANNEL SYNCHRONIZED CANVAS CHART ENGINE (ZERO-JITTER HiDPI)
+    // 8. 6-CHANNEL SYNCHRONIZED CANVAS CHART ENGINE (ZERO-JITTER FIXED SIZE)
     // =========================================================================
     function drawMultiLineCanvas(canvasId, seriesList, minVal, maxVal, customHistory) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width <= 0) return;
+      const cssW = canvas.clientWidth || Math.floor(canvas.getBoundingClientRect().width);
+      if (cssW <= 0) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-      const h = canvas.getAttribute('height') ? parseInt(canvas.getAttribute('height'), 10) : 160;
-      const w = Math.floor(rect.width);
-
-      // Lock CSS dimensions so backing-store updates never shift layout height
-      if (canvas.style.height !== `${h}px`) canvas.style.height = `${h}px`;
-      if (canvas.style.width !== '100%') canvas.style.width = '100%';
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const h = canvas.clientHeight || 94;
+      const w = cssW;
 
       const targetW = Math.round(w * dpr);
       const targetH = Math.round(h * dpr);
@@ -2387,13 +2443,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
-      // Subtle dashed horizontal gridlines
+      // Pixel-snapped horizontal gridlines (zero subpixel shimmer)
       ctx.save();
       ctx.strokeStyle = 'rgba(34, 34, 34, 0.08)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       for (let i = 1; i <= 3; i++) {
-        const y = Math.round((h / 4) * i) + 0.5;
+        const y = Math.floor((h / 4) * i) + 0.5;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(w, y);
@@ -2405,8 +2461,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const n = data.length;
       if (n < 2) return;
 
-      const padTop = 10;
-      const padBot = 10;
+      const padTop = 6;
+      const padBot = 6;
+      const plotW = Math.max(20, w - 4);
       const plotH = Math.max(20, h - padTop - padBot);
 
       seriesList.forEach((s, sIdx) => {
@@ -2414,7 +2471,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const sMax = s.max !== undefined ? s.max : maxVal;
         const span = Math.max(0.0001, sMax - sMin);
         const points = data.map((pt, idx) => {
-          const x = (idx / (n - 1)) * w;
+          const x = (idx / (n - 1)) * plotW;
           const v = pt[s.key] !== undefined ? Number(pt[s.key]) : 0;
           const norm = Math.min(1, Math.max(0, (v - sMin) / span));
           const y = h - padBot - norm * plotH;
@@ -2446,17 +2503,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
         }
 
         ctx.strokeStyle = s.color;
-        ctx.lineWidth = s.width || 2.1;
+        ctx.lineWidth = s.width || 2.0;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
         traceSmoothPath();
         ctx.stroke();
 
-        // Crisp end-point marker on right edge
         const last = points[points.length - 1];
         ctx.fillStyle = s.color;
         ctx.beginPath();
-        ctx.arc(last.x - 2, last.y, 2.5, 0, Math.PI * 2);
+        ctx.arc(last.x, last.y, 2.3, 0, Math.PI * 2);
         ctx.fill();
       });
     }
@@ -2464,58 +2520,58 @@ Check your Browserslist config to be sure that your targets are set up correctly
     let _chartRafId = null;
     function renderAllChartsNow() {
       _chartRafId = null;
-      drawMultiLineCanvas('cockpit-stream-canvas', [
-        { key: 'rpm', color: '#1473E6', min: 500, max: 5500, width: 2.3 },
-        { key: 'spd', color: '#059669', min: 0, max: 140, width: 2.2 },
-        { key: 'cat', color: '#F25F3A', min: 200, max: 680, width: 1.9 }
-      ], 0, 100);
+      if (appState.activeTab === 'cockpit') {
+        drawMultiLineCanvas('cockpit-stream-canvas', [
+          { key: 'rpm', color: '#1473E6', min: 500, max: 5500, width: 2.2 },
+          { key: 'spd', color: '#059669', min: 0, max: 140, width: 2.1 },
+          { key: 'cat', color: '#F25F3A', min: 200, max: 680, width: 1.8 }
+        ], 0, 100);
+      } else if (appState.activeTab === 'graphs') {
+        drawMultiLineCanvas('chart-dynamics', [
+          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.2 },
+          { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.1 },
+          { key: 'load', color: '#F25F3A', min: 0, max: 100, width: 1.7 },
+          { key: 'absLoad', color: '#E13C7A', min: 0, max: 100, width: 1.4 }
+        ], 0, 100);
 
-      drawMultiLineCanvas('chart-dynamics', [
-        { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.3 },
-        { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.2 },
-        { key: 'load', color: '#F25F3A', min: 0, max: 100, width: 1.8 },
-        { key: 'absLoad', color: '#E13C7A', min: 0, max: 100, width: 1.5 }
-      ], 0, 100);
+        drawMultiLineCanvas('chart-thermal', [
+          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 2.2 },
+          { key: 'iat', color: '#F59E0B', min: 20, max: 85, width: 1.9 },
+          { key: 'amb', color: '#059669', min: 0, max: 50, width: 1.4 },
+          { key: 'cat', color: '#1473E6', min: 200, max: 700, width: 1.9 }
+        ], 0, 100);
 
-      drawMultiLineCanvas('chart-thermal', [
-        { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 2.3 },
-        { key: 'iat', color: '#F59E0B', min: 20, max: 85, width: 2.0 },
-        { key: 'amb', color: '#059669', min: 0, max: 50, width: 1.5 },
-        { key: 'cat', color: '#1473E6', min: 200, max: 700, width: 2.0 }
-      ], 0, 100);
+        drawMultiLineCanvas('chart-trims', [
+          { key: 'stft', color: '#059669', min: -12, max: 12, width: 2.2 },
+          { key: 'ltft', color: '#1473E6', min: -12, max: 12, width: 1.9 },
+          { key: 'o2s1', color: '#F25F3A', min: 0, max: 1.0, width: 1.5 },
+          { key: 'o2s2', color: '#E13C7A', min: 0, max: 1.0, width: 1.3 }
+        ], -12, 12);
 
-      drawMultiLineCanvas('chart-trims', [
-        { key: 'stft', color: '#059669', min: -12, max: 12, width: 2.3 },
-        { key: 'ltft', color: '#1473E6', min: -12, max: 12, width: 2.0 },
-        { key: 'o2s1', color: '#F25F3A', min: 0, max: 1.0, width: 1.6 },
-        { key: 'o2s2', color: '#E13C7A', min: 0, max: 1.0, width: 1.4 }
-      ], -12, 12);
+        drawMultiLineCanvas('chart-boost', [
+          { key: 'rail', color: '#4F46E5', min: 8, max: 21, width: 2.2 },
+          { key: 'map', color: '#1473E6', min: 20, max: 190, width: 2.1 },
+          { key: 'timing', color: '#F25F3A', min: -15, max: 35, width: 1.5 }
+        ], 0, 200);
 
-      drawMultiLineCanvas('chart-boost', [
-        { key: 'rail', color: '#4F46E5', min: 8, max: 21, width: 2.3 },
-        { key: 'map', color: '#1473E6', min: 20, max: 190, width: 2.2 },
-        { key: 'timing', color: '#F25F3A', min: -15, max: 35, width: 1.6 }
-      ], 0, 200);
+        drawMultiLineCanvas('chart-throttle', [
+          { key: 'pedalD', color: '#1473E6', min: 0, max: 100, width: 2.2 },
+          { key: 'thr', color: '#059669', min: 0, max: 100, width: 1.9 },
+          { key: 'relThr', color: '#F25F3A', min: 0, max: 100, width: 1.5 },
+          { key: 'actThr', color: '#E13C7A', min: 0, max: 100, width: 1.4 }
+        ], 0, 100);
 
-      drawMultiLineCanvas('chart-throttle', [
-        { key: 'pedalD', color: '#1473E6', min: 0, max: 100, width: 2.3 },
-        { key: 'thr', color: '#059669', min: 0, max: 100, width: 2.0 },
-        { key: 'relThr', color: '#F25F3A', min: 0, max: 100, width: 1.6 },
-        { key: 'actThr', color: '#E13C7A', min: 0, max: 100, width: 1.5 }
-      ], 0, 100);
-
-      drawMultiLineCanvas('chart-aux', [
-        { key: 'volt', color: '#1473E6', min: 11.5, max: 15.0, width: 2.3 },
-        { key: 'fuel', color: '#D97706', min: 0, max: 100, width: 2.0 },
-        { key: 'evap', color: '#059669', min: 0, max: 100, width: 1.6 },
-        { key: 'fuelLh', color: '#E13C7A', min: 0, max: 18, width: 1.8 }
-      ], 0, 100);
-
-      if (appState.activeTab === 'history' && historyInspectSamples.length >= 2) {
+        drawMultiLineCanvas('chart-aux', [
+          { key: 'volt', color: '#1473E6', min: 11.5, max: 15.0, width: 2.2 },
+          { key: 'fuel', color: '#D97706', min: 0, max: 100, width: 1.9 },
+          { key: 'evap', color: '#059669', min: 0, max: 100, width: 1.5 },
+          { key: 'fuelLh', color: '#E13C7A', min: 0, max: 18, width: 1.7 }
+        ], 0, 100);
+      } else if (appState.activeTab === 'history' && historyInspectSamples.length >= 2) {
         drawMultiLineCanvas('history-inspect-canvas', [
-          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.3 },
-          { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.2 },
-          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 1.8 }
+          { key: 'rpm', color: '#1473E6', min: 500, max: 6000, width: 2.2 },
+          { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.1 },
+          { key: 'coolant', color: '#D92B2B', min: 30, max: 115, width: 1.7 }
         ], 0, 100, historyInspectSamples);
       }
     }
@@ -3860,14 +3916,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
         };
       } else if (appState.source === 'sim_city') {
         const wave = (Math.sin(t * 0.45) + 1) / 2;
-        const spd = Math.max(0, 18 + wave * 54 + Math.sin(t * 1.5) * 12);
-        const rpm = 1150 + (spd % 26) * 85 + wave * 650;
+        const gearWave = (Math.sin(t * 0.9) + 1) / 2;
+        const spd = Math.max(0, 18 + wave * 56 + Math.sin(t * 0.22) * 8);
+        const rpm = 1250 + wave * 1350 + gearWave * 450;
         const load = 22 + wave * 42;
         const absLoad = 20 + wave * 44;
         const map = 34 + wave * 78;
         const rail = 12.04 + wave * 4.8;
         const cat = 340 + wave * 135;
-        const stft = Math.sin(t * 1.8) * 2.8;
+        const stft = Math.sin(t * 1.1) * 2.4;
         const thr = 16 + wave * 32;
         const pedal = 18 + wave * 38;
         live = {
@@ -3881,7 +3938,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           pedalD: pedal, pedalE: pedal,
           timing: 6 + wave * 12,
           evap: 2.4 + wave * 18,
-          o2s1: 0.18 + (Math.sin(t * 3.5) + 1) * 0.32,
+          o2s1: 0.18 + (Math.sin(t * 2.2) + 1) * 0.32,
           o2s1Trim: stft,
           runtime: 1164 + Math.floor(t * 2)
         };
@@ -3960,11 +4017,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const ch = params.get('channel');
         const ep = params.get('endpoint');
         const tbl = params.get('table');
+        const srcParam = params.get('source');
+        const tabParam = params.get('tab');
         if (prov && document.getElementById('cloud-provider')) document.getElementById('cloud-provider').value = prov;
         if (ch && document.getElementById('cloud-channel-id')) document.getElementById('cloud-channel-id').value = ch;
         if (ep && document.getElementById('cloud-custom-url')) document.getElementById('cloud-custom-url').value = ep;
         if (tbl && document.getElementById('cloud-supabase-table')) document.getElementById('cloud-supabase-table').value = tbl;
         updateCloudProviderUi();
+        if (srcParam && ['snap1', 'snap2', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
+          changeDataSource(srcParam);
+        }
+        if (tabParam && ['cockpit', 'graphs', 'history', 'infographics', 'passport', 'cloud', 'bluetooth'].includes(tabParam)) {
+          switchTab(tabParam);
+        }
         if (params.get('cloud') === 'watch') {
           setTimeout(() => {
             switchTab('cockpit');
@@ -3976,14 +4041,20 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     })();
 
-    window.addEventListener('resize', renderAllCharts);
+    let _lastViewportW = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth !== _lastViewportW) {
+        _lastViewportW = window.innerWidth;
+        renderAllCharts();
+      }
+    });
     window.addEventListener('themechange', renderAllCharts);
     loadPassivePrefs();
     refreshPassiveSessionsUi();
     renderStaticInfographics();
     renderAllVariablesTable();
     updateDomMetrics(appState.current);
-    setTimeout(renderAllCharts, 60);
+    renderAllChartsNow();
   </script>
 </body>
 </html>
