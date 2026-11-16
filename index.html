@@ -1191,6 +1191,63 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
         </div>
 
+        <!-- Passive Phone Drive Recorder & On-Device Storage (IndexedDB) -->
+        <div class="acro-card rounded-3xl p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Passive Background &amp; Storage</span>
+                <span id="passive-rec-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold">STANDBY</span>
+              </div>
+              <h3 class="text-sm font-bold text-[#222222] mt-0.5">Passive Phone Drive Recorder &amp; Local Database</h3>
+              <p class="text-xs text-[#5A5F6A]">Once paired with Bluetooth, PulseOBD runs passively, keeps your link alive, auto-reconnects on drops, and stores every received frame in your phone's IndexedDB.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="exportStoredDriveCsv()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Export Stored CSV</button>
+              <button onclick="exportStoredDriveJson()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Export Stored JSON</button>
+              <button onclick="clearStoredDrives()" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Drives</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3 text-xs">
+            <div class="acro-well rounded-2xl p-3">
+              <span class="text-[#5A5F6A] block">Stored Frames (Phone)</span>
+              <strong id="passive-sample-count" class="font-mono-num text-base text-[#222222]">0</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-3">
+              <span class="text-[#5A5F6A] block">Active Drive Session</span>
+              <strong id="passive-session-label" class="font-mono-num text-sm text-[#1473E6] truncate block">Not started</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-3">
+              <span class="text-[#5A5F6A] block">Screen Wake Lock</span>
+              <strong id="passive-wakelock-state" class="font-mono-num text-sm text-[#5A5F6A]">Inactive</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-3">
+              <span class="text-[#5A5F6A] block">BLE Auto-Reconnect</span>
+              <strong id="passive-reconnect-state" class="font-mono-num text-sm text-[#047857]">Armed</strong>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-4 text-xs text-[#222222] mb-3">
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="passive-auto-record" type="checkbox" checked onchange="savePassivePrefs()" class="w-4 h-4 accent-[#222222] rounded" />
+              <span>Auto-record passively once paired</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="passive-wakelock-cb" type="checkbox" checked onchange="savePassivePrefs()" class="w-4 h-4 accent-[#222222] rounded" />
+              <span>Keep screen awake while driving</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="passive-autoreconnect-cb" type="checkbox" checked onchange="savePassivePrefs()" class="w-4 h-4 accent-[#222222] rounded" />
+              <span>Auto-reconnect if Bluetooth drops</span>
+            </label>
+          </div>
+
+          <div id="passive-sessions-list" class="acro-well rounded-2xl p-3 text-xs space-y-1.5 max-h-36 overflow-y-auto">
+            <div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>
+          </div>
+        </div>
+
         <div class="acro-card rounded-3xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
@@ -2591,14 +2648,380 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return true;
     }
 
+    // =========================================================================
+    // 10B. PASSIVE PHONE DRIVE RECORDER & PERSISTENT INDEXEDDB STORAGE
+    // =========================================================================
+    const PASSIVE_PREFS_KEY = 'pulseobd_passive_prefs_v1';
+    const LAST_FRAME_KEY = 'pulseobd_last_live_frame_v1';
+    const DRIVE_DB_NAME = 'PulseOBD_DriveDB';
+    const DRIVE_DB_VERSION = 1;
+
+    const passiveState = {
+      db: null,
+      activeSessionId: null,
+      activeSession: null,
+      sampleCount: 0,
+      lastWriteMs: 0,
+      wakeLock: null,
+      bleUserDisconnected: false,
+      bleReconnecting: false,
+      bleListenerAttached: new WeakSet()
+    };
+
+    function savePassivePrefs() {
+      try {
+        localStorage.setItem(PASSIVE_PREFS_KEY, JSON.stringify({
+          autoRecord: Boolean(document.getElementById('passive-auto-record')?.checked),
+          wakeLock: Boolean(document.getElementById('passive-wakelock-cb')?.checked),
+          autoReconnect: Boolean(document.getElementById('passive-autoreconnect-cb')?.checked)
+        }));
+      } catch (_) {}
+    }
+
+    function loadPassivePrefs() {
+      try {
+        const raw = localStorage.getItem(PASSIVE_PREFS_KEY);
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (p.autoRecord !== undefined && document.getElementById('passive-auto-record')) document.getElementById('passive-auto-record').checked = Boolean(p.autoRecord);
+        if (p.wakeLock !== undefined && document.getElementById('passive-wakelock-cb')) document.getElementById('passive-wakelock-cb').checked = Boolean(p.wakeLock);
+        if (p.autoReconnect !== undefined && document.getElementById('passive-autoreconnect-cb')) document.getElementById('passive-autoreconnect-cb').checked = Boolean(p.autoReconnect);
+      } catch (_) {}
+    }
+
+    function openDriveDb() {
+      if (passiveState.db) return Promise.resolve(passiveState.db);
+      if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+      return new Promise((resolve) => {
+        try {
+          const req = indexedDB.open(DRIVE_DB_NAME, DRIVE_DB_VERSION);
+          req.onupgradeneeded = (ev) => {
+            const db = ev.target.result;
+            if (!db.objectStoreNames.contains('sessions')) {
+              db.createObjectStore('sessions', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('samples')) {
+              const store = db.createObjectStore('samples', { keyPath: 'id', autoIncrement: true });
+              store.createIndex('sessionId', 'sessionId', { unique: false });
+            }
+          };
+          req.onsuccess = (ev) => {
+            passiveState.db = ev.target.result;
+            resolve(passiveState.db);
+          };
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function requestDriveWakeLock() {
+      const cb = document.getElementById('passive-wakelock-cb');
+      const lbl = document.getElementById('passive-wakelock-state');
+      if (cb && !cb.checked) return;
+      if (!('wakeLock' in navigator)) {
+        if (lbl) lbl.textContent = 'Unsupported';
+        return;
+      }
+      try {
+        if (passiveState.wakeLock) return;
+        passiveState.wakeLock = await navigator.wakeLock.request('screen');
+        if (lbl) {
+          lbl.textContent = 'Active (Screen On)';
+          lbl.className = 'font-mono-num text-sm text-[#047857]';
+        }
+        passiveState.wakeLock.addEventListener('release', () => {
+          passiveState.wakeLock = null;
+          if (lbl) {
+            lbl.textContent = 'Released';
+            lbl.className = 'font-mono-num text-sm text-[#5A5F6A]';
+          }
+        });
+      } catch (_) {
+        if (lbl) lbl.textContent = 'Blocked / Battery';
+      }
+    }
+
+    async function releaseDriveWakeLock() {
+      try {
+        if (passiveState.wakeLock) {
+          await passiveState.wakeLock.release();
+          passiveState.wakeLock = null;
+        }
+      } catch (_) {}
+      const lbl = document.getElementById('passive-wakelock-state');
+      if (lbl) {
+        lbl.textContent = 'Inactive';
+        lbl.className = 'font-mono-num text-sm text-[#5A5F6A]';
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && (appState.blePollingActive || appState.serialPollingActive || appState.wifiPollTimer)) {
+        requestDriveWakeLock();
+        renderAllCharts();
+      }
+    });
+
+    function updatePassiveStatusUi(statusText, badgeCls) {
+      const badge = document.getElementById('passive-rec-badge');
+      if (badge && statusText) {
+        badge.textContent = statusText;
+        badge.className = badgeCls || 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold';
+      }
+      const cnt = document.getElementById('passive-sample-count');
+      if (cnt) cnt.textContent = String(passiveState.sampleCount);
+      const slbl = document.getElementById('passive-session-label');
+      if (slbl && passiveState.activeSession) {
+        slbl.textContent = `${passiveState.activeSession.transport} · ${new Date(passiveState.activeSession.startedAt).toLocaleTimeString()}`;
+      }
+    }
+
+    async function startPassiveDriveSession(transportLabel) {
+      const autoCb = document.getElementById('passive-auto-record');
+      if (autoCb && !autoCb.checked) return;
+      requestDriveWakeLock();
+      const db = await openDriveDb();
+      const session = {
+        id: 'drive-' + Date.now(),
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        transport: transportLabel,
+        vin: 'AAVZZZ6RZHU112564',
+        sampleCount: 0,
+        maxRpm: 0,
+        maxSpd: 0,
+        maxCoolant: 0
+      };
+      passiveState.activeSessionId = session.id;
+      passiveState.activeSession = session;
+      passiveState.sampleCount = 0;
+      if (db) {
+        try {
+          const tx = db.transaction('sessions', 'readwrite');
+          tx.objectStore('sessions').put(session);
+        } catch (_) {}
+      }
+      updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold animate-pulse');
+      logTerminal(`[PASSIVE] Started on-device drive recording (${session.id}) via ${transportLabel}.`, 'text-[#1473E6] font-semibold');
+      refreshPassiveSessionsUi();
+    }
+
+    async function recordPassiveSample(d) {
+      const autoCb = document.getElementById('passive-auto-record');
+      if (autoCb && !autoCb.checked) return;
+      const now = Date.now();
+      if (now - passiveState.lastWriteMs < 450) return;
+      passiveState.lastWriteMs = now;
+
+      if (!passiveState.activeSessionId) {
+        await startPassiveDriveSession('Bluetooth OBD-II');
+      }
+
+      const drv = computeDerivedMetrics(d);
+      const sample = {
+        sessionId: passiveState.activeSessionId,
+        ts: new Date(now).toISOString(),
+        rpm: Number((d.rpm || 0).toFixed(1)),
+        spd: Math.round(d.spd || 0),
+        load: Number((d.load || 0).toFixed(1)),
+        absLoad: Number((d.absLoad || 0).toFixed(1)),
+        coolant: Math.round(d.coolant || 0),
+        iat: Math.round(d.iat || 0),
+        amb: Math.round(d.amb || 0),
+        cat: Number((d.cat || 0).toFixed(1)),
+        stft: Number((d.stft || 0).toFixed(2)),
+        ltft: Number((d.ltft || 0).toFixed(2)),
+        secO2Trim: Number((d.secO2Trim || 0).toFixed(2)),
+        map: Math.round(d.map || 0),
+        baro: d.baro || 83,
+        rail: Number((d.rail || 0).toFixed(2)),
+        timing: Number((d.timing || 0).toFixed(1)),
+        thr: Number((d.thr || 0).toFixed(1)),
+        thrB: Number((d.thrB || 0).toFixed(1)),
+        relThr: Number((d.relThr || 0).toFixed(1)),
+        actThr: Number((d.actThr || 0).toFixed(1)),
+        pedalD: Number((d.pedalD || 0).toFixed(1)),
+        pedalE: Number((d.pedalE || 0).toFixed(1)),
+        o2s1: Number((d.o2s1 || 0).toFixed(3)),
+        o2s2: Number((d.o2s2 || 0).toFixed(3)),
+        lambda: Number((d.lambda || 1).toFixed(4)),
+        fuel: Number((d.fuel || 0).toFixed(1)),
+        evap: Number((d.evap || 0).toFixed(1)),
+        volt: Number((d.volt || 0).toFixed(3)),
+        runtime: Math.round(d.runtime || 0),
+        fuelLh: Number(drv.fuelLh.toFixed(2)),
+        l100km: Number(drv.l100km.toFixed(1))
+      };
+
+      passiveState.sampleCount++;
+      if (passiveState.activeSession) {
+        passiveState.activeSession.sampleCount = passiveState.sampleCount;
+        passiveState.activeSession.updatedAt = sample.ts;
+        passiveState.activeSession.maxRpm = Math.max(passiveState.activeSession.maxRpm, sample.rpm);
+        passiveState.activeSession.maxSpd = Math.max(passiveState.activeSession.maxSpd, sample.spd);
+        passiveState.activeSession.maxCoolant = Math.max(passiveState.activeSession.maxCoolant, sample.coolant);
+      }
+
+      try { localStorage.setItem(LAST_FRAME_KEY, JSON.stringify(sample)); } catch (_) {}
+
+      const db = await openDriveDb();
+      if (db) {
+        try {
+          const tx = db.transaction(['samples', 'sessions'], 'readwrite');
+          tx.objectStore('samples').add(sample);
+          if (passiveState.activeSession) {
+            tx.objectStore('sessions').put(passiveState.activeSession);
+          }
+        } catch (_) {}
+      }
+      updatePassiveStatusUi();
+      if (passiveState.sampleCount % 10 === 1) refreshPassiveSessionsUi();
+    }
+
+    async function getAllStoredSessions() {
+      const db = await openDriveDb();
+      if (!db) return [];
+      return new Promise((resolve) => {
+        try {
+          const req = db.transaction('sessions', 'readonly').objectStore('sessions').getAll();
+          req.onsuccess = () => resolve((req.result || []).sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || '')));
+          req.onerror = () => resolve([]);
+        } catch (_) {
+          resolve([]);
+        }
+      });
+    }
+
+    async function getSessionSamples(sessionId) {
+      const db = await openDriveDb();
+      if (!db || !sessionId) return [];
+      return new Promise((resolve) => {
+        try {
+          const idx = db.transaction('samples', 'readonly').objectStore('samples').index('sessionId');
+          const req = idx.getAll(sessionId);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        } catch (_) {
+          resolve([]);
+        }
+      });
+    }
+
+    async function refreshPassiveSessionsUi() {
+      const box = document.getElementById('passive-sessions-list');
+      if (!box) return;
+      const sessions = await getAllStoredSessions();
+      if (!sessions.length) {
+        box.innerHTML = '<div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>';
+        return;
+      }
+      box.innerHTML = sessions.slice(0, 12).map(s => `
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
+          <div class="min-w-0">
+            <span class="font-bold text-[#222222] font-mono-num">${new Date(s.startedAt).toLocaleString()}</span>
+            <span class="text-[#5A5F6A] ml-2">${s.transport} · <strong class="text-[#1473E6]">${s.sampleCount} frames</strong> · Max ${Math.round(s.maxSpd || 0)} km/h · ${Math.round(s.maxRpm || 0)} RPM · ${Math.round(s.maxCoolant || 0)}°C</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
+            <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#222222] text-white font-semibold">CSV</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadStoredDriveSession(sessionId) {
+      const sessions = await getAllStoredSessions();
+      const targetId = sessionId || (sessions[0] && sessions[0].id);
+      if (!targetId) return;
+      const samples = await getSessionSamples(targetId);
+      if (!samples.length) return;
+      appState.paused = true;
+      appState.history = samples.slice(-80).map(s => ({ ...SNAPSHOTS.snap1, ...s, ...computeDerivedMetrics(s) }));
+      appState.current = { ...appState.history[appState.history.length - 1] };
+      updateDomMetrics(appState.current);
+      renderAllCharts();
+      if (appState.activeTab === 'passport') renderAllVariablesTable();
+      const badge = document.getElementById('conn-badge');
+      if (badge) badge.textContent = `STORED DRIVE · ${samples.length} frames`;
+      logTerminal(`[STORAGE] Loaded stored drive ${targetId} (${samples.length} frames) into Cockpit & 6 Graphs.`, 'text-[#047857] font-semibold');
+      switchTab('cockpit');
+    }
+
+    async function exportStoredDriveCsv(sessionId) {
+      const sessions = await getAllStoredSessions();
+      const targetId = sessionId || passiveState.activeSessionId || (sessions[0] && sessions[0].id);
+      const samples = targetId ? await getSessionSamples(targetId) : [];
+      if (!samples.length) {
+        exportTelemetryCsv();
+        return;
+      }
+      const headers = ['timestamp,rpm,speed_kmh,calc_load_pct,abs_load_pct,coolant_c,iat_c,ambient_c,catalyst_c,stft_pct,ltft_pct,sec_o2_trim_pct,o2_b1s1_v,o2_b1s2_v,lambda,map_kpa,baro_kpa,rail_mpa,timing_deg,thr_a_pct,thr_b_pct,rel_thr_pct,act_thr_pct,pedal_d_pct,pedal_e_pct,fuel_level_pct,evap_purge_pct,ecu_volt_v,est_fuel_lh,est_l100km,runtime_s'];
+      const rows = samples.map(h => [
+        h.ts, h.rpm, h.spd, h.load, h.absLoad, h.coolant, h.iat, h.amb, h.cat,
+        h.stft, h.ltft, h.secO2Trim, h.o2s1, h.o2s2, h.lambda, h.map, h.baro, h.rail,
+        h.timing, h.thr, h.thrB, h.relThr, h.actThr, h.pedalD, h.pedalE, h.fuel, h.evap,
+        h.volt, h.fuelLh, h.l100km, h.runtime
+      ].join(','));
+      const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pulseobd_${targetId}.csv`;
+      a.click();
+    }
+
+    async function exportStoredDriveJson(sessionId) {
+      const sessions = await getAllStoredSessions();
+      const targetId = sessionId || passiveState.activeSessionId || (sessions[0] && sessions[0].id);
+      const samples = targetId ? await getSessionSamples(targetId) : [];
+      if (!samples.length) {
+        exportFullJsonSnapshot();
+        return;
+      }
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        sessionId: targetId,
+        vin: 'AAVZZZ6RZHU112564',
+        readOnlyEnforced: true,
+        frameCount: samples.length,
+        latest124Variables: buildCompleteVariableCatalog({ ...SNAPSHOTS.snap1, ...samples[samples.length - 1] }),
+        samples
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pulseobd_${targetId}_124vars.json`;
+      a.click();
+    }
+
+    async function clearStoredDrives() {
+      const db = await openDriveDb();
+      if (db) {
+        const tx = db.transaction(['sessions', 'samples'], 'readwrite');
+        tx.objectStore('sessions').clear();
+        tx.objectStore('samples').clear();
+      }
+      passiveState.activeSessionId = null;
+      passiveState.activeSession = null;
+      passiveState.sampleCount = 0;
+      try { localStorage.removeItem(LAST_FRAME_KEY); } catch (_) {}
+      updatePassiveStatusUi('STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+      refreshPassiveSessionsUi();
+      logTerminal('[STORAGE] Cleared all locally stored drive sessions.', 'text-[#B45309]');
+    }
+
     function commitLiveFrame() {
       const derived = computeDerivedMetrics(appState.current);
       appState.current = { ...appState.current, ...derived };
       appState.history.push({ ...appState.current });
       if (appState.history.length > 80) appState.history.shift();
-      updateDomMetrics(appState.current);
-      renderAllCharts();
-      if (appState.activeTab === 'passport') renderAllVariablesTable();
+      recordPassiveSample(appState.current);
+      if (!document.hidden) {
+        updateDomMetrics(appState.current);
+        renderAllCharts();
+        if (appState.activeTab === 'passport') renderAllVariablesTable();
+      }
     }
 
     const FAST_POLL_PIDS = ['010C', '010D', '0104', '010B', '0123', '0111', '0149', '0106', '0144'];
@@ -2702,6 +3125,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const r = await sendSerialElm(initCmd, 2500);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
       }
+      await startPassiveDriveSession('Web Serial COM3');
       maybeAutoStartCloudTx('Web Serial COM3');
       while (appState.serialPollingActive && appState.serialPort) {
         for (const pid of FAST_POLL_PIDS) {
@@ -2734,8 +3158,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         appState.serialWriter = port.writable.getWriter();
         appState.serialPollingActive = true;
         changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (All 124 Vars)';
-        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling all Mode 01 PIDs (strictly read-only)...', 'text-[#047857] font-semibold');
+        document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (Passive Recording)';
+        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling & passively storing all Mode 01 PIDs...', 'text-[#047857] font-semibold');
         runSerialPollingLoop().catch(err => {
           logTerminal(`[SERIAL LOOP] Stopped: ${err.message}`, 'text-[#B45309]');
         });
@@ -2745,12 +3169,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     async function disconnectActivePort() {
+      passiveState.bleUserDisconnected = true;
       appState.serialPollingActive = false;
       appState.blePollingActive = false;
       if (appState.wifiPollTimer) {
         clearInterval(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
       }
+      await releaseDriveWakeLock();
+      updatePassiveStatusUi('STOPPED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
       try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
       try { if (appState.serialWriter) { appState.serialWriter.releaseLock(); appState.serialWriter = null; } } catch (_) {}
       if (appState.serialPort) {
@@ -2777,6 +3204,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const r = await sendBleElm(initCmd, 2000);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
       }
+      if (!passiveState.activeSessionId) {
+        await startPassiveDriveSession(`BLE · ${appState.bleDevice?.name || 'OBDII'}`);
+      } else {
+        requestDriveWakeLock();
+        updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold animate-pulse');
+      }
       maybeAutoStartCloudTx('Bluetooth BLE GATT');
       while (appState.blePollingActive && appState.bleWriteChar) {
         for (const pid of FAST_POLL_PIDS) {
@@ -2795,6 +3228,62 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
 
+    async function connectBleGattDevice(dev) {
+      const server = await dev.gatt.connect();
+      appState.bleServer = server;
+      const services = await server.getPrimaryServices();
+      let notifyChar = null;
+      let writeChar = null;
+      for (const svc of services) {
+        const chars = await svc.getCharacteristics();
+        for (const ch of chars) {
+          if (!notifyChar && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
+          if (!writeChar && (ch.properties.write || ch.properties.writeWithoutResponse)) writeChar = ch;
+        }
+      }
+      if (!writeChar || !notifyChar) {
+        throw new Error('Selected BLE device does not expose serial notify/write characteristics.');
+      }
+      await notifyChar.startNotifications();
+      notifyChar.addEventListener('characteristicvaluechanged', (ev) => {
+        const chunk = new TextDecoder().decode(ev.target.value);
+        bleRxBuffer += chunk;
+        if (bleRxBuffer.includes('>') && bleWaiter) bleWaiter();
+      });
+      appState.bleWriteChar = writeChar;
+      appState.blePollingActive = true;
+      changeDataSource('live_obd');
+      document.getElementById('conn-badge').textContent = `LIVE BLE · ${dev.name || 'OBDII'} · REC`;
+      const rcLbl = document.getElementById('passive-reconnect-state');
+      if (rcLbl) rcLbl.textContent = 'Connected';
+      logTerminal(`[BLE] Connected to ${dev.name || dev.id}! Running passively & storing every frame.`, 'text-[#047857] font-semibold');
+      runBlePollingLoop().catch(err => logTerminal(`[BLE LOOP] ${err.message}`, 'text-[#B45309]'));
+    }
+
+    async function attemptBleAutoReconnect() {
+      const autoCb = document.getElementById('passive-autoreconnect-cb');
+      if (passiveState.bleUserDisconnected || !appState.bleDevice || (autoCb && !autoCb.checked)) return;
+      if (passiveState.bleReconnecting) return;
+      passiveState.bleReconnecting = true;
+      appState.blePollingActive = false;
+      const rcLbl = document.getElementById('passive-reconnect-state');
+      updatePassiveStatusUi('RECONNECTING...', 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold');
+      for (let attempt = 1; attempt <= 8; attempt++) {
+        if (passiveState.bleUserDisconnected) break;
+        if (rcLbl) rcLbl.textContent = `Retry #${attempt}/8...`;
+        logTerminal(`[BLE RECONNECT] Attempt ${attempt}/8 to restore passive link...`, 'text-[#B45309]');
+        await new Promise(r => setTimeout(r, Math.min(8000, attempt * 1500)));
+        try {
+          await connectBleGattDevice(appState.bleDevice);
+          passiveState.bleReconnecting = false;
+          return;
+        } catch (_) {}
+      }
+      passiveState.bleReconnecting = false;
+      if (rcLbl) rcLbl.textContent = 'Disconnected';
+      updatePassiveStatusUi('PAUSED (LINK LOST)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] font-mono-num font-bold');
+    }
+
     async function connectWebBluetooth() {
       if (!('bluetooth' in navigator)) {
         logTerminal('[BLE] Web Bluetooth API requires Chrome on Android/Desktop or Bluefy browser on iOS.', 'text-[#B45309]');
@@ -2802,39 +3291,23 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
       const NORDIC_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
       try {
+        passiveState.bleUserDisconnected = false;
         logTerminal('[BLE] Scanning for ELM327 BLE GATT adapters (0xFFF0 / 0xFFE0 / Nordic UART)...', 'text-[#1473E6]');
         const dev = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: [0xfff0, 0xffe0, '0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb', NORDIC_SVC]
         });
         appState.bleDevice = dev;
-        const server = await dev.gatt.connect();
-        appState.bleServer = server;
-        const services = await server.getPrimaryServices();
-        let notifyChar = null;
-        let writeChar = null;
-        for (const svc of services) {
-          const chars = await svc.getCharacteristics();
-          for (const ch of chars) {
-            if (!notifyChar && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
-            if (!writeChar && (ch.properties.write || ch.properties.writeWithoutResponse)) writeChar = ch;
-          }
+        if (!passiveState.bleListenerAttached.has(dev)) {
+          passiveState.bleListenerAttached.add(dev);
+          dev.addEventListener('gattserverdisconnected', () => {
+            if (!passiveState.bleUserDisconnected) {
+              logTerminal('[BLE] Link dropped unexpectedly — initiating passive auto-reconnect...', 'text-[#B45309] font-semibold');
+              attemptBleAutoReconnect();
+            }
+          });
         }
-        if (!writeChar || !notifyChar) {
-          throw new Error('Selected BLE device does not expose serial notify/write characteristics.');
-        }
-        await notifyChar.startNotifications();
-        notifyChar.addEventListener('characteristicvaluechanged', (ev) => {
-          const chunk = new TextDecoder().decode(ev.target.value);
-          bleRxBuffer += chunk;
-          if (bleRxBuffer.includes('>') && bleWaiter) bleWaiter();
-        });
-        appState.bleWriteChar = writeChar;
-        appState.blePollingActive = true;
-        changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = `LIVE BLE · ${dev.name || 'OBDII'}`;
-        logTerminal(`[BLE] Connected to ${dev.name || dev.id}! Starting continuous read-only 124-variable polling...`, 'text-[#047857] font-semibold');
-        runBlePollingLoop().catch(err => logTerminal(`[BLE LOOP] ${err.message}`, 'text-[#B45309]'));
+        await connectBleGattDevice(dev);
       } catch (err) {
         logTerminal(`[BLE] Connection canceled or unavailable: ${err.message}`, 'text-[#B45309]');
       }
@@ -2849,9 +3322,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
       appState.current = { ...merged, ...derived };
       appState.history.push({ ...appState.current });
       if (appState.history.length > 80) appState.history.shift();
-      updateDomMetrics(appState.current);
-      renderAllCharts();
-      if (appState.activeTab === 'passport') renderAllVariablesTable();
+      recordPassiveSample(appState.current);
+      if (!document.hidden) {
+        updateDomMetrics(appState.current);
+        renderAllCharts();
+        if (appState.activeTab === 'passport') renderAllVariablesTable();
+      }
       return data;
     }
 
@@ -2864,10 +3340,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
       logTerminal(`[BRIDGE] Connecting to Windows COM3 read-only bridge at ${baseUrl}/api/live ...`, 'text-[#047857]');
       try {
+        await startPassiveDriveSession('Wi-Fi COM3 Bridge');
         const data = await pollWifiBridgeOnce(baseUrl);
         changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = 'LIVE · Wi-Fi COM3 Bridge (All 124 Vars)';
-        logTerminal(`[BRIDGE] Connected! Live polling every 900ms from COM3 (RPM=${data.rpm}, Coolant=${data.coolant}°C)`, 'text-[#047857] font-semibold');
+        document.getElementById('conn-badge').textContent = 'LIVE · Wi-Fi COM3 Bridge · REC';
+        logTerminal(`[BRIDGE] Connected! Live passive recording every 900ms from COM3 (RPM=${data.rpm}, Coolant=${data.coolant}°C)`, 'text-[#047857] font-semibold');
         appState.wifiPollTimer = setInterval(() => {
           pollWifiBridgeOnce(baseUrl).catch(() => {});
         }, 900);
@@ -3082,6 +3559,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     window.addEventListener('resize', renderAllCharts);
     window.addEventListener('themechange', renderAllCharts);
+    loadPassivePrefs();
+    refreshPassiveSessionsUi();
     renderStaticInfographics();
     renderAllVariablesTable();
     updateDomMetrics(appState.current);
