@@ -26,7 +26,7 @@ param(
     [bool]$EnableCloudStream = $true,
     [ValidateSet('auto','ntfy','firebase','supabase','webhook')]
     [string]$CloudProvider = 'auto',
-    [string]$CloudChannel = 'AAVZZZ6RZHU112564',
+    [string]$CloudChannel = 'auto',
     [string]$CloudUrl = '',
     [string]$SupabaseTable = 'pulseobd_telemetry',
     [string]$CloudApiKey = '',
@@ -43,17 +43,23 @@ try {
     Add-Type -AssemblyName System.Net.Http
 } catch {}
 
+$ScriptFolderLeaf = Split-Path $PSScriptRoot -Leaf
+$ProjectRoot = if ($ScriptFolderLeaf -ieq 'bridge') { Split-Path $PSScriptRoot -Parent } else { $PSScriptRoot }
+$VehicleHistoryRoot = Join-Path $ProjectRoot 'vehicle_history'
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
 # Auto-load private local Firebase configuration (gitignored firebase.local.json or env vars)
 $LocalConfigCandidates = @(
     (Join-Path $PSScriptRoot 'firebase.local.json'),
-    (Join-Path (Split-Path $PSScriptRoot -Parent) 'firebase.local.json')
+    (Join-Path $ProjectRoot 'firebase.local.json')
 )
+$ExplicitCloudChannel = ($CloudChannel -and $CloudChannel -ne 'auto')
 foreach ($cfgFile in $LocalConfigCandidates) {
     if (Test-Path $cfgFile) {
         try {
             $localCfg = Get-Content $cfgFile -Raw | ConvertFrom-Json
             if (-not $CloudUrl -and $localCfg.url) { $CloudUrl = [string]$localCfg.url }
-            if ($localCfg.channel) { $CloudChannel = [string]$localCfg.channel }
+            if (-not $ExplicitCloudChannel -and $localCfg.channel -and $localCfg.channel -ne 'auto') { $CloudChannel = [string]$localCfg.channel }
             if (-not $CloudApiKey -and $localCfg.auth) { $CloudApiKey = [string]$localCfg.auth }
             if ($CloudProvider -eq 'auto' -and $localCfg.provider) { $CloudProvider = [string]$localCfg.provider }
             Write-Host "Loaded private cloud config from $cfgFile" -ForegroundColor DarkGreen
@@ -89,40 +95,54 @@ function Add-FirebaseAuthQuery {
     return "${Url}${sep}auth=$([Uri]::EscapeDataString($Auth))"
 }
 
-if ($CloudProvider -eq 'ntfy') {
-    $ntfyTopic = if ($CloudChannel -match '^(?i)pulseobd-') { $CloudChannel } else { "pulseobd-$CloudChannel" }
-    $ResolvedCloudUrl = "https://ntfy.sh/$([Uri]::EscapeDataString($ntfyTopic))"
-    $ResolvedCloudMethod = 'POST'
-} elseif ($CloudProvider -eq 'firebase') {
-    $fbBase = $CloudUrl.TrimEnd('/')
-    if ($fbBase) {
-        $safeCh = [Uri]::EscapeDataString($CloudChannel)
-        if ($fbBase.EndsWith('/latest.json')) {
-            $prefix = $fbBase.Substring(0, $fbBase.Length - 12)
-        } elseif ($fbBase.EndsWith('.json')) {
-            $prefix = $fbBase.Substring(0, $fbBase.Length - 5)
-        } elseif ($fbBase -match '/vehicles/[^/]+$' -or $fbBase -match '/pulseobd/[^/]+$') {
-            $prefix = $fbBase
-        } elseif ($fbBase -match '/vehicles$') {
-            $prefix = "$fbBase/$safeCh"
-        } else {
-            $prefix = "$fbBase/vehicles/$safeCh"
+function Initialize-CloudEndpointUrls {
+    param([string]$ActiveVin)
+    if (-not $script:CloudChannel -or $script:CloudChannel -eq 'auto' -or $script:ExplicitCloudChannel -eq $false) {
+        if ($ActiveVin) { $script:CloudChannel = $ActiveVin }
+    }
+    if (-not $script:CloudChannel -or $script:CloudChannel -eq 'auto') {
+        $script:CloudChannel = 'AAVZZZ6RZHU112564'
+    }
+
+    if ($script:CloudProvider -eq 'ntfy') {
+        $ntfyTopic = if ($script:CloudChannel -match '^(?i)pulseobd-') { $script:CloudChannel } else { "pulseobd-$($script:CloudChannel)" }
+        $script:ResolvedCloudUrl = "https://ntfy.sh/$([Uri]::EscapeDataString($ntfyTopic))"
+        $script:ResolvedCloudMethod = 'POST'
+    } elseif ($script:CloudProvider -eq 'firebase') {
+        $fbBase = $script:CloudUrl.TrimEnd('/')
+        if ($fbBase) {
+            $safeCh = [Uri]::EscapeDataString($script:CloudChannel)
+            if ($fbBase.EndsWith('/latest.json')) {
+                $prefix = $fbBase.Substring(0, $fbBase.Length - 12)
+            } elseif ($fbBase.EndsWith('.json')) {
+                $prefix = $fbBase.Substring(0, $fbBase.Length - 5)
+            } elseif ($fbBase -match '/vehicles/[^/]+$' -or $fbBase -match '/pulseobd/[^/]+$') {
+                $prefix = Split-Path $fbBase -Parent
+                $prefix = ($prefix -replace '\\','/') + "/$safeCh"
+                if ($fbBase -match '/vehicles/[^/]+$' -and (-not $ActiveVin -or $fbBase.EndsWith("/$ActiveVin"))) {
+                    $prefix = $fbBase
+                }
+            } elseif ($fbBase -match '/vehicles$') {
+                $prefix = "$fbBase/$safeCh"
+            } else {
+                $prefix = "$fbBase/vehicles/$safeCh"
+            }
+            $script:FirebaseLatestUrl = Add-FirebaseAuthQuery -Url "$prefix/latest.json" -Auth $script:CloudApiKey
+            $script:FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/frames.json" -Auth $script:CloudApiKey
+            $script:FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/meta.json" -Auth $script:CloudApiKey
+            $script:ResolvedCloudUrl = $script:FirebaseLatestUrl
+            $script:ResolvedCloudMethod = 'PUT'
         }
-        $FirebaseLatestUrl = Add-FirebaseAuthQuery -Url "$prefix/latest.json" -Auth $CloudApiKey
-        $FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/frames.json" -Auth $CloudApiKey
-        $FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/meta.json" -Auth $CloudApiKey
-        $ResolvedCloudUrl = $FirebaseLatestUrl
-        $ResolvedCloudMethod = 'PUT'
+    } elseif ($script:CloudProvider -eq 'supabase') {
+        $sbBase = $script:CloudUrl.TrimEnd('/')
+        if ($sbBase) {
+            $script:ResolvedCloudUrl = "$sbBase/rest/v1/$([Uri]::EscapeDataString($script:SupabaseTable))"
+        }
+        $script:ResolvedCloudMethod = 'POST'
+    } else {
+        $script:ResolvedCloudUrl = $script:CloudUrl.Trim()
+        $script:ResolvedCloudMethod = 'POST'
     }
-} elseif ($CloudProvider -eq 'supabase') {
-    $sbBase = $CloudUrl.TrimEnd('/')
-    if ($sbBase) {
-        $ResolvedCloudUrl = "$sbBase/rest/v1/$([Uri]::EscapeDataString($SupabaseTable))"
-    }
-    $ResolvedCloudMethod = 'POST'
-} else {
-    $ResolvedCloudUrl = $CloudUrl.Trim()
-    $ResolvedCloudMethod = 'POST'
 }
 
 function Refresh-ObdRfcomm {
@@ -202,11 +222,436 @@ function Parse-CanDataBytes {
     return ,$bytes
 }
 
+function Parse-IsoTpAllBytes {
+    param([string]$RawResp)
+    if (-not $RawResp) { return @() }
+    $lines = @($RawResp -split "`r?`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
+    $frameLines = @($lines | Where-Object { $_ -match '^7E[8-F]\s' })
+    if ($frameLines.Count -eq 0) {
+        return (Parse-CanDataBytes -RawResp $RawResp)
+    }
+    $firstTokens = @($frameLines[0] -split '\s+' | Where-Object { $_ -ne '' })
+    if ($firstTokens.Count -lt 3) { return @() }
+    $pci0 = 0
+    try { $pci0 = [Convert]::ToInt32($firstTokens[1], 16) } catch { return @() }
+    $out = New-Object System.Collections.ArrayList
+    if (($pci0 -band 0xF0) -eq 0x10 -and $firstTokens.Count -ge 4) {
+        $lenHi = ($pci0 -band 0x0F) * 256
+        $lenLo = [Convert]::ToInt32($firstTokens[2], 16)
+        $totalLen = $lenHi + $lenLo
+        for ($i = 3; $i -lt $firstTokens.Count; $i++) {
+            try { $null = $out.Add([Convert]::ToInt32($firstTokens[$i], 16)) } catch {}
+        }
+        for ($l = 1; $l -lt $frameLines.Count; $l++) {
+            $toks = @($frameLines[$l] -split '\s+' | Where-Object { $_ -ne '' })
+            if ($toks.Count -ge 2 -and $toks[1] -match '^2[0-9A-Fa-f]$') {
+                for ($j = 2; $j -lt $toks.Count; $j++) {
+                    try { $null = $out.Add([Convert]::ToInt32($toks[$j], 16)) } catch {}
+                }
+            }
+        }
+        $limit = [Math]::Min($totalLen, $out.Count)
+        $sliced = @()
+        for ($k = 0; $k -lt $limit; $k++) { $sliced += [int]$out[$k] }
+        return ,$sliced
+    } elseif (($pci0 -band 0xF0) -eq 0x00) {
+        $sfLen = $pci0 -band 0x0F
+        $sliced = @()
+        for ($i = 0; $i -lt $sfLen -and (2 + $i) -lt $firstTokens.Count; $i++) {
+            try { $sliced += [Convert]::ToInt32($firstTokens[2 + $i], 16) } catch {}
+        }
+        return ,$sliced
+    }
+    return @()
+}
+
+function Decode-IsoTpAscii {
+    param([int[]]$Bytes, [int]$SkipCount = 3)
+    if ($null -eq $Bytes -or $Bytes.Count -le $SkipCount) { return '' }
+    $sb = New-Object System.Text.StringBuilder
+    for ($i = $SkipCount; $i -lt $Bytes.Count; $i++) {
+        $b = $Bytes[$i]
+        if ($b -ge 0x20 -and $b -le 0x7E) {
+            $null = $sb.Append([char]$b)
+        }
+    }
+    return $sb.ToString().Trim()
+}
+
+function Decode-IsoTpHex {
+    param([int[]]$Bytes, [int]$SkipCount = 3)
+    if ($null -eq $Bytes -or $Bytes.Count -le $SkipCount) { return '' }
+    $sb = New-Object System.Text.StringBuilder
+    for ($i = $SkipCount; $i -lt $Bytes.Count; $i++) {
+        $null = $sb.Append($Bytes[$i].ToString('X2'))
+    }
+    return $sb.ToString()
+}
+
+function Get-SafeVinName {
+    param([string]$RawVin, [string]$FallbackPart)
+    if ($RawVin) {
+        $clean = ($RawVin.ToUpperInvariant() -replace '[^A-Z0-9]', '')
+        if ($clean.Length -ge 6) { return $clean }
+    }
+    if ($FallbackPart) {
+        $cleanPart = ($FallbackPart.ToUpperInvariant() -replace '[^A-Z0-9_-]', '')
+        if ($cleanPart.Length -ge 4) { return "ECU_$cleanPart" }
+    }
+    return 'UNKNOWN_VEHICLE_' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd')
+}
+
+function Resolve-VehicleIdentity {
+    param($StaticSession)
+    $rawVin = ''
+    if ($StaticSession.Mode09 -and $StaticSession.Mode09['0902']) {
+        $rawVin = Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Mode09['0902']) -SkipCount 3
+    }
+    if ((-not $rawVin -or ($rawVin -replace '[^A-Z0-9]', '').Length -lt 6) -and $StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F190']) {
+        $rawVin = Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F190']) -SkipCount 3
+    }
+
+    $partNum = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F187']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F187']) -SkipCount 3 } else { '' }
+    $swVer   = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F189']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F189']) -SkipCount 3 } else { '' }
+    $hwPart  = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F191']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F191']) -SkipCount 3 } else { '' }
+    $engine  = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F197']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F197']) -SkipCount 3 } else { '' }
+    $asamNm  = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F19E']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F19E']) -SkipCount 3 } else { '' }
+    $asamVer = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F1A2']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F1A2']) -SkipCount 3 } else { '' }
+    $hwVer   = if ($StaticSession.Uds7E0 -and $StaticSession.Uds7E0['F1A3']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Uds7E0['F1A3']) -SkipCount 3 } else { '' }
+    $calid   = if ($StaticSession.Mode09 -and $StaticSession.Mode09['0904']) { Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Mode09['0904']) -SkipCount 3 } else { '' }
+    $cvn     = if ($StaticSession.Mode09 -and $StaticSession.Mode09['0906']) { Decode-IsoTpHex   -Bytes (Parse-IsoTpAllBytes $StaticSession.Mode09['0906']) -SkipCount 3 } else { '' }
+    $ecuName = if ($StaticSession.Mode09 -and $StaticSession.Mode09['090A']) { (Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $StaticSession.Mode09['090A']) -SkipCount 3) -replace '\s+', '' } else { '' }
+
+    $vin = Get-SafeVinName -RawVin $rawVin -FallbackPart $partNum
+    if (-not $engine -and $ecuName) { $engine = $ecuName }
+    $label = if ($vin -eq 'AAVZZZ6RZHU112564') {
+        "VW Polo 1.2L TSI ($engine)"
+    } elseif ($engine) {
+        "$vin ($engine)"
+    } else {
+        "Vehicle $vin"
+    }
+
+    return [ordered]@{
+        vin             = $vin
+        label           = $label
+        engine          = $engine
+        ecuName         = $ecuName
+        partNumber      = $partNum
+        softwareVersion = $swVer
+        hardwarePart    = $hwPart
+        hardwareVersion = $hwVer
+        asamDataset     = $asamNm
+        asamVersion     = $asamVer
+        calid           = $calid
+        cvn             = $cvn
+        protocol        = "$($StaticSession.ATDP) ($($StaticSession.ATDPN))"
+        adapter         = [ordered]@{
+            ATI  = $StaticSession.ATI
+            AT1  = $StaticSession.AT1
+            ATDP = $StaticSession.ATDP
+        }
+    }
+}
+
+$script:SessionFrames = New-Object System.Collections.ArrayList
+$script:SessionCsvWrittenHeader = $false
+
+function ConvertTo-PlainOrdered {
+    param($Obj)
+    if ($null -eq $Obj) { return $null }
+    if ($Obj -is [System.Collections.IDictionary]) {
+        $ht = [ordered]@{}
+        foreach ($k in $Obj.Keys) { $ht[$k] = ConvertTo-PlainOrdered $Obj[$k] }
+        return $ht
+    }
+    if ($Obj -is [PSCustomObject]) {
+        $ht = [ordered]@{}
+        foreach ($p in $Obj.PSObject.Properties) { $ht[$p.Name] = ConvertTo-PlainOrdered $p.Value }
+        return $ht
+    }
+    if (($Obj -is [System.Collections.IEnumerable]) -and -not ($Obj -is [string])) {
+        $arr = New-Object System.Collections.ArrayList
+        foreach ($item in $Obj) { $null = $arr.Add((ConvertTo-PlainOrdered $item)) }
+        return ,$arr.ToArray()
+    }
+    return $Obj
+}
+
+function Write-JsonFileNoBom {
+    param([string]$FilePath, $DataObj, [int]$Depth = 8)
+    $parent = Split-Path $FilePath -Parent
+    if ($parent -and -not (Test-Path $parent)) {
+        $null = New-Item -ItemType Directory -Path $parent -Force
+    }
+    $json = ($DataObj | ConvertTo-Json -Depth $Depth) + "`n"
+    [System.IO.File]::WriteAllText($FilePath, $json, $script:Utf8NoBom)
+}
+
+function Upsert-ProjectVehicleFiles {
+    param(
+        [string]$HistoryRoot,
+        $VehicleInfo,
+        [string]$SessionId,
+        [string]$SessionStartedAt,
+        [string]$TransportLabel,
+        $FramesArray,
+        $LatestMetrics,
+        $StaticDump,
+        [string]$SourceTag = 'com3_bridge'
+    )
+    if (-not $HistoryRoot) { return $null }
+    $safeVin = Get-SafeVinName -RawVin ([string]$VehicleInfo.vin) -FallbackPart ([string]$VehicleInfo.partNumber)
+    $vinDir = Join-Path $HistoryRoot $safeVin
+    $sessDir = Join-Path $vinDir 'sessions'
+    if (-not (Test-Path $sessDir)) {
+        $null = New-Item -ItemType Directory -Path $sessDir -Force
+    }
+
+    $profilePath = Join-Path $vinDir 'vehicle_profile.json'
+    $latestPath  = Join-Path $vinDir 'latest.json'
+    $indexPath   = Join-Path $HistoryRoot 'vehicles_index.json'
+
+    $existingProfile = $null
+    if (Test-Path $profilePath) {
+        try { $existingProfile = ConvertTo-PlainOrdered (Get-Content $profilePath -Raw | ConvertFrom-Json) } catch {}
+    }
+
+    $framesList = @($FramesArray)
+    $maxRpm = 0.0; $maxSpd = 0; $maxCool = 0
+    foreach ($fr in $framesList) {
+        if ($null -eq $fr) { continue }
+        $r = 0.0; $sp = 0; $co = 0
+        try { $r = [double]$fr['rpm'] } catch { try { $r = [double]$fr.rpm } catch {} }
+        try { $sp = [int]$fr['spd'] } catch { try { $sp = [int]$fr.spd } catch {} }
+        try { $co = [int]$fr['coolant'] } catch { try { $co = [int]$fr.coolant } catch {} }
+        if ($r -gt $maxRpm) { $maxRpm = $r }
+        if ($sp -gt $maxSpd) { $maxSpd = $sp }
+        if ($co -gt $maxCool) { $maxCool = $co }
+    }
+    $nowIso = (Get-Date).ToUniversalTime().ToString('o')
+    if ($LatestMetrics -and $LatestMetrics['timestamp']) { $nowIso = [string]$LatestMetrics['timestamp'] }
+    elseif ($LatestMetrics -and $LatestMetrics['ts']) { $nowIso = [string]$LatestMetrics['ts'] }
+
+    $sessFileRel = "sessions/$SessionId.json"
+    if ($SessionId) {
+        $sessionObj = [ordered]@{
+            id              = $SessionId
+            vin             = $safeVin
+            vehicleLabel    = $VehicleInfo.label
+            engine          = $VehicleInfo.engine
+            partNumber      = $VehicleInfo.partNumber
+            transport       = $TransportLabel
+            readOnlyEnforced = $true
+            startedAt       = $SessionStartedAt
+            updatedAt       = $nowIso
+            sampleCount     = $framesList.Count
+            maxRpm          = $maxRpm
+            maxSpd          = $maxSpd
+            maxCoolant      = $maxCool
+            frames          = $framesList
+        }
+        if ($StaticDump) { $sessionObj['staticDump'] = $StaticDump }
+        Write-JsonFileNoBom -FilePath (Join-Path $sessDir "$SessionId.json") -DataObj $sessionObj -Depth 8
+    }
+
+    $mergedSessions = New-Object System.Collections.ArrayList
+    if ($existingProfile -and $existingProfile['sessions']) {
+        foreach ($es in @($existingProfile['sessions'])) {
+            $esId = if ($es -is [System.Collections.IDictionary]) { $es['id'] } else { $es.id }
+            if ($esId -and $esId -ne $SessionId) {
+                $null = $mergedSessions.Add($es)
+            }
+        }
+    }
+    if ($SessionId) {
+        $sessMetaEntry = [ordered]@{
+            id          = $SessionId
+            startedAt   = $SessionStartedAt
+            updatedAt   = $nowIso
+            transport   = $TransportLabel
+            sampleCount = $framesList.Count
+            maxRpm      = $maxRpm
+            maxSpd      = $maxSpd
+            maxCoolant  = $maxCool
+            file        = $sessFileRel
+        }
+        $null = $mergedSessions.Add($sessMetaEntry)
+    }
+
+    $firstSeen = if ($existingProfile -and $existingProfile['firstSeenAt']) { $existingProfile['firstSeenAt'] } elseif ($SessionStartedAt) { $SessionStartedAt } else { $nowIso }
+    $profileObj = [ordered]@{
+        vin             = $safeVin
+        label           = if ($VehicleInfo.label) { $VehicleInfo.label } elseif ($existingProfile -and $existingProfile['label']) { $existingProfile['label'] } else { "Vehicle $safeVin" }
+        engine          = if ($VehicleInfo.engine) { $VehicleInfo.engine } elseif ($existingProfile) { $existingProfile['engine'] } else { '' }
+        ecuName         = if ($VehicleInfo.ecuName) { $VehicleInfo.ecuName } elseif ($existingProfile) { $existingProfile['ecuName'] } else { '' }
+        partNumber      = if ($VehicleInfo.partNumber) { $VehicleInfo.partNumber } elseif ($existingProfile) { $existingProfile['partNumber'] } else { '' }
+        softwareVersion = if ($VehicleInfo.softwareVersion) { $VehicleInfo.softwareVersion } elseif ($existingProfile) { $existingProfile['softwareVersion'] } else { '' }
+        hardwarePart    = if ($VehicleInfo.hardwarePart) { $VehicleInfo.hardwarePart } elseif ($existingProfile) { $existingProfile['hardwarePart'] } else { '' }
+        hardwareVersion = if ($VehicleInfo.hardwareVersion) { $VehicleInfo.hardwareVersion } elseif ($existingProfile) { $existingProfile['hardwareVersion'] } else { '' }
+        asamDataset     = if ($VehicleInfo.asamDataset) { $VehicleInfo.asamDataset } elseif ($existingProfile) { $existingProfile['asamDataset'] } else { '' }
+        asamVersion     = if ($VehicleInfo.asamVersion) { $VehicleInfo.asamVersion } elseif ($existingProfile) { $existingProfile['asamVersion'] } else { '' }
+        calid           = if ($VehicleInfo.calid) { $VehicleInfo.calid } elseif ($existingProfile) { $existingProfile['calid'] } else { '' }
+        cvn             = if ($VehicleInfo.cvn) { $VehicleInfo.cvn } elseif ($existingProfile) { $existingProfile['cvn'] } else { '' }
+        protocol        = if ($VehicleInfo.protocol) { $VehicleInfo.protocol } elseif ($existingProfile) { $existingProfile['protocol'] } else { '' }
+        firstSeenAt     = $firstSeen
+        lastSeenAt      = $nowIso
+        sessionCount    = $mergedSessions.Count
+        sessions        = $mergedSessions.ToArray()
+    }
+    Write-JsonFileNoBom -FilePath $profilePath -DataObj $profileObj -Depth 7
+
+    $latestSummary = [ordered]@{
+        rpm           = 0
+        spd           = 0
+        coolant       = 0
+        volt          = 0
+        fuel          = 0
+        dtcCount      = 0
+        engineRunning = $false
+    }
+    if ($LatestMetrics) {
+        $latestSummary.rpm           = $LatestMetrics['rpm']
+        $latestSummary.spd           = $LatestMetrics['spd']
+        $latestSummary.coolant       = $LatestMetrics['coolant']
+        $latestSummary.volt          = $LatestMetrics['volt']
+        $latestSummary.fuel          = $LatestMetrics['fuel']
+        $latestSummary.dtcCount      = $LatestMetrics['dtcCount']
+        $latestSummary.engineRunning = $LatestMetrics['engineRunning']
+
+        $latestDoc = [ordered]@{
+            v             = 3
+            ts            = $nowIso
+            vin           = $safeVin
+            vehicleLabel  = $profileObj.label
+            sessionId     = $SessionId
+            src           = $SourceTag
+            variableCount = 124
+            metrics       = $LatestMetrics
+        }
+        Write-JsonFileNoBom -FilePath $latestPath -DataObj $latestDoc -Depth 7
+    }
+
+    $existingIndex = $null
+    if (Test-Path $indexPath) {
+        try { $existingIndex = ConvertTo-PlainOrdered (Get-Content $indexPath -Raw | ConvertFrom-Json) } catch {}
+    }
+    $mergedVehicles = New-Object System.Collections.ArrayList
+    if ($existingIndex -and $existingIndex['vehicles']) {
+        foreach ($ev in @($existingIndex['vehicles'])) {
+            $evVin = if ($ev -is [System.Collections.IDictionary]) { $ev['vin'] } else { $ev.vin }
+            if ($evVin -and $evVin -ne $safeVin) {
+                $null = $mergedVehicles.Add($ev)
+            }
+        }
+    }
+    $null = $mergedVehicles.Add([ordered]@{
+        vin             = $safeVin
+        label           = $profileObj.label
+        engine          = $profileObj.engine
+        ecuName         = $profileObj.ecuName
+        partNumber      = $profileObj.partNumber
+        softwareVersion = $profileObj.softwareVersion
+        hardwarePart    = $profileObj.hardwarePart
+        hardwareVersion = $profileObj.hardwareVersion
+        calid           = $profileObj.calid
+        cvn             = $profileObj.cvn
+        firstSeenAt     = $profileObj.firstSeenAt
+        lastSeenAt      = $profileObj.lastSeenAt
+        sessionCount    = $profileObj.sessionCount
+        latestSummary   = $latestSummary
+        profilePath     = "vehicle_history/$safeVin/vehicle_profile.json"
+        latestPath      = "vehicle_history/$safeVin/latest.json"
+        sessionsDir     = "vehicle_history/$safeVin/sessions"
+    })
+    $indexDoc = [ordered]@{
+        version   = 1
+        updatedAt = (Get-Date).ToUniversalTime().ToString('o')
+        note      = 'Per-vehicle telemetry archive inside the PulseOBD project folder. Each new vehicle gets its own <VIN>/ subfolder and individual session records.'
+        vehicles  = $mergedVehicles.ToArray()
+    }
+    Write-JsonFileNoBom -FilePath $indexPath -DataObj $indexDoc -Depth 8
+    return [ordered]@{
+        vin         = $safeVin
+        profilePath = $profilePath
+        indexPath   = $indexPath
+        sessionCount = $profileObj.sessionCount
+    }
+}
+
+function Save-BridgeFrameToProjectFolder {
+    param(
+        [string]$HistoryRoot,
+        $VehicleInfo,
+        [string]$SessionId,
+        [string]$SessionStartedAt,
+        $Payload,
+        [switch]$ForceJsonFlush
+    )
+    if (-not $HistoryRoot -or -not $Payload) { return }
+    $safeVin = Get-SafeVinName -RawVin ([string]$VehicleInfo.vin) -FallbackPart ([string]$VehicleInfo.partNumber)
+    $sessDir = Join-Path (Join-Path $HistoryRoot $safeVin) 'sessions'
+    if (-not (Test-Path $sessDir)) {
+        $null = New-Item -ItemType Directory -Path $sessDir -Force
+    }
+    $frameObj = [ordered]@{
+        ts            = $Payload.timestamp
+        src           = 'com3_bridge'
+        rpm           = $Payload.rpm
+        spd           = $Payload.spd
+        load          = $Payload.load
+        absLoad       = $Payload.absLoad
+        coolant       = $Payload.coolant
+        iat           = $Payload.iat
+        amb           = $Payload.amb
+        cat           = $Payload.cat
+        stft          = $Payload.stft
+        ltft          = $Payload.ltft
+        secO2Trim     = $Payload.secO2Trim
+        map           = $Payload.map
+        baro          = $Payload.baro
+        rail          = $Payload.rail
+        timing        = $Payload.timing
+        thr           = $Payload.thr
+        thrB          = $Payload.thrB
+        relThr        = $Payload.relThr
+        actThr        = $Payload.actThr
+        pedalD        = $Payload.pedalD
+        pedalE        = $Payload.pedalE
+        o2s1          = $Payload.o2s1
+        o2s2          = $Payload.o2s2
+        lambda        = $Payload.lambda
+        fuel          = $Payload.fuel
+        evap          = $Payload.evap
+        volt          = $Payload.volt
+        runtime       = $Payload.runtime
+        milOn         = $Payload.milOn
+        dtcCount      = $Payload.dtcCount
+        engineRunning = $Payload.engineRunning
+    }
+    $null = $script:SessionFrames.Add($frameObj)
+
+    $csvPath = Join-Path $sessDir "$SessionId.csv"
+    if (-not $script:SessionCsvWrittenHeader -and -not (Test-Path $csvPath)) {
+        $hdr = "timestamp,vin,rpm,spd,load,coolant,iat,amb,cat,stft,ltft,map,baro,rail,timing,thr,pedalD,o2s1,o2s2,lambda,fuel,evap,volt,runtime,dtcCount`r`n"
+        [System.IO.File]::WriteAllText($csvPath, $hdr, $script:Utf8NoBom)
+        $script:SessionCsvWrittenHeader = $true
+    }
+    $csvRow = "$($frameObj.ts),$safeVin,$($frameObj.rpm),$($frameObj.spd),$($frameObj.load),$($frameObj.coolant),$($frameObj.iat),$($frameObj.amb),$($frameObj.cat),$($frameObj.stft),$($frameObj.ltft),$($frameObj.map),$($frameObj.baro),$($frameObj.rail),$($frameObj.timing),$($frameObj.thr),$($frameObj.pedalD),$($frameObj.o2s1),$($frameObj.o2s2),$($frameObj.lambda),$($frameObj.fuel),$($frameObj.evap),$($frameObj.volt),$($frameObj.runtime),$($frameObj.dtcCount)`r`n"
+    [System.IO.File]::AppendAllText($csvPath, $csvRow, $script:Utf8NoBom)
+
+    if ($ForceJsonFlush -or $script:SessionFrames.Count -eq 1 -or ($script:SessionFrames.Count % 5 -eq 0)) {
+        $staticArg = if ($script:SessionFrames.Count -le 1) { $Payload.staticDump } else { $null }
+        $null = Upsert-ProjectVehicleFiles -HistoryRoot $HistoryRoot -VehicleInfo $VehicleInfo -SessionId $SessionId -SessionStartedAt $SessionStartedAt -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $frameObj -StaticDump $staticArg -SourceTag 'com3_bridge'
+    }
+}
+
 function Read-AllLiveTelemetry {
     param(
         [System.IO.Ports.SerialPort]$Port,
         [string[]]$PidList,
         [hashtable]$StaticSession,
+        $VehicleInfo,
         [int]$GapMs = 15
     )
     $rawMap = [ordered]@{}
@@ -243,8 +688,11 @@ function Read-AllLiveTelemetry {
     $voltVal = if ($b42.Count -ge 2) { [Math]::Round((256 * $b42[0] + $b42[1]) / 1000.0, 3) } else { [Math]::Round($atrvVolt, 3) }
     $fuelSysLabel = if ($engineRunning) { 'Closed loop (using O2 sensor)' } elseif ($ecuAwake) { 'Open loop — Engine Off' } else { 'Open loop — Engine/ECU Off' }
 
+    $vinVal = if ($VehicleInfo -and $VehicleInfo.vin) { [string]$VehicleInfo.vin } else { 'AAVZZZ6RZHU112564' }
     $payload = [ordered]@{
         timestamp     = (Get-Date).ToUniversalTime().ToString('o')
+        vin           = $vinVal
+        vehicle       = $VehicleInfo
         readOnly      = $true
         ecuAwake      = $ecuAwake
         engineRunning = $engineRunning
@@ -419,11 +867,21 @@ try {
     $null = Send-ElmReadOnly $port 'ATSP6'
     $null = Send-ElmReadOnly $port 'ATST32'
 
-    # Initial live sample
-    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
+    $ActiveVehicle = Resolve-VehicleIdentity -StaticSession $staticSession
+    Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
+    Write-Host "Identified Vehicle VIN: $($ActiveVehicle.vin) | $($ActiveVehicle.label) | Archive -> $VehicleHistoryRoot\$($ActiveVehicle.vin)" -ForegroundColor Cyan
+
+    # Initial live sample + immediate project-folder record creation
+    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+    try {
+        Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -Payload $latestPayload -ForceJsonFlush
+    } catch {
+        Write-Warning "Project folder archive note: $($_.Exception.Message)"
+    }
 
     $listener.Start()
     Write-Host "PulseOBD Bridge listening on http://localhost:$HttpPort/api/live" -ForegroundColor Green
+    Write-Host "Project Folder Archive API -> http://localhost:$HttpPort/api/vehicles" -ForegroundColor Green
     if ($EnableCloudStream -and $ResolvedCloudUrl) {
         Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
         if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
@@ -443,33 +901,118 @@ try {
             $req = $ctx.Request
             $res = $ctx.Response
             $res.Headers.Add('Access-Control-Allow-Origin', '*')
+            $res.Headers.Add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            $res.Headers.Add('Access-Control-Allow-Headers', 'Content-Type')
 
-            if ($req.Url.AbsolutePath -eq '/api/live' -or $req.Url.AbsolutePath -eq '/api/snapshot') {
-                if (-not $latestPayload) {
-                    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
+            $reqPath = $req.Url.AbsolutePath
+            $queryMap = @{}
+            if ($req.Url.Query) {
+                $qTrim = $req.Url.Query.TrimStart('?')
+                foreach ($pair in ($qTrim -split '&')) {
+                    if (-not $pair) { continue }
+                    $kv = $pair -split '=', 2
+                    $qk = [Uri]::UnescapeDataString($kv[0])
+                    $qv = if ($kv.Count -gt 1) { [Uri]::UnescapeDataString($kv[1]) } else { '' }
+                    $queryMap[$qk] = $qv
                 }
-                $jsonBytes = [System.Text.Encoding]::UTF8.GetBytes(($latestPayload | ConvertTo-Json -Depth 6))
-                $res.ContentType = 'application/json'
+            }
+
+            if ($req.HttpMethod -eq 'OPTIONS') {
+                $res.StatusCode = 204
+            } elseif ($reqPath -eq '/api/live' -or $reqPath -eq '/api/snapshot') {
+                if (-not $latestPayload) {
+                    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                }
+                $jsonBytes = $Utf8NoBom.GetBytes(($latestPayload | ConvertTo-Json -Depth 6))
+                $res.ContentType = 'application/json; charset=utf-8'
                 $res.OutputStream.Write($jsonBytes, 0, $jsonBytes.Length)
-            } elseif ($req.Url.AbsolutePath -eq '/api/cloud-status') {
+            } elseif ($reqPath -eq '/api/vehicles') {
+                $idxFile = Join-Path $VehicleHistoryRoot 'vehicles_index.json'
+                $outTxt = if (Test-Path $idxFile) { [System.IO.File]::ReadAllText($idxFile, $Utf8NoBom) } else { '{"version":1,"vehicles":[]}' }
+                $vBytes = $Utf8NoBom.GetBytes($outTxt)
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($vBytes, 0, $vBytes.Length)
+            } elseif ($reqPath -eq '/api/vehicle-history') {
+                $reqVin = if ($queryMap['vin']) { Get-SafeVinName -RawVin $queryMap['vin'] } elseif ($ActiveVehicle) { $ActiveVehicle.vin } else { 'AAVZZZ6RZHU112564' }
+                $reqSess = $queryMap['session']
+                $targetFile = if ($reqSess) {
+                    $safeSess = ($reqSess -replace '[^A-Za-z0-9_.-]', '')
+                    Join-Path (Join-Path (Join-Path $VehicleHistoryRoot $reqVin) 'sessions') "$safeSess.json"
+                } else {
+                    Join-Path (Join-Path $VehicleHistoryRoot $reqVin) 'vehicle_profile.json'
+                }
+                if (Test-Path $targetFile) {
+                    $outTxt = [System.IO.File]::ReadAllText($targetFile, $Utf8NoBom)
+                    $hBytes = $Utf8NoBom.GetBytes($outTxt)
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($hBytes, 0, $hBytes.Length)
+                } else {
+                    $res.StatusCode = 404
+                    $errBytes = $Utf8NoBom.GetBytes('{"error":"Not found"}')
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                }
+            } elseif ($reqPath -eq '/api/save-history' -and $req.HttpMethod -eq 'POST') {
+                try {
+                    $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                    $rawBody = $sr.ReadToEnd()
+                    $sr.Close()
+                    $bodyObj = ConvertTo-PlainOrdered ($rawBody | ConvertFrom-Json)
+                    $vInfo = if ($bodyObj['vehicle']) { $bodyObj['vehicle'] } else { [ordered]@{ vin = 'AAVZZZ6RZHU112564' } }
+                    $sMeta = if ($bodyObj['session']) { $bodyObj['session'] } else { [ordered]@{} }
+                    $sSamples = if ($bodyObj['samples']) { @($bodyObj['samples']) } else { @() }
+                    $sId = if ($sMeta['id']) { [string]$sMeta['id'] } else { 'drv_' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss') }
+                    $sStart = if ($sMeta['startedAt']) { [string]$sMeta['startedAt'] } else { (Get-Date).ToUniversalTime().ToString('o') }
+                    $sTrans = if ($sMeta['transport']) { [string]$sMeta['transport'] } else { 'Browser Client' }
+                    $lastSample = if ($sSamples.Count -gt 0) { $sSamples[$sSamples.Count - 1] } else { $null }
+                    $savedInfo = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $vInfo -SessionId $sId -SessionStartedAt $sStart -TransportLabel $sTrans -FramesArray $sSamples -LatestMetrics $lastSample -StaticDump $bodyObj['staticDump'] -SourceTag 'studio_web'
+                    $respJson = ($savedInfo | ConvertTo-Json -Depth 4)
+                    $rBytes = $Utf8NoBom.GetBytes($respJson)
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($rBytes, 0, $rBytes.Length)
+                } catch {
+                    $res.StatusCode = 400
+                    $errJson = ([ordered]@{ error = $_.Exception.Message } | ConvertTo-Json)
+                    $eBytes = $Utf8NoBom.GetBytes($errJson)
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($eBytes, 0, $eBytes.Length)
+                }
+            } elseif ($reqPath.StartsWith('/vehicle_history/')) {
+                $relPath = $reqPath.Substring('/vehicle_history/'.Length).TrimStart('/')
+                $candidate = [System.IO.Path]::GetFullPath((Join-Path $VehicleHistoryRoot ($relPath -replace '/', [System.IO.Path]::DirectorySeparatorChar)))
+                $rootFull = [System.IO.Path]::GetFullPath($VehicleHistoryRoot)
+                if ($candidate.StartsWith($rootFull) -and (Test-Path $candidate) -and -not (Get-Item $candidate).PSIsContainer) {
+                    $bytes = [System.IO.File]::ReadAllBytes($candidate)
+                    $res.ContentType = if ($candidate.EndsWith('.csv')) { 'text/csv; charset=utf-8' } else { 'application/json; charset=utf-8' }
+                    $res.OutputStream.Write($bytes, 0, $bytes.Length)
+                } else {
+                    $res.StatusCode = 404
+                    $errBytes = $Utf8NoBom.GetBytes('{"error":"Not found"}')
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($errBytes, 0, $errBytes.Length)
+                }
+            } elseif ($reqPath -eq '/api/cloud-status') {
                 $statusJson = [ordered]@{
                     provider     = $CloudProvider
                     channel      = $CloudChannel
+                    vin          = $ActiveVehicle.vin
+                    vehicleLabel = $ActiveVehicle.label
                     sessionId    = $TripSessionId
                     txCount      = $cloudTxCount
                     queuedCount  = $cloudOfflineQueue.Count
                     saveHistory  = $SaveCloudHistory
                     configured   = [bool]$ResolvedCloudUrl
+                    archiveRoot  = $VehicleHistoryRoot
                 } | ConvertTo-Json
-                $sBytes = [System.Text.Encoding]::UTF8.GetBytes($statusJson)
-                $res.ContentType = 'application/json'
+                $sBytes = $Utf8NoBom.GetBytes($statusJson)
+                $res.ContentType = 'application/json; charset=utf-8'
                 $res.OutputStream.Write($sBytes, 0, $sBytes.Length)
             } else {
                 $candidates = @(
                     (Join-Path $PSScriptRoot 'PulseOBD_Studio.html'),
                     (Join-Path $PSScriptRoot 'index.html'),
-                    (Join-Path $PSScriptRoot '..\PulseOBD_Studio.html'),
-                    (Join-Path $PSScriptRoot '..\index.html')
+                    (Join-Path $ProjectRoot 'PulseOBD_Studio.html'),
+                    (Join-Path $ProjectRoot 'index.html')
                 )
                 $htmlPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
                 if ($htmlPath) {
@@ -477,24 +1020,27 @@ try {
                     $res.ContentType = 'text/html; charset=utf-8'
                     $res.OutputStream.Write($bytes, 0, $bytes.Length)
                 } else {
-                    $msg = [System.Text.Encoding]::UTF8.GetBytes('PulseOBD Read-Only All-Variable COM3 + Firebase Auto-Sync Bridge Running.')
+                    $msg = $Utf8NoBom.GetBytes('PulseOBD Read-Only All-Variable COM3 + Project Folder Archive Bridge Running.')
                     $res.OutputStream.Write($msg, 0, $msg.Length)
                 }
             }
             $res.Close()
         }
 
-        # 2. Periodic autonomous COM3 poll + local JSON snapshot + Auto Cloud TX (Live + History)
+        # 2. Periodic autonomous COM3 poll + local JSON snapshot + per-VIN Project Folder Archive + Auto Cloud TX
         if ($lastPollSw.ElapsedMilliseconds -ge $PollIntervalMs) {
             $lastPollSw.Restart()
-            $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
+            $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
 
             if ($SaveLocalJson) {
                 try {
-                    $diagDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'diagnostics'
+                    $diagDir = Join-Path $ProjectRoot 'diagnostics'
                     if (-not (Test-Path $diagDir)) { $diagDir = $PSScriptRoot }
                     $outJsonPath = Join-Path $diagDir 'live_telemetry_latest.json'
-                    [System.IO.File]::WriteAllText($outJsonPath, ($latestPayload | ConvertTo-Json -Depth 6), [System.Text.Encoding]::UTF8)
+                    [System.IO.File]::WriteAllText($outJsonPath, ($latestPayload | ConvertTo-Json -Depth 6), $Utf8NoBom)
+                } catch {}
+                try {
+                    Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -Payload $latestPayload
                 } catch {}
             }
 
@@ -546,7 +1092,8 @@ try {
                     v             = 3
                     ts            = $latestPayload.timestamp
                     sessionId     = $TripSessionId
-                    vin           = 'AAVZZZ6RZHU112564'
+                    vin           = $ActiveVehicle.vin
+                    vehicle       = $ActiveVehicle
                     src           = 'com3_bridge'
                     variableCount = 124
                     metrics       = $metricsObj
@@ -559,7 +1106,7 @@ try {
                 $wireObj = if ($CloudProvider -eq 'supabase') {
                     [ordered]@{
                         channel_id = $CloudChannel
-                        vin        = 'AAVZZZ6RZHU112564'
+                        vin        = $ActiveVehicle.vin
                         payload    = $packetObj
                     }
                 } else {
@@ -611,7 +1158,7 @@ try {
                                 $lastMetaSw.Restart()
                                 $metaBody = ([ordered]@{
                                     id          = $TripSessionId
-                                    vin         = 'AAVZZZ6RZHU112564'
+                                    vin         = $ActiveVehicle.vin
                                     transport   = 'com3_bridge'
                                     startedAt   = $sessionStartedAt
                                     updatedAt   = $latestPayload.timestamp
@@ -649,6 +1196,13 @@ try {
         Start-Sleep -Milliseconds 35
     }
 } finally {
+    if ($SaveLocalJson -and $ActiveVehicle -and $script:SessionFrames.Count -gt 0) {
+        try {
+            $lastFr = $script:SessionFrames[$script:SessionFrames.Count - 1]
+            $null = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $lastFr -StaticDump $staticSession -SourceTag 'com3_bridge'
+            Write-Host "Saved $($script:SessionFrames.Count) frame(s) to $VehicleHistoryRoot\$($ActiveVehicle.vin)\sessions\$TripSessionId.json" -ForegroundColor Green
+        } catch {}
+    }
     if ($null -ne $httpClient) { $httpClient.Dispose() }
     if ($listener.IsListening) { $listener.Stop() }
     if ($port.IsOpen) {

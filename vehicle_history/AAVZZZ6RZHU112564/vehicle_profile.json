@@ -1,0 +1,52 @@
+{
+  "vin": "AAVZZZ6RZHU112564",
+  "label": "VW Polo 1.2L TSI (R4 1.2l TFS)",
+  "engine": "R4 1.2l TFS",
+  "ecuName": "ECM-EngineControl",
+  "partNumber": "04E906027LH",
+  "softwareVersion": "3997",
+  "hardwarePart": "04E907309AF",
+  "hardwareVersion": "H24",
+  "asamDataset": "EV_ECM12TFS01104E906027LH",
+  "asamVersion": "001002",
+  "calid": "04E027LH3997AAAD",
+  "cvn": "40819633",
+  "adapter": {
+    "AT@1": "OBDII to RS232 Interpreter",
+    "ATRV_end": "13.9V",
+    "ATZ": "ATZ\n\n\nELM327 v2.1",
+    "ATRV": "13.8V",
+    "ATI": "ELM327 v2.1"
+  },
+  "protocol": "AUTO, (A6)",
+  "mode01SupportedCount": 39,
+  "mode06SupportedCount": 16,
+  "mode09SupportedCount": 5,
+  "firstSeenAt": "2026-11-16T16:43:04.8188996+02:00",
+  "lastSeenAt": "2026-11-16T17:14:08.0506401+02:00",
+  "sessionCount": 2,
+  "sessions": [
+    {
+      "id": "session_2026-11-16_164304_idle_dump",
+      "startedAt": "2026-11-16T16:43:04.8188996+02:00",
+      "updatedAt": "2026-11-16T16:43:04.8188996+02:00",
+      "transport": "COM3 · ELM327 v2.1 (Initial Dump)",
+      "sampleCount": 1,
+      "maxRpm": 774,
+      "maxSpd": 0,
+      "maxCoolant": 98,
+      "file": "sessions/session_2026-11-16_164304_idle_dump.json"
+    },
+    {
+      "id": "session_2026-11-16_171007_idle_followup",
+      "startedAt": "2026-11-16T17:10:07+02:00",
+      "updatedAt": "2026-11-16T17:14:08.0506401+02:00",
+      "transport": "COM3 · ELM327 v2.1 (Follow-up + Mode 06/UDS)",
+      "sampleCount": 2,
+      "maxRpm": 774,
+      "maxSpd": 0,
+      "maxCoolant": 98,
+      "file": "sessions/session_2026-11-16_171007_idle_followup.json"
+    }
+  ]
+}

@@ -259,8 +259,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 VW Polo 1.2 TSI · 16:43 Dump
               </span>
             </div>
-            <p class="text-xs text-[#5A5F6A] hidden sm:block mt-0.5">
-              VIN <span class="font-mono-num text-[#222222] font-medium">AAVZZZ6RZHU112564</span> · Engine <span class="font-mono-num text-[#222222] font-medium">R4 1.2l TFS (04E906027LH)</span> · <span class="font-mono-num">124 Variables Mapped</span>
+            <p id="header-vehicle-meta" class="text-xs text-[#5A5F6A] hidden sm:block mt-0.5">
+              VIN <span id="hdr-vin" class="font-mono-num text-[#222222] font-medium">AAVZZZ6RZHU112564</span> · Engine <span id="hdr-engine" class="font-mono-num text-[#222222] font-medium">R4 1.2l TFS (04E906027LH)</span> · <span class="font-mono-num">124 Variables Mapped</span>
             </p>
           </div>
         </div>
@@ -350,8 +350,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <h2 class="text-xl sm:text-[34px] font-bold tracking-[-0.03em] leading-[1.15] text-[#222222]">
           Live drive telemetry &amp; cloud health
         </h2>
-        <p class="mt-1.5 text-xs sm:text-sm text-[#4A4E57] max-w-xl mx-auto leading-relaxed">
-          Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and real-time online streaming for your VW Polo 1.2L TSI.
+        <p id="hero-vehicle-subtitle" class="mt-1.5 text-xs sm:text-sm text-[#4A4E57] max-w-xl mx-auto leading-relaxed">
+          Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and per-VIN project folder archiving for your VW Polo 1.2L TSI.
         </p>
 
         <!-- Signature Dual Pill CTAs -->
@@ -758,18 +758,52 @@ Check your Browserslist config to be sure that your targets are set up correctly
       </section>
 
       <!-- =================================================================== -->
-      <!-- TAB 2B: DRIVE HISTORY & TIMELINE INSPECTOR                          -->
+      <!-- TAB 2B: DRIVE HISTORY & PER-VIN PROJECT FOLDER ARCHIVE              -->
       <!-- =================================================================== -->
       <section id="tab-history" class="hidden space-y-4">
-        <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-bold text-[#222222]">Drive History &amp; On-Device Trip Archive</h2>
-            <p class="text-xs text-[#5A5F6A]">All drives passively recorded in IndexedDB (<code class="font-mono-num">PulseOBD_DriveDB</code>) and auto-synced to Firebase when online.</p>
+        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-base font-bold text-[#222222]">Vehicle History &amp; Project Folder Archive</h2>
+                <span id="folder-sync-badge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold">PROJECT FOLDER · vehicle_history/</span>
+              </div>
+              <p class="text-xs text-[#5A5F6A] mt-0.5">Saves individual records per VIN (<code class="font-mono-num">vehicle_history/&lt;VIN&gt;/</code>) in your project folder + on-device IndexedDB (<code class="font-mono-num">PulseOBD_DriveDB</code>).</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="saveCurrentBufferAsDrive()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Save Current Drive Now</button>
+              <button id="btn-link-project-folder" onclick="linkProjectDirectory()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Link Project Folder</button>
+              <button onclick="syncAllVehiclesToProjectFolder(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Save All to Project Folder</button>
+              <button onclick="toggleNewVehicleForm()" class="text-xs px-3 py-1.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold hover:bg-[#DBEAFE] transition">+ Add / Switch Vehicle</button>
+              <button onclick="syncPendingDrivesToFirebase(true)" class="text-xs px-3 py-1.5 acro-pill-secondary">Sync Firebase</button>
+              <button onclick="clearStoredDrives()" class="text-xs px-3 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Local</button>
+            </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="saveCurrentBufferAsDrive()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Save Current Drive Now</button>
-            <button onclick="syncPendingDrivesToFirebase(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Sync Drives to Firebase</button>
-            <button onclick="clearStoredDrives()" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear History</button>
+
+          <!-- Inline New Vehicle Registration / Switch Form -->
+          <div id="new-vehicle-form" class="hidden acro-well rounded-2xl p-3.5 border border-[#D7DFF6] space-y-2.5 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-bold text-[#222222]">Create Individual Vehicle Record (<code class="font-mono-num text-[#1473E6]">vehicle_history/&lt;VIN&gt;/</code>)</span>
+              <span class="text-[11px] text-[#5A5F6A]">Or connect OBD-II / import JSON — PulseOBD auto-reads VIN <code class="font-mono-num">0902</code> / <code class="font-mono-num">22F190</code></span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <input id="new-veh-vin" type="text" placeholder="VIN (e.g. WVWZZZ1KZ8W000001)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] uppercase focus:outline-none focus:border-[#222222]" />
+              <input id="new-veh-label" type="text" placeholder="Label (e.g. 2019 VW Golf 1.4 TSI)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <input id="new-veh-engine" type="text" placeholder="Engine (e.g. CZDA 1.4 TFSI)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <div class="flex gap-2">
+                <input id="new-veh-part" type="text" placeholder="ECU Part (optional)" class="min-w-0 flex-1 bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <button type="button" onclick="createNewVehicleRecordFromForm()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Create Record</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Individual Per-Vehicle Records Strip -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between gap-2 text-xs">
+              <span class="font-bold uppercase tracking-wider text-[#5A5F6A]">Registered Vehicles in Archive (<span id="hist-vehicle-count" class="font-mono-num text-[#222222]">1</span>)</span>
+              <span id="hist-active-filter-label" class="font-mono-num text-[#1473E6] font-semibold truncate">Showing: All Vehicles</span>
+            </div>
+            <div id="history-vehicle-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs"></div>
           </div>
         </div>
 
@@ -801,11 +835,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 flex flex-col min-w-0">
             <div class="flex items-center justify-between gap-2 mb-3">
-              <h3 class="text-sm font-bold text-[#222222]">Recorded Drive Sessions</h3>
+              <h3 class="text-sm font-bold text-[#222222]">Individual Vehicle Sessions</h3>
               <button onclick="refreshHistoryTab()" class="text-xs px-2.5 py-1 acro-pill-secondary">Refresh</button>
             </div>
             <div id="history-sessions-list" class="space-y-2 max-h-[380px] overflow-y-auto pr-1 text-xs">
-              <div class="text-[#5A5F6A] py-4">No drives stored yet. Click <strong>Save Current Drive Now</strong> or connect Bluetooth OBD-II to record automatically.</div>
+              <div class="text-[#5A5F6A] py-4">Loading vehicle history...</div>
             </div>
           </div>
 
@@ -924,7 +958,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Mode 06 Cylinder Balance (06A2 – 06A5)</span>
-                <h2 class="text-lg font-bold text-[#222222] mt-0.5">R4 1.2L TSI 4-Cylinder Misfire Infographic</h2>
+                <h2 id="info-engine-title" class="text-lg font-bold text-[#222222] mt-0.5">R4 1.2L TSI 4-Cylinder Misfire Infographic</h2>
               </div>
               <span class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold">
                 Firing Order: 1 - 3 - 4 - 2 · 0 Active Misfires
@@ -1148,7 +1182,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <div id="vin-firebase-box" class="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 p-3 space-y-2 text-[11px]">
                     <div class="flex items-center justify-between gap-2">
                       <span class="font-bold text-[#1473E6] uppercase tracking-wider">VIN Firebase URL</span>
-                      <span class="font-mono-num font-bold text-[#222222]">AAVZZZ6RZHU112564</span>
+                      <span id="cloud-vin-badge" class="font-mono-num font-bold text-[#222222]">AAVZZZ6RZHU112564</span>
                     </div>
                     <div class="bg-white border border-[#D7DFF6] rounded-xl p-2 font-mono-num text-[#222222] space-y-1">
                       <div class="text-[10px] text-[#5A5F6A]">Dedicated Vehicle Endpoint:</div>
@@ -1168,9 +1202,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
                     <details class="text-[#4A4E57]">
                       <summary class="cursor-pointer font-semibold text-[#222222]">Activate free DB in Firebase Console (4 steps)</summary>
                       <ol class="mt-1.5 list-decimal list-inside space-y-0.5 text-[11px]">
-                        <li>Open <span class="font-mono-num text-[#222222]">console.firebase.google.com</span> → <strong>Create project</strong> named <code class="font-mono-num font-bold text-[#1473E6]">pulseobd-aavzzz6rzhu112564</code>.</li>
+                        <li>Open <span class="font-mono-num text-[#222222]">console.firebase.google.com</span> → <strong>Create project</strong> named <code id="cloud-fb-project-code" class="font-mono-num font-bold text-[#1473E6]">pulseobd-aavzzz6rzhu112564</code>.</li>
                         <li>Go to <strong>Build → Realtime Database → Create Database</strong> (pick closest region).</li>
-                        <li>Set Rules for <code class="font-mono-num">vehicles/AAVZZZ6RZHU112564</code> to <code class="font-mono-num">read: true, write: true</code> (or paste DB Secret above).</li>
+                        <li>Set Rules for <code id="cloud-fb-rules-path" class="font-mono-num">vehicles/AAVZZZ6RZHU112564</code> to <code class="font-mono-num">read: true, write: true</code> (or paste DB Secret above).</li>
                         <li>Click <strong>Apply VIN Firebase URL</strong> above — auto-sync &amp; <code class="font-mono-num">/history</code> activate immediately.</li>
                       </ol>
                     </details>
@@ -1222,7 +1256,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               </div>
               <h3 class="text-base font-bold text-[#222222] mt-0.5">Auto-Save Live &amp; Trip History</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Streams all 124 variables to <span class="font-mono-num text-[#222222]">/vehicles/AAVZZZ6RZHU112564/latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
+                Streams all 124 variables to <span id="cloud-tx-path-lbl" class="font-mono-num text-[#222222]">/vehicles/AAVZZZ6RZHU112564/latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
               </p>
 
               <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
@@ -1289,7 +1323,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 </div>
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Remote Vehicle VIN</span>
-                  <strong class="font-mono-num text-[#222222]">AAVZZZ6RZHU112564</strong>
+                  <strong id="cloud-rx-vin-lbl" class="font-mono-num text-[#222222]">AAVZZZ6RZHU112564</strong>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Last Frame Received</span>
@@ -1315,13 +1349,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div>
               <h3 class="text-sm font-bold text-[#222222]">Live Cloud &amp; Firebase Sync Log</h3>
-              <p class="text-xs text-[#5A5F6A]">Real-time log of auto-connect events, Firebase <span class="font-mono-num">TX</span> (<span class="font-mono-num">/vehicles/AAVZZZ6RZHU112564/latest</span> + <span class="font-mono-num">history</span>), offline flushes, and <span class="font-mono-num">RX</span></p>
+              <p class="text-xs text-[#5A5F6A]">Real-time log of auto-connect events, Firebase <span class="font-mono-num">TX</span> (<span id="cloud-log-path-lbl" class="font-mono-num">/vehicles/AAVZZZ6RZHU112564/latest</span> + <span class="font-mono-num">history</span>), offline flushes, and <span class="font-mono-num">RX</span></p>
             </div>
             <button onclick="clearCloudLog()" class="text-xs px-3 py-1 acro-pill-secondary">Clear Log</button>
           </div>
           <div id="cloud-log" class="acro-well rounded-2xl p-3.5 h-44 overflow-y-auto font-mono-num text-xs space-y-1">
-            <div class="text-[#1473E6] font-semibold">[CLOUD] Firebase VIN Channel ready: AAVZZZ6RZHU112564 (/vehicles/AAVZZZ6RZHU112564/latest.json)</div>
-            <div class="text-[#5A5F6A]">[INFO] Click "Apply VIN Firebase URL" or paste your Firebase Console RTDB URL to persist privately and auto-sync whenever online.</div>
+            <div class="text-[#1473E6] font-semibold">[ARCHIVE] Local Project Folder archiving ready (vehicle_history/&lt;VIN&gt;/). Optional Cloud VIN Channel ready.</div>
+            <div class="text-[#5A5F6A]">[INFO] Drives are stored per VIN inside vehicle_history/ and IndexedDB; add a Firebase URL anytime to also mirror remotely.</div>
           </div>
         </div>
 
@@ -1399,7 +1433,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               </button>
               <label class="w-full py-2 px-4 acro-pill-secondary text-xs flex items-center justify-center gap-1.5 cursor-pointer">
                 <span>Import JSON Dump (Standard or Extended)</span>
-                <input type="file" accept=".json" onchange="importJsonDump(event)" class="hidden" />
+                <input id="json-import-input" type="file" accept=".json" onchange="importJsonDump(event)" class="hidden" />
               </label>
             </div>
           </div>
@@ -1798,11 +1832,39 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     // =========================================================================
-    // 4. APPLICATION & CLOUD RELAY STATE
+    // 4. APPLICATION, MULTI-VEHICLE ARCHIVE & CLOUD RELAY STATE
     // =========================================================================
     const CLOUD_STORAGE_KEY = 'pulseobd_cloud_cfg_v1';
     const BT_PREFS_KEY = 'pulseobd_bt_prefs_v1';
     const DEVICE_ROLE_KEY = 'pulseobd_device_role_v1';
+    const ACTIVE_VEHICLE_KEY = 'pulseobd_active_vehicle_v1';
+
+    const DEFAULT_VEHICLE_PROFILE = {
+      vin: 'AAVZZZ6RZHU112564',
+      label: 'VW Polo 1.2L TSI',
+      engine: 'R4 1.2l TFS',
+      ecuName: 'ECM-EngineControl',
+      partNumber: '04E906027LH',
+      softwareVersion: '3997',
+      hardwarePart: '04E907309AF',
+      hardwareVersion: 'H24',
+      calid: '04E027LH3997AAAD',
+      cvn: '40819633',
+      firstSeenAt: '2026-11-16T16:43:04.8188996+02:00',
+      lastSeenAt: '2026-11-16T17:14:08.0506401+02:00'
+    };
+
+    function loadRememberedVehicleProfile() {
+      try {
+        const raw = localStorage.getItem(ACTIVE_VEHICLE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.vin) return { ...parsed };
+        }
+      } catch (_) {}
+      return { ...DEFAULT_VEHICLE_PROFILE };
+    }
+
     const appState = {
       activeTab: 'cockpit',
       source: 'snap1',
@@ -1823,6 +1885,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       companionBleDevices: [],
       serialPollingActive: false,
       wifiPollTimer: null,
+      bridgeAutoSync: (typeof window !== 'undefined' && window.location && window.location.port === '8765'),
+      activeVehicle: loadRememberedVehicleProfile(),
+      vehicleRegistry: {},
+      historyVinFilter: 'ALL',
+      projectFolderHandle: null,
+      projectFolderName: '',
+      projectHistoryMeta: { loadedFrom: '', lastSavedAt: '', lastSavedVin: '' },
       current: { ...SNAPSHOTS.snap1 },
       history: [],
       cloud: {
@@ -1844,6 +1913,101 @@ Check your Browserslist config to be sure that your targets are set up correctly
         firebaseReachable: false
       }
     };
+    appState.vehicleRegistry[appState.activeVehicle.vin] = { ...appState.activeVehicle };
+
+    function normalizeVinString(rawVin, fallbackPart) {
+      if (rawVin) {
+        const clean = String(rawVin).toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (clean.length >= 6) return clean;
+      }
+      if (fallbackPart) {
+        const cleanPart = String(fallbackPart).toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+        if (cleanPart.length >= 4) return 'ECU_' + cleanPart;
+      }
+      return DEFAULT_VEHICLE_PROFILE.vin;
+    }
+
+    function getActiveVin() {
+      return (appState.activeVehicle && appState.activeVehicle.vin) || DEFAULT_VEHICLE_PROFILE.vin;
+    }
+
+    function updateVehicleIdentityDom() {
+      const v = appState.activeVehicle || DEFAULT_VEHICLE_PROFILE;
+      const vin = v.vin || DEFAULT_VEHICLE_PROFILE.vin;
+      const engParts = [v.engine || v.ecuName || 'OBD-II ECU', v.partNumber ? `(${v.partNumber})` : ''].filter(Boolean).join(' ');
+      const elHdrVin = document.getElementById('hdr-vin');
+      if (elHdrVin) elHdrVin.textContent = vin;
+      const elHdrEng = document.getElementById('hdr-engine');
+      if (elHdrEng) elHdrEng.textContent = engParts;
+      const elHeroSub = document.getElementById('hero-vehicle-subtitle');
+      if (elHeroSub) {
+        elHeroSub.textContent = `Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and per-VIN project folder archiving for your ${v.label || vin}.`;
+      }
+      const elInfoEng = document.getElementById('info-engine-title');
+      if (elInfoEng) {
+        elInfoEng.textContent = v.engine && v.engine.includes('1.2')
+          ? 'R4 1.2L TSI 4-Cylinder Misfire Infographic'
+          : `${v.engine || v.label || vin} · Cylinder Misfire Infographic`;
+      }
+      const fbProj = getSuggestedVinFirebaseProject(vin);
+      const elCloudVin = document.getElementById('cloud-vin-badge');
+      if (elCloudVin) elCloudVin.textContent = vin;
+      const elProjCode = document.getElementById('cloud-fb-project-code');
+      if (elProjCode) elProjCode.textContent = fbProj;
+      const elRulesPath = document.getElementById('cloud-fb-rules-path');
+      if (elRulesPath) elRulesPath.textContent = `vehicles/${vin}`;
+      const elTxLbl = document.getElementById('cloud-tx-path-lbl');
+      if (elTxLbl) elTxLbl.textContent = `/vehicles/${vin}/latest.json`;
+      const elRxVin = document.getElementById('cloud-rx-vin-lbl');
+      if (elRxVin) elRxVin.textContent = vin;
+      const elLogPath = document.getElementById('cloud-log-path-lbl');
+      if (elLogPath) elLogPath.textContent = `/vehicles/${vin}/latest`;
+    }
+
+    function registerOrSwitchVehicle(profileInput, opts = {}) {
+      const prevVin = getActiveVin();
+      const rawVin = profileInput?.vin || prevVin;
+      const vin = normalizeVinString(rawVin, profileInput?.partNumber);
+      const existing = appState.vehicleRegistry[vin] || {};
+      const nowIso = new Date().toISOString();
+      const merged = {
+        ...existing,
+        ...profileInput,
+        vin,
+        label: (profileInput?.label || existing.label || (vin === DEFAULT_VEHICLE_PROFILE.vin ? DEFAULT_VEHICLE_PROFILE.label : `Vehicle ${vin}`)).trim(),
+        engine: profileInput?.engine || existing.engine || (vin === DEFAULT_VEHICLE_PROFILE.vin ? DEFAULT_VEHICLE_PROFILE.engine : ''),
+        ecuName: profileInput?.ecuName || existing.ecuName || '',
+        partNumber: profileInput?.partNumber || existing.partNumber || '',
+        softwareVersion: profileInput?.softwareVersion || existing.softwareVersion || '',
+        hardwarePart: profileInput?.hardwarePart || existing.hardwarePart || '',
+        hardwareVersion: profileInput?.hardwareVersion || existing.hardwareVersion || '',
+        calid: profileInput?.calid || existing.calid || '',
+        cvn: profileInput?.cvn || existing.cvn || '',
+        firstSeenAt: profileInput?.firstSeenAt || existing.firstSeenAt || nowIso,
+        lastSeenAt: profileInput?.lastSeenAt || nowIso
+      };
+      appState.vehicleRegistry[vin] = merged;
+      if (typeof saveVehicleToDb === 'function') saveVehicleToDb(merged);
+
+      if (opts.activate !== false) {
+        appState.activeVehicle = merged;
+        try { localStorage.setItem(ACTIVE_VEHICLE_KEY, JSON.stringify(merged)); } catch (_) {}
+        const chInput = document.getElementById('cloud-channel-id');
+        if (chInput && (!chInput.value.trim() || chInput.value.trim() === prevVin)) {
+          chInput.value = vin;
+        }
+        updateVehicleIdentityDom();
+        if (typeof updateCloudProviderUi === 'function') updateCloudProviderUi();
+        if (typeof updateCloudBadges === 'function') updateCloudBadges();
+      }
+      if (opts.refreshUi !== false && appState.activeTab === 'history' && typeof refreshHistoryTab === 'function') {
+        refreshHistoryTab();
+      }
+      if (opts.persistProfile && typeof persistSessionToProjectFolder === 'function') {
+        persistSessionToProjectFolder(merged, null, [], null, { quiet: opts.quiet }).catch(() => {});
+      }
+      return merged;
+    }
 
     function seedHistory(baseSnap) {
       appState.history = [];
@@ -1855,7 +2019,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     seedHistory(SNAPSHOTS.snap1);
 
     // =========================================================================
-    // 5. REAL-TIME CLOUD TELEMETRY RELAY ENGINE (FIREBASE DEFAULT & AUTO-CONNECT)
+    // 5. REAL-TIME CLOUD TELEMETRY RELAY ENGINE (PROJECT FOLDER + OPTIONAL FIREBASE)
     // =========================================================================
     function logCloud(msg, cls = 'text-[#5A5F6A]') {
       const box = document.getElementById('cloud-log');
@@ -1892,27 +2056,32 @@ Check your Browserslist config to be sure that your targets are set up correctly
       } catch (_) {}
     }
 
-    const VEHICLE_VIN = 'AAVZZZ6RZHU112564';
-    const VIN_FIREBASE_PROJECT = 'pulseobd-' + VEHICLE_VIN.toLowerCase();
-    const VIN_FIREBASE_HOST = [VIN_FIREBASE_PROJECT + '-default-rtdb', 'firebaseio', 'com'].join('.');
+    function getSuggestedVinFirebaseProject(vin) {
+      const clean = normalizeVinString(vin || getActiveVin());
+      return 'pulseobd-' + clean.toLowerCase();
+    }
 
-    function getSuggestedVinFirebaseRootUrl() {
-      return 'https://' + VIN_FIREBASE_HOST;
+    function getSuggestedVinFirebaseRootUrl(vin) {
+      const proj = getSuggestedVinFirebaseProject(vin);
+      return 'https://' + [proj + '-default-rtdb', 'firebaseio', 'com'].join('.');
     }
 
     function getSuggestedVinFirebaseEndpointUrl() {
-      const ch = (document.getElementById('cloud-channel-id')?.value || VEHICLE_VIN).trim() || VEHICLE_VIN;
-      return `${getSuggestedVinFirebaseRootUrl()}/vehicles/${encodeURIComponent(ch)}`;
+      const activeVin = getActiveVin();
+      const ch = (document.getElementById('cloud-channel-id')?.value || activeVin).trim() || activeVin;
+      return `${getSuggestedVinFirebaseRootUrl(ch)}/vehicles/${encodeURIComponent(ch)}`;
     }
 
     function getNtfyTopicPath(ch) {
-      const clean = (ch || VEHICLE_VIN).trim() || VEHICLE_VIN;
+      const activeVin = getActiveVin();
+      const clean = (ch || activeVin).trim() || activeVin;
       return clean.toLowerCase().startsWith('pulseobd-') ? clean : `pulseobd-${clean}`;
     }
 
     function getCloudEndpointConfig() {
+      const activeVin = getActiveVin();
       const prov = document.getElementById('cloud-provider')?.value || 'firebase';
-      const channel = (document.getElementById('cloud-channel-id')?.value || VEHICLE_VIN).trim() || VEHICLE_VIN;
+      const channel = (document.getElementById('cloud-channel-id')?.value || activeVin).trim() || activeVin;
       const customUrl = (document.getElementById('cloud-custom-url')?.value || '').trim();
       const supabaseTable = (document.getElementById('cloud-supabase-table')?.value || 'pulseobd_telemetry').trim() || 'pulseobd_telemetry';
       const apiKey = (document.getElementById('cloud-api-key')?.value || '').trim();
@@ -1940,12 +2109,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
     function loadCloudConfig() {
       try {
         const raw = localStorage.getItem(CLOUD_STORAGE_KEY);
+        const activeVin = getActiveVin();
+        if (document.getElementById('cloud-channel-id') && !document.getElementById('cloud-channel-id').value.trim()) {
+          document.getElementById('cloud-channel-id').value = activeVin;
+        }
         if (!raw) return;
         const cfg = JSON.parse(raw);
         if (cfg.prov && document.getElementById('cloud-provider')) document.getElementById('cloud-provider').value = cfg.prov;
         const rawCh = (cfg.channel || '').trim();
         if (rawCh && document.getElementById('cloud-channel-id')) {
-          document.getElementById('cloud-channel-id').value = (rawCh === 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b' && !cfg.customUrl) ? VEHICLE_VIN : rawCh;
+          document.getElementById('cloud-channel-id').value = (rawCh === 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b' && !cfg.customUrl) ? activeVin : rawCh;
         }
         if (cfg.customUrl !== undefined && document.getElementById('cloud-custom-url')) document.getElementById('cloud-custom-url').value = cfg.customUrl;
         if (cfg.supabaseTable && document.getElementById('cloud-supabase-table')) document.getElementById('cloud-supabase-table').value = cfg.supabaseTable;
@@ -2022,8 +2195,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
               ? `VIN Firebase endpoint reachable & live (/vehicles/${cfg.channel}/latest.json + /history).`
               : `VIN Firebase URL saved locally (/vehicles/${cfg.channel}). Auto-sync armed — create DB in Firebase Console if not yet active.`;
           } else {
-            fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-medium';
-            fbStatusText.textContent = 'Click "Apply VIN Firebase URL" below or paste your Firebase Console RTDB URL to start auto-saving live & trip history.';
+            fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#F4F6FC] border border-[#D7DFF6] text-[#1E3A8A] font-medium';
+            fbStatusText.textContent = 'Saving to local Project Folder (vehicle_history/) by default. Optional: Click "Apply VIN Firebase URL" below whenever ready to mirror online.';
           }
         }
       } else if (prov === 'supabase') {
@@ -2053,15 +2226,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const provEl = document.getElementById('cloud-provider');
       const chEl = document.getElementById('cloud-channel-id');
       const urlEl = document.getElementById('cloud-custom-url');
+      const activeVin = getActiveVin();
       if (provEl) provEl.value = 'firebase';
-      if (chEl && !chEl.value.trim()) chEl.value = VEHICLE_VIN;
+      if (chEl && !chEl.value.trim()) chEl.value = activeVin;
       const endpoint = getSuggestedVinFirebaseEndpointUrl();
       if (urlEl) urlEl.value = endpoint;
       saveCloudConfig();
       updateCloudProviderUi();
       updateCloudBadges();
+      const projName = getSuggestedVinFirebaseProject(chEl?.value || activeVin);
       logCloud(`[VIN FIREBASE] Applied VIN endpoint: ${endpoint} (live at /latest.json & drives at /history).`, 'text-[#1473E6] font-bold');
-      logCloud(`[SETUP NOTE] Activate free Realtime Database for project "${VIN_FIREBASE_PROJECT}" in console.firebase.google.com if not created yet.`, 'text-[#5A5F6A]');
+      logCloud(`[SETUP NOTE] Activate free Realtime Database for project "${projName}" in console.firebase.google.com if not created yet.`, 'text-[#5A5F6A]');
       evaluateAutoCloudConnection('url-updated');
     }
 
@@ -2075,13 +2250,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     function downloadBridgeFirebaseConfig() {
       const cfg = getCloudEndpointConfig();
-      const ch = cfg.channel || VEHICLE_VIN;
+      const activeVin = getActiveVin();
+      const ch = cfg.channel || activeVin;
       const urlToUse = (cfg.prov === 'firebase' && isCloudEndpointConfigured(cfg))
         ? cfg.customUrl.replace(/\/+$/, '')
         : getSuggestedVinFirebaseEndpointUrl();
       const payload = {
         provider: 'firebase',
-        vin: VEHICLE_VIN,
+        vin: activeVin,
         channel: ch,
         url: urlToUse,
         auth: cfg.apiKey || ''
@@ -2125,7 +2301,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
           historyRootUrl: appendAuth(`${prefix}/history.json`)
         };
       }
-      const ch = encodeURIComponent((cfg.channel || VEHICLE_VIN).trim() || VEHICLE_VIN);
+      const activeVin = getActiveVin();
+      const ch = encodeURIComponent((cfg.channel || activeVin).trim() || activeVin);
       let rootPath;
       if (/\/vehicles\/[^/]+$/i.test(base) || /\/pulseobd\/[^/]+$/i.test(base)) {
         rootPath = base;
@@ -2159,12 +2336,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
     function buildCloudPacket(includeFullCatalog) {
       const d = appState.current;
       const drv = computeDerivedMetrics(d);
+      const activeVeh = appState.activeVehicle || DEFAULT_VEHICLE_PROFILE;
       const sessionId = passiveState.activeSessionId || ('session_' + new Date().toISOString().slice(0, 10));
       const packet = {
         v: 3,
         ts: new Date().toISOString(),
         sessionId,
-        vin: 'AAVZZZ6RZHU112564',
+        vin: activeVeh.vin,
+        vehicle: { ...activeVeh },
         src: appState.source,
         variableCount: 124,
         metrics: {
@@ -2314,10 +2493,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (statusBadge) statusBadge.textContent = `WATCHING ${cfg.prov.toUpperCase()} STREAM (RX)`;
         if (advState) advState.textContent = `Remote RX (#${rxCount})`;
       } else if (!configured && cfg.prov === 'firebase') {
-        if (pillText) pillText.textContent = 'FIREBASE URL NEEDED';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#F59E0B]';
-        if (statusBadge) statusBadge.textContent = 'ENTER FIREBASE URL';
-        if (advState) advState.textContent = 'Set Firebase DB URL';
+        if (pillText) pillText.textContent = 'PROJECT FOLDER · FB READY';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#1473E6]';
+        if (statusBadge) statusBadge.textContent = 'PROJECT FOLDER ACTIVE (CLOUD OPTIONAL)';
+        if (advState) advState.textContent = 'Project Folder Active';
       } else {
         if (pillText) pillText.textContent = `${cfg.prov.toUpperCase()} AUTO-ARMED`;
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#1473E6]';
@@ -2404,7 +2583,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             appState.cloud.lastHistoryMetaMs = nowMs;
             const sessMeta = {
               id: packet.sessionId || 'live_session',
-              vin: packet.vin || 'AAVZZZ6RZHU112564',
+              vin: packet.vin || getActiveVin(),
               transport: packet.src || 'live',
               updatedAt: packet.ts,
               lastRpm: packet.metrics?.rpm || 0,
@@ -2552,6 +2731,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
       appState.cloud.rxCount++;
       const elRx = document.getElementById('cloud-last-rx');
       if (elRx) elRx.textContent = new Date().toLocaleTimeString();
+
+      if (pkt.vin || (pkt.vehicle && pkt.vehicle.vin)) {
+        registerOrSwitchVehicle({
+          ...(pkt.vehicle || {}),
+          vin: pkt.vin || pkt.vehicle?.vin,
+          lastSeenAt: pkt.ts || new Date().toISOString()
+        }, { activate: true, refreshUi: false });
+      }
       updateCloudBadges();
 
       if (Array.isArray(pkt.readiness) && pkt.readiness.length === READINESS_MONITORS.length) {
@@ -2839,7 +3026,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id: sess.id,
-              vin: sess.vin || 'AAVZZZ6RZHU112564',
+              vin: sess.vin || getActiveVin(),
               transport: sess.transport || 'OBD-II',
               startedAt: sess.startedAt,
               updatedAt: sess.updatedAt,
@@ -2936,7 +3123,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             } else {
               appState.cloud.firebaseReachable = false;
               updateCloudProviderUi();
-              logCloud(`[FIREBASE CHECK] HTTP ${res.status} at ${paths.latestUrl} — create DB "${VIN_FIREBASE_PROJECT}" + open RTDB rules in Firebase Console (4 steps above). Frames stay queued safely offline.`, 'text-[#B45309]');
+              logCloud(`[FIREBASE CHECK] HTTP ${res.status} at ${paths.latestUrl} — create DB "${getSuggestedVinFirebaseProject(cfg.channel)}" + open RTDB rules in Firebase Console (4 steps above). Frames stay queued safely offline.`, 'text-[#B45309]');
             }
           }
         } catch (_) {
@@ -3460,12 +3647,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
           { key: 'evap', color: '#059669', min: 0, max: 100, width: 1.5 },
           { key: 'fuelLh', color: '#E13C7A', min: 0, max: 18, width: 1.7 }
         ], 0, 100);
-      } else if (appState.activeTab === 'history' && historyInspectSamples.length >= 2) {
+      } else if (appState.activeTab === 'history' && historyInspectSamples.length >= 1) {
+        const plotArr = historyInspectSamples.length === 1
+          ? [historyInspectSamples[0], historyInspectSamples[0]]
+          : historyInspectSamples;
         drawMultiLineCanvas('history-inspect-canvas', [
           { key: 'rpm', color: '#1473E6', min: 0, max: 6000, width: 2.2 },
           { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.1 },
           { key: 'coolant', color: '#D92B2B', min: 0, max: 115, width: 1.7 }
-        ], 0, 100, historyInspectSamples);
+        ], 0, 100, plotArr);
       }
     }
 
@@ -3561,12 +3751,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
         });
       });
 
+      const av = (typeof appState !== 'undefined' && appState.activeVehicle) ? appState.activeVehicle : { vin: 'AAVZZZ6RZHU112564', ecuName: 'ECM-EngineControl', calid: '04E027LH3997AAAD', cvn: '40819633', partNumber: '04E906027LH', softwareVersion: '3997', hardwarePart: '04E907309AF', engine: 'R4 1.2l TFS' };
+      const isDefaultPolo = !av.vin || av.vin === 'AAVZZZ6RZHU112564';
+
       list.push(
         { id: '0900', cat: 'MODE09', name: 'Mode 09 Supported PIDs Bitmask', val: '55 40 00 00 (02, 04, 06, 08, 0A)', raw: '7E8 06 49 00 55 40 00 00', status: 'Verified' },
-        { id: '0902', cat: 'MODE09', name: 'Vehicle Identification Number (VIN)', val: 'AAVZZZ6RZHU112564', raw: '49 02 01 41 41 56...', status: 'Verified' },
-        { id: '0904', cat: 'MODE09', name: 'Calibration ID (CALID)', val: '04E027LH3997AAAD', raw: '49 04 01 30 34 45...', status: 'Verified' },
-        { id: '0906', cat: 'MODE09', name: 'Calibration Verification Number (CVN)', val: '40819633', raw: '7E8 07 49 06 01 40 81 96 33', status: 'Verified' },
-        { id: '090A', cat: 'MODE09', name: 'ECU Name', val: 'ECM-EngineControl', raw: '49 0A 01 45 43 4D...', status: 'Verified' }
+        { id: '0902', cat: 'MODE09', name: 'Vehicle Identification Number (VIN)', val: av.vin || 'AAVZZZ6RZHU112564', raw: '49 02 01 ...', status: 'Verified' },
+        { id: '0904', cat: 'MODE09', name: 'Calibration ID (CALID)', val: av.calid || (isDefaultPolo ? '04E027LH3997AAAD' : 'N/A'), raw: '49 04 01 ...', status: av.calid || isDefaultPolo ? 'Verified' : 'Unqueried' },
+        { id: '0906', cat: 'MODE09', name: 'Calibration Verification Number (CVN)', val: av.cvn || (isDefaultPolo ? '40819633' : 'N/A'), raw: '7E8 07 49 06 ...', status: av.cvn || isDefaultPolo ? 'Verified' : 'Unqueried' },
+        { id: '090A', cat: 'MODE09', name: 'ECU Name', val: av.ecuName || 'ECM-EngineControl', raw: '49 0A 01 ...', status: 'Verified' }
       );
 
       IUMPR_COUNTERS.forEach(c => {
@@ -3587,6 +3780,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
             val: `${d.atrv} (${d.volt.toFixed(2)}V Pin 16 Live)`,
             status: voltState
           });
+        } else if (u.id === '22 F187') {
+          list.push({ ...u, val: av.partNumber || (isDefaultPolo ? u.val : '—') });
+        } else if (u.id === '22 F189') {
+          list.push({ ...u, val: av.softwareVersion || (isDefaultPolo ? u.val : '—') });
+        } else if (u.id === '22 F190') {
+          list.push({ ...u, val: av.vin || u.val });
+        } else if (u.id === '22 F191') {
+          list.push({ ...u, val: av.hardwarePart || (isDefaultPolo ? u.val : '—') });
+        } else if (u.id === '22 F197') {
+          list.push({ ...u, val: av.engine || (isDefaultPolo ? u.val : (av.label || '—')), status: isDefaultPolo ? u.status : 'Identified' });
         } else {
           list.push(u);
         }
@@ -3742,6 +3945,121 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return [];
     }
 
+    function parseElmIsoTpBytes(rawResp) {
+      if (!rawResp || /NO\s*DATA|UNABLE\s*TO\s*CONNECT|STOPPED|ERROR/i.test(rawResp)) return [];
+      const lines = rawResp.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const canLines = lines.filter(l => /^7E[8-F]\b/i.test(l) && !/\b7F\s+(01|09|22)\b/i.test(l));
+      let totalLen = 0;
+      const bytes = [];
+      if (canLines.length > 0) {
+        for (const l of canLines) {
+          const toks = l.split(/\s+/).filter(Boolean);
+          if (toks.length < 3) continue;
+          const pci = toks[1];
+          if (/^1[0-9A-F]$/i.test(pci) && toks.length >= 4) {
+            totalLen = ((parseInt(pci, 16) & 0x0F) << 8) | (parseInt(toks[2], 16) || 0);
+            for (let i = 3; i < toks.length; i++) {
+              const v = parseInt(toks[i], 16);
+              if (!Number.isNaN(v)) bytes.push(v);
+            }
+          } else if (/^2[0-9A-F]$/i.test(pci)) {
+            for (let i = 2; i < toks.length; i++) {
+              const v = parseInt(toks[i], 16);
+              if (!Number.isNaN(v)) bytes.push(v);
+            }
+          } else if (/^0[0-9A-F]$/i.test(pci)) {
+            const sfLen = parseInt(pci, 16) & 0x0F;
+            if (!totalLen && sfLen > 0) totalLen = sfLen;
+            for (let i = 2; i < toks.length && bytes.length < totalLen; i++) {
+              const v = parseInt(toks[i], 16);
+              if (!Number.isNaN(v)) bytes.push(v);
+            }
+          }
+        }
+      } else {
+        // Headerless ISO-TP fallback (e.g. "014\n0: 49 02 01 ...\n1: ...")
+        for (const l of lines) {
+          if (/^(SEARCHING|BUS|AT)/i.test(l) || /^[0-9A-F]{3}$/i.test(l)) {
+            if (/^[0-9A-F]{3}$/i.test(l)) totalLen = parseInt(l, 16) || totalLen;
+            continue;
+          }
+          const cleanLine = l.replace(/^[0-9A-F]+:\s*/i, '');
+          if (!/^([0-9A-F]{2}\s*)+$/i.test(cleanLine)) continue;
+          cleanLine.split(/\s+/).forEach(h => {
+            const v = parseInt(h, 16);
+            if (!Number.isNaN(v)) bytes.push(v);
+          });
+        }
+      }
+      if (totalLen > 0 && bytes.length > totalLen) return bytes.slice(0, totalLen);
+      return bytes;
+    }
+
+    function decodeElmAscii(rawResp, skipCount = 3) {
+      const bytes = parseElmIsoTpBytes(rawResp);
+      if (bytes.length <= skipCount) return '';
+      let out = '';
+      for (let i = skipCount; i < bytes.length; i++) {
+        const b = bytes[i];
+        if (b >= 32 && b <= 126) out += String.fromCharCode(b);
+      }
+      return out.trim();
+    }
+
+    function decodeElmHex(rawResp, skipCount = 3) {
+      const bytes = parseElmIsoTpBytes(rawResp);
+      if (bytes.length <= skipCount) return '';
+      return bytes.slice(skipCount).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('');
+    }
+
+    async function discoverLiveVehicleIdentity(sendElmFn, transportLabel) {
+      if (typeof sendElmFn !== 'function') return appState.activeVehicle;
+      const tryCmd = async (cmd, ms = 1200) => {
+        try { return await sendElmFn(cmd, ms); } catch (_) { return ''; }
+      };
+      try {
+        const r0902 = await tryCmd('0902', 1600);
+        const r0904 = await tryCmd('0904', 1400);
+        const r0906 = await tryCmd('0906', 1200);
+        const r090A = await tryCmd('090A', 1400);
+        let vin = decodeElmAscii(r0902, 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        if (vin.length < 6) {
+          const rF190 = await tryCmd('22F190', 1400);
+          vin = decodeElmAscii(rF190, 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        }
+        const calid = decodeElmAscii(r0904, 3);
+        const cvn = decodeElmHex(r0906, 3);
+        const ecuName = decodeElmAscii(r090A, 3);
+        const rF187 = await tryCmd('22F187', 1100);
+        const rF189 = await tryCmd('22F189', 1100);
+        const rF191 = await tryCmd('22F191', 1100);
+        const rF197 = await tryCmd('22F197', 1100);
+        const partNumber = decodeElmAscii(rF187, 3);
+        const softwareVersion = decodeElmAscii(rF189, 3);
+        const hardwarePart = decodeElmAscii(rF191, 3);
+        const engine = decodeElmAscii(rF197, 3);
+
+        if ((vin && vin.length >= 6) || partNumber) {
+          const finalVin = normalizeVinString(vin, partNumber);
+          const profile = registerOrSwitchVehicle({
+            vin: finalVin,
+            label: (engine && partNumber) ? `${engine} (${partNumber})` : (engine || ecuName || `Vehicle ${finalVin}`),
+            engine: engine || undefined,
+            ecuName: ecuName || 'ECM-EngineControl',
+            partNumber: partNumber || undefined,
+            softwareVersion: softwareVersion || undefined,
+            hardwarePart: hardwarePart || undefined,
+            calid: calid || undefined,
+            cvn: cvn || undefined,
+            lastSeenAt: new Date().toISOString()
+          }, { activate: true, persistProfile: true, quiet: true });
+          logTerminal(`[VEHICLE ID] Identified VIN ${profile.vin} (${profile.label || profile.engine || 'OBD-II'}) via ${transportLabel}. Archiving to vehicle_history/${profile.vin}/`, 'text-[#1473E6] font-semibold');
+          return profile;
+        }
+      } catch (_) {}
+      return appState.activeVehicle;
+    }
+
     function applyElmResponseToState(cmd, rawResp) {
       const clean = cmd.toUpperCase().replace(/\s+/g, '');
       const next = { ...appState.current };
@@ -3818,12 +4136,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     // =========================================================================
-    // 10B. PASSIVE PHONE DRIVE RECORDER & PERSISTENT INDEXEDDB STORAGE
+    // 10B. PASSIVE PHONE DRIVE RECORDER, INDEXEDDB v3 & PROJECT FOLDER ENGINE
     // =========================================================================
     const PASSIVE_PREFS_KEY = 'pulseobd_passive_prefs_v1';
     const LAST_FRAME_KEY = 'pulseobd_last_live_frame_v1';
     const DRIVE_DB_NAME = 'PulseOBD_DriveDB';
-    const DRIVE_DB_VERSION = 2;
+    const DRIVE_DB_VERSION = 3;
 
     const passiveState = {
       db: null,
@@ -3876,6 +4194,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
             if (!db.objectStoreNames.contains('cloudQueue')) {
               db.createObjectStore('cloudQueue', { keyPath: 'id', autoIncrement: true });
             }
+            if (!db.objectStoreNames.contains('vehicles')) {
+              db.createObjectStore('vehicles', { keyPath: 'vin' });
+            }
+            if (!db.objectStoreNames.contains('handles')) {
+              db.createObjectStore('handles', { keyPath: 'id' });
+            }
           };
           req.onsuccess = (ev) => {
             passiveState.db = ev.target.result;
@@ -3886,6 +4210,651 @@ Check your Browserslist config to be sure that your targets are set up correctly
           resolve(null);
         }
       });
+    }
+
+    async function saveVehicleToDb(veh) {
+      if (!veh || !veh.vin) return;
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('vehicles')) return;
+      try {
+        const tx = db.transaction('vehicles', 'readwrite');
+        tx.objectStore('vehicles').put({ ...veh, vin: normalizeVinString(veh.vin, veh.partNumber) });
+      } catch (_) {}
+    }
+
+    async function getAllStoredVehicles() {
+      const merged = { ...(appState.vehicleRegistry || {}) };
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('vehicles')) {
+        await new Promise((resolve) => {
+          try {
+            const req = db.transaction('vehicles', 'readonly').objectStore('vehicles').getAll();
+            req.onsuccess = () => {
+              (req.result || []).forEach(v => {
+                if (v && v.vin) merged[v.vin] = { ...(merged[v.vin] || {}), ...v };
+              });
+              resolve();
+            };
+            req.onerror = () => resolve();
+          } catch (_) {
+            resolve();
+          }
+        });
+      }
+      const av = appState.activeVehicle;
+      if (av && av.vin) merged[av.vin] = { ...(merged[av.vin] || {}), ...av };
+      appState.vehicleRegistry = merged;
+      return Object.values(merged).sort((a, b) => (b.lastSeenAt || '').localeCompare(a.lastSeenAt || ''));
+    }
+
+    async function saveHandleToDb(id, handle) {
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('handles')) return;
+      try {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put({ id, handle, savedAt: new Date().toISOString() });
+      } catch (_) {}
+    }
+
+    async function loadHandleFromDb(id) {
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('handles')) return null;
+      return new Promise((resolve) => {
+        try {
+          const req = db.transaction('handles', 'readonly').objectStore('handles').get(id);
+          req.onsuccess = () => resolve(req.result ? req.result.handle : null);
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    }
+
+    function getBridgeBaseUrl() {
+      if (typeof window !== 'undefined' && window.location && window.location.port === '8765') {
+        return window.location.origin;
+      }
+      const inp = document.getElementById('bridge-url-input');
+      return (inp && inp.value ? inp.value : 'http://localhost:8765').replace(/\/+$/, '');
+    }
+
+    function updateProjectFolderBadge(extraText) {
+      const badge = document.getElementById('folder-sync-badge');
+      const linkBtn = document.getElementById('btn-link-project-folder');
+      if (appState.projectFolderHandle) {
+        if (badge) {
+          badge.textContent = extraText || `LINKED FOLDER: ${appState.projectFolderName || appState.projectFolderHandle.name}/vehicle_history/`;
+          badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold';
+        }
+        if (linkBtn) {
+          linkBtn.textContent = `Linked: ${appState.projectFolderName || appState.projectFolderHandle.name} ✓`;
+          linkBtn.className = 'text-xs px-3.5 py-1.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold transition';
+        }
+      } else if (appState.bridgeAutoSync) {
+        if (badge) {
+          badge.textContent = extraText || 'BRIDGE ARCHIVE · vehicle_history/';
+          badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold';
+        }
+        if (linkBtn) {
+          linkBtn.textContent = 'Link Project Folder';
+          linkBtn.className = 'text-xs px-3.5 py-1.5 acro-pill-secondary';
+        }
+      } else {
+        if (badge) {
+          badge.textContent = extraText || 'PROJECT FOLDER · vehicle_history/';
+          badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold';
+        }
+        if (linkBtn) {
+          linkBtn.textContent = 'Link Project Folder';
+          linkBtn.className = 'text-xs px-3.5 py-1.5 acro-pill-secondary';
+        }
+      }
+    }
+
+    async function ensureDirHandlePermission(handle, interactive) {
+      if (!handle) return false;
+      try {
+        if (typeof handle.queryPermission === 'function') {
+          const perm = await handle.queryPermission({ mode: 'readwrite' });
+          if (perm === 'granted') return true;
+          if (interactive && typeof handle.requestPermission === 'function') {
+            const reqPerm = await handle.requestPermission({ mode: 'readwrite' });
+            return reqPerm === 'granted';
+          }
+          return false;
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function resolveVehicleHistoryDirHandle(rootHandle, createIfMissing) {
+      if (!rootHandle) return null;
+      const nameLower = String(rootHandle.name || '').toLowerCase();
+      if (nameLower === 'vehicle_history') return rootHandle;
+      return await rootHandle.getDirectoryHandle('vehicle_history', { create: Boolean(createIfMissing) });
+    }
+
+    async function writeJsonToDirHandle(dirHandle, filename, obj) {
+      const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify(obj, null, 2) + '\n');
+      await writable.close();
+    }
+
+    async function readJsonFromDirHandle(dirHandle, filename) {
+      try {
+        const fileHandle = await dirHandle.getFileHandle(filename, { create: false });
+        const file = await fileHandle.getFile();
+        const txt = await file.text();
+        return JSON.parse(txt);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function linkProjectDirectory() {
+      if (typeof window.showDirectoryPicker !== 'function') {
+        logTerminal('[PROJECT FOLDER] Direct folder linking requires Chrome or Edge on Desktop/Android. Exporting archive bundle instead...', 'text-[#B45309]');
+        await syncAllVehiclesToProjectFolder(true);
+        return;
+      }
+      try {
+        const handle = await window.showDirectoryPicker({ id: 'pulseobd-project-folder', mode: 'readwrite' });
+        appState.projectFolderHandle = handle;
+        appState.projectFolderName = handle.name || 'project';
+        await saveHandleToDb('projectFolder', handle);
+        updateProjectFolderBadge();
+        logTerminal(`[PROJECT FOLDER] Linked "${appState.projectFolderName}". Merging existing records and saving vehicle_history/<VIN>/ files...`, 'text-[#047857] font-semibold');
+        await loadProjectHistoryManifest();
+        await syncAllVehiclesToProjectFolder(false);
+        await refreshHistoryTab();
+      } catch (err) {
+        if (err && err.name !== 'AbortError') {
+          logTerminal(`[PROJECT FOLDER] Could not link folder: ${err.message}`, 'text-[#B45309]');
+        }
+      }
+    }
+
+    async function buildVehiclesIndexPayload(vehiclesList, allSessions) {
+      const items = (vehiclesList || []).map(v => {
+        const vSessions = (allSessions || []).filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === v.vin);
+        const profRel = `vehicle_history/${v.vin}/vehicle_profile.json`;
+        return {
+          vin: v.vin,
+          label: v.label || `Vehicle ${v.vin}`,
+          engine: v.engine || '',
+          ecuName: v.ecuName || 'ECM-EngineControl',
+          partNumber: v.partNumber || '',
+          softwareVersion: v.softwareVersion || '',
+          hardwarePart: v.hardwarePart || '',
+          hardwareVersion: v.hardwareVersion || '',
+          calid: v.calid || '',
+          cvn: v.cvn || '',
+          firstSeenAt: v.firstSeenAt || new Date().toISOString(),
+          lastSeenAt: v.lastSeenAt || new Date().toISOString(),
+          sessionCount: vSessions.length,
+          latestSummary: v.latestSummary || {},
+          profilePath: profRel,
+          latestPath: `vehicle_history/${v.vin}/latest.json`,
+          sessionsDir: `vehicle_history/${v.vin}/sessions`
+        };
+      });
+      return {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        note: 'Per-vehicle telemetry archive inside the PulseOBD project folder. Each new vehicle gets its own <VIN>/ subfolder and individual session records.',
+        vehicles: items
+      };
+    }
+
+    async function persistSessionToProjectFolder(vehicleProfile, sessionMeta, samples, staticDump, opts = {}) {
+      const rawVin = vehicleProfile?.vin || sessionMeta?.vin || getActiveVin();
+      const vin = normalizeVinString(rawVin, vehicleProfile?.partNumber);
+      const veh = { ...(appState.vehicleRegistry[vin] || {}), ...(vehicleProfile || {}), vin, lastSeenAt: new Date().toISOString() };
+      const lastFrame = (Array.isArray(samples) && samples.length > 0) ? samples[samples.length - 1] : null;
+      if (lastFrame) {
+        veh.latestSummary = {
+          rpm: Number((lastFrame.rpm || 0).toFixed(1)),
+          spd: Math.round(lastFrame.spd || 0),
+          coolant: Math.round(lastFrame.coolant || 0),
+          volt: Number((lastFrame.volt || 0).toFixed(3)),
+          fuel: Number((lastFrame.fuel || 0).toFixed(1)),
+          dtcCount: lastFrame.dtcCount || 0,
+          engineRunning: (lastFrame.rpm || 0) >= 50
+        };
+      }
+      appState.vehicleRegistry[vin] = veh;
+      await saveVehicleToDb(veh);
+
+      let writtenDest = '';
+      const allSessions = await getAllStoredSessions();
+      const allVehicles = await getAllStoredVehicles();
+
+      // 1. Write directly into Linked Project Folder if permitted
+      if (appState.projectFolderHandle) {
+        const granted = await ensureDirHandlePermission(appState.projectFolderHandle, Boolean(opts.interactive));
+        if (granted) {
+          try {
+            const histRoot = await resolveVehicleHistoryDirHandle(appState.projectFolderHandle, true);
+            const vinDir = await histRoot.getDirectoryHandle(vin, { create: true });
+            const sessDir = await vinDir.getDirectoryHandle('sessions', { create: true });
+
+            if (sessionMeta && sessionMeta.id) {
+              const safeSessFile = `${sessionMeta.id.replace(/[^A-Za-z0-9_.-]/g, '')}.json`;
+              sessionMeta.file = sessionMeta.file || `sessions/${safeSessFile}`;
+              sessionMeta.projectFolderSaved = true;
+              const sessObj = {
+                id: sessionMeta.id,
+                vin,
+                vehicleLabel: veh.label || `Vehicle ${vin}`,
+                engine: veh.engine || '',
+                partNumber: veh.partNumber || '',
+                transport: sessionMeta.transport || 'Browser Capture',
+                readOnlyEnforced: true,
+                startedAt: sessionMeta.startedAt,
+                updatedAt: sessionMeta.updatedAt || new Date().toISOString(),
+                sampleCount: Array.isArray(samples) ? samples.length : (sessionMeta.sampleCount || 0),
+                maxRpm: sessionMeta.maxRpm || 0,
+                maxSpd: sessionMeta.maxSpd || 0,
+                maxCoolant: sessionMeta.maxCoolant || 0,
+                frames: Array.isArray(samples) ? samples : []
+              };
+              if (staticDump) sessObj.rawDump = staticDump;
+              await writeJsonToDirHandle(sessDir, safeSessFile, sessObj);
+              const db = await openDriveDb();
+              if (db) {
+                try { db.transaction('sessions', 'readwrite').objectStore('sessions').put(sessionMeta); } catch (_) {}
+              }
+            }
+
+            if (lastFrame) {
+              await writeJsonToDirHandle(vinDir, 'latest.json', {
+                v: 3,
+                ts: lastFrame.ts || new Date().toISOString(),
+                vin,
+                vehicleLabel: veh.label || `Vehicle ${vin}`,
+                sessionId: sessionMeta?.id || '',
+                src: 'project_folder',
+                variableCount: 124,
+                metrics: lastFrame
+              });
+            }
+
+            const vinSessions = allSessions
+              .filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === vin)
+              .sort((a, b) => (a.startedAt || '').localeCompare(b.startedAt || ''));
+            const profileOut = {
+              ...veh,
+              sessionCount: vinSessions.length,
+              sessions: vinSessions.map(s => ({
+                id: s.id,
+                startedAt: s.startedAt,
+                updatedAt: s.updatedAt,
+                transport: s.transport || 'OBD-II',
+                sampleCount: s.sampleCount || 0,
+                maxRpm: s.maxRpm || 0,
+                maxSpd: s.maxSpd || 0,
+                maxCoolant: s.maxCoolant || 0,
+                file: s.file || `sessions/${s.id.replace(/[^A-Za-z0-9_.-]/g, '')}.json`
+              }))
+            };
+            await writeJsonToDirHandle(vinDir, 'vehicle_profile.json', profileOut);
+            const idxPayload = await buildVehiclesIndexPayload(allVehicles, allSessions);
+            await writeJsonToDirHandle(histRoot, 'vehicles_index.json', idxPayload);
+            writtenDest = `${appState.projectFolderName || 'folder'}/vehicle_history/${vin}`;
+          } catch (err) {
+            if (!opts.quiet) logTerminal(`[PROJECT FOLDER] Write note: ${err.message}`, 'text-[#B45309]');
+          }
+        }
+      }
+
+      // 2. Also POST to local Windows Bridge if Bridge auto-sync is active
+      if (appState.bridgeAutoSync && sessionMeta && sessionMeta.id) {
+        try {
+          const bridgeUrl = getBridgeBaseUrl() + '/api/save-history';
+          const res = await fetch(bridgeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vehicle: veh,
+              session: sessionMeta,
+              samples: Array.isArray(samples) ? samples : [],
+              staticDump: staticDump || null
+            })
+          });
+          if (res.ok) {
+            sessionMeta.projectFolderSaved = true;
+            const db = await openDriveDb();
+            if (db) {
+              try { db.transaction('sessions', 'readwrite').objectStore('sessions').put(sessionMeta); } catch (_) {}
+            }
+            writtenDest = writtenDest ? `${writtenDest} + Bridge` : `Bridge vehicle_history/${vin}`;
+          }
+        } catch (_) {}
+      }
+
+      if (writtenDest) {
+        appState.projectHistoryMeta = {
+          ...appState.projectHistoryMeta,
+          lastSavedAt: new Date().toISOString(),
+          lastSavedVin: vin
+        };
+        updateProjectFolderBadge();
+        if (!opts.quiet) {
+          logTerminal(`[PROJECT FOLDER] Saved individual record for VIN ${vin} → ${writtenDest}`, 'text-[#047857] font-semibold');
+        }
+      }
+      return writtenDest;
+    }
+
+    async function syncAllVehiclesToProjectFolder(manualTrigger) {
+      const vehicles = await getAllStoredVehicles();
+      const sessions = await getAllStoredSessions();
+      let savedCount = 0;
+
+      if (appState.projectFolderHandle) {
+        const granted = await ensureDirHandlePermission(appState.projectFolderHandle, Boolean(manualTrigger));
+        if (granted) {
+          for (const veh of vehicles) {
+            const vSessions = sessions.filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === veh.vin);
+            if (vSessions.length === 0) {
+              await persistSessionToProjectFolder(veh, null, [], null, { quiet: true, interactive: Boolean(manualTrigger) });
+              savedCount++;
+            } else {
+              for (const s of vSessions) {
+                const samples = await getSessionSamples(s.id);
+                await persistSessionToProjectFolder(veh, s, samples, null, { quiet: true, interactive: Boolean(manualTrigger) });
+                savedCount++;
+              }
+            }
+          }
+          updateProjectFolderBadge();
+          refreshPassiveSessionsUi();
+          refreshHistoryTab();
+          logTerminal(`[PROJECT FOLDER] Synced ${vehicles.length} vehicle(s) / ${sessions.length} session(s) into vehicle_history/<VIN>/.`, 'text-[#047857] font-semibold');
+          return savedCount;
+        }
+      }
+
+      if (appState.bridgeAutoSync) {
+        for (const s of sessions) {
+          const samples = await getSessionSamples(s.id);
+          const veh = appState.vehicleRegistry[s.vin || getActiveVin()] || { vin: s.vin || getActiveVin() };
+          await persistSessionToProjectFolder(veh, s, samples, null, { quiet: true });
+          savedCount++;
+        }
+        refreshPassiveSessionsUi();
+        refreshHistoryTab();
+        logTerminal(`[PROJECT FOLDER] Saved ${savedCount} session(s) via Bridge into project vehicle_history/<VIN>/.`, 'text-[#047857] font-semibold');
+        return savedCount;
+      }
+
+      if (manualTrigger) {
+        const archiveBundle = {
+          exportedAt: new Date().toISOString(),
+          index: await buildVehiclesIndexPayload(vehicles, sessions),
+          vehiclesByVin: {}
+        };
+        for (const veh of vehicles) {
+          const vSessions = sessions.filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === veh.vin);
+          const expanded = [];
+          for (const s of vSessions) {
+            expanded.push({ ...s, frames: await getSessionSamples(s.id) });
+          }
+          archiveBundle.vehiclesByVin[veh.vin] = { profile: veh, sessions: expanded };
+        }
+        const blob = new Blob([JSON.stringify(archiveBundle, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `pulseobd_vehicle_history_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        logTerminal(`[ARCHIVE EXPORT] Exported all ${vehicles.length} vehicle record(s). On Chrome/Edge desktop, click "Link Project Folder" to write directly into vehicle_history/<VIN>/.`, 'text-[#1473E6] font-semibold');
+      }
+      return savedCount;
+    }
+
+    async function loadProjectHistoryManifest() {
+      const db = await openDriveDb();
+      if (!appState.projectFolderHandle && db) {
+        const savedHandle = await loadHandleFromDb('projectFolder');
+        if (savedHandle && await ensureDirHandlePermission(savedHandle, false)) {
+          appState.projectFolderHandle = savedHandle;
+          appState.projectFolderName = savedHandle.name || 'project';
+        }
+      }
+
+      const existingSessions = await getAllStoredSessions();
+      const existingMap = new Map(existingSessions.map(s => [s.id, s]));
+      let loadedSource = '';
+
+      const ingestVehicleIndex = async (idxObj, fetchProfileFn) => {
+        if (!idxObj || !Array.isArray(idxObj.vehicles)) return;
+        for (const summary of idxObj.vehicles) {
+          if (!summary || !summary.vin) continue;
+          const profile = (typeof fetchProfileFn === 'function' ? await fetchProfileFn(summary.vin) : null) || summary;
+          const mergedVeh = {
+            ...summary,
+            ...profile,
+            vin: normalizeVinString(summary.vin, profile.partNumber),
+            latestSummary: summary.latestSummary || profile.latestSummary
+          };
+          registerOrSwitchVehicle(mergedVeh, { activate: false, refreshUi: false });
+
+          const profSessions = Array.isArray(profile.sessions) ? profile.sessions : [];
+          for (const ps of profSessions) {
+            if (!ps || !ps.id) continue;
+            const prev = existingMap.get(ps.id);
+            const mergedSess = {
+              ...(prev || {}),
+              ...ps,
+              vin: mergedVeh.vin,
+              projectFolderSaved: true,
+              file: ps.file || (prev && prev.file) || `sessions/${ps.id}.json`,
+              syncedToCloud: Boolean(prev && prev.syncedToCloud)
+            };
+            existingMap.set(ps.id, mergedSess);
+            if (db) {
+              try { db.transaction('sessions', 'readwrite').objectStore('sessions').put(mergedSess); } catch (_) {}
+            }
+          }
+        }
+      };
+
+      // Source A: Linked Project Directory on disk
+      if (appState.projectFolderHandle) {
+        try {
+          const histDir = await resolveVehicleHistoryDirHandle(appState.projectFolderHandle, false);
+          if (histDir) {
+            const idx = await readJsonFromDirHandle(histDir, 'vehicles_index.json');
+            if (idx && Array.isArray(idx.vehicles)) {
+              await ingestVehicleIndex(idx, async (vin) => {
+                try {
+                  const vinDir = await histDir.getDirectoryHandle(vin, { create: false });
+                  return await readJsonFromDirHandle(vinDir, 'vehicle_profile.json');
+                } catch (_) { return null; }
+              });
+              loadedSource = 'linked_folder';
+            }
+          }
+        } catch (_) {}
+      }
+
+      // Source B: Relative ./vehicle_history/ under HTTP/HTTPS project folder or GitHub Pages
+      if (!loadedSource && typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
+        try {
+          const resIdx = await fetch('./vehicle_history/vehicles_index.json', { cache: 'no-store' });
+          if (resIdx.ok) {
+            const idx = await resIdx.json();
+            await ingestVehicleIndex(idx, async (vin) => {
+              try {
+                const resP = await fetch(`./vehicle_history/${encodeURIComponent(vin)}/vehicle_profile.json`, { cache: 'no-store' });
+                return resP.ok ? await resP.json() : null;
+              } catch (_) { return null; }
+            });
+            loadedSource = 'static_project_folder';
+          }
+        } catch (_) {}
+      }
+
+      // Source C: Windows Bridge (only when Bridge auto-sync is explicitly active)
+      if (!loadedSource && appState.bridgeAutoSync) {
+        try {
+          const base = getBridgeBaseUrl();
+          const resV = await fetch(`${base}/api/vehicles`, { cache: 'no-store' });
+          if (resV.ok) {
+            const idx = await resV.json();
+            await ingestVehicleIndex(idx, async (vin) => {
+              try {
+                const resP = await fetch(`${base}/api/vehicle-history?vin=${encodeURIComponent(vin)}`, { cache: 'no-store' });
+                return resP.ok ? await resP.json() : null;
+              } catch (_) { return null; }
+            });
+            loadedSource = 'bridge_api';
+          }
+        } catch (_) {}
+      }
+
+      await getAllStoredVehicles();
+      appState.projectHistoryMeta.loadedFrom = loadedSource || 'indexeddb';
+      updateVehicleIdentityDom();
+      updateProjectFolderBadge();
+      return loadedSource;
+    }
+
+    function toggleNewVehicleForm(forceShow) {
+      const form = document.getElementById('new-vehicle-form');
+      if (!form) return;
+      const shouldShow = (forceShow === true) ? true : (forceShow === false ? false : form.classList.contains('hidden'));
+      form.classList.toggle('hidden', !shouldShow);
+      if (shouldShow) {
+        const vinInput = document.getElementById('new-veh-vin');
+        if (vinInput) vinInput.focus();
+      }
+    }
+
+    async function createNewVehicleRecordFromForm() {
+      const vinRaw = (document.getElementById('new-veh-vin')?.value || '').trim().toUpperCase();
+      const labelRaw = (document.getElementById('new-veh-label')?.value || '').trim();
+      const engineRaw = (document.getElementById('new-veh-engine')?.value || '').trim();
+      const partRaw = (document.getElementById('new-veh-part')?.value || '').trim().toUpperCase();
+      const cleanVin = vinRaw.replace(/[^A-Z0-9]/g, '');
+      if (cleanVin.length < 6 && partRaw.length < 4) {
+        logTerminal('[VEHICLE ID] Enter a valid VIN (at least 6 chars) or ECU Part Number to create a record.', 'text-[#B45309]');
+        document.getElementById('new-veh-vin')?.focus();
+        return;
+      }
+      const vin = normalizeVinString(cleanVin, partRaw);
+      const nowIso = new Date().toISOString();
+      const prof = registerOrSwitchVehicle({
+        vin,
+        label: labelRaw || (engineRaw ? `${engineRaw}` : `Vehicle ${vin}`),
+        engine: engineRaw || 'OBD-II Powertrain',
+        ecuName: 'ECM-EngineControl',
+        partNumber: partRaw || '',
+        firstSeenAt: nowIso,
+        lastSeenAt: nowIso
+      }, { activate: true, refreshUi: false });
+
+      ['new-veh-vin', 'new-veh-label', 'new-veh-engine', 'new-veh-part'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      toggleNewVehicleForm(false);
+      await persistSessionToProjectFolder(prof, null, [], null, { quiet: false });
+      renderAllVariablesTable();
+      await refreshHistoryTab();
+      logTerminal(`[VEHICLE ID] Created individual record vehicle_history/${prof.vin}/ (${prof.label}) and switched active workspace.`, 'text-[#047857] font-semibold');
+    }
+
+    function selectVehicleFilter(vin) {
+      if (!vin || vin === 'ALL' || appState.historyVinFilter === vin) {
+        appState.historyVinFilter = 'ALL';
+      } else {
+        appState.historyVinFilter = vin;
+      }
+      historyInspectSessionId = null;
+      refreshHistoryTab();
+    }
+
+    async function switchToVehicleRecord(vin) {
+      const target = appState.vehicleRegistry[vin];
+      if (!target) return;
+      registerOrSwitchVehicle(target, { activate: true, refreshUi: false });
+      renderAllVariablesTable();
+      await refreshHistoryTab();
+      logTerminal(`[VEHICLE ID] Active workspace switched to ${target.label || vin} (${vin}). New recordings save to vehicle_history/${vin}/`, 'text-[#1473E6] font-semibold');
+    }
+
+    async function exportVehicleArchiveJson(vin) {
+      const targetVin = vin || getActiveVin();
+      const veh = appState.vehicleRegistry[targetVin] || { vin: targetVin };
+      const sessions = (await getAllStoredSessions()).filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === targetVin);
+      const fullSessions = [];
+      for (const s of sessions) {
+        const frames = await getSessionSamples(s.id);
+        fullSessions.push({ ...s, frames });
+      }
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        vin: targetVin,
+        vehicle_profile: { ...veh, sessionCount: fullSessions.length },
+        sessions: fullSessions
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `vehicle_history_${targetVin}.json`;
+      a.click();
+      logTerminal(`[EXPORT] Downloaded individual archive vehicle_history_${targetVin}.json (${fullSessions.length} sessions).`, 'text-[#047857]');
+    }
+
+    function renderVehicleArchiveCards(vehicles, allSessions) {
+      const container = document.getElementById('history-vehicle-cards');
+      const countEl = document.getElementById('hist-vehicle-count');
+      const filterEl = document.getElementById('hist-active-filter-label');
+      const activeVin = getActiveVin();
+      if (countEl) countEl.textContent = String(vehicles.length);
+      if (filterEl) {
+        filterEl.textContent = appState.historyVinFilter === 'ALL'
+          ? `Showing: All Vehicles (${vehicles.length})`
+          : `Filtered VIN: ${appState.historyVinFilter}`;
+      }
+      if (!container) return;
+      container.innerHTML = vehicles.map(v => {
+        const vSessions = allSessions.filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === v.vin);
+        const vFrames = vSessions.reduce((acc, s) => acc + (s.sampleCount || 0), 0);
+        const isCurrent = v.vin === activeVin;
+        const isFiltered = appState.historyVinFilter === v.vin;
+        const cardBorder = isCurrent
+          ? 'border-[#1473E6] ring-1 ring-[#1473E6] bg-[#F8FAFF]'
+          : (isFiltered ? 'border-[#222222] ring-1 ring-[#222222] bg-[#F9FAFB]' : 'border-[#E6E8EE] bg-[#F9FAFB]');
+        const activeTag = isCurrent
+          ? '<span class="px-2 py-0.5 rounded-full bg-[#1473E6] text-white font-bold text-[10px] shrink-0">ACTIVE</span>'
+          : '';
+        return `
+          <div class="border ${cardBorder} rounded-2xl p-3 space-y-2 min-w-0 transition">
+            <div class="flex items-start justify-between gap-2 min-w-0">
+              <div class="min-w-0">
+                <div class="font-bold text-[#222222] truncate" title="${v.label || v.vin}">${v.label || `Vehicle ${v.vin}`}</div>
+                <div class="font-mono-num text-[11px] text-[#1473E6] font-bold truncate">${v.vin}</div>
+                <div class="text-[11px] text-[#5A5F6A] truncate">${[v.engine, v.partNumber].filter(Boolean).join(' · ') || v.ecuName || 'OBD-II ECU'}</div>
+              </div>
+              ${activeTag}
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#5A5F6A] font-mono-num">
+              <span><strong>${vSessions.length}</strong> drive(s) · <strong>${vFrames}</strong> frames</span>
+              <span class="text-[#047857]">vehicle_history/${v.vin.slice(-6)}/</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <button onclick="switchToVehicleRecord('${v.vin}')" class="px-2.5 py-1 rounded-full ${isCurrent ? 'bg-[#222222] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isCurrent ? 'Active ✓' : 'Use Vehicle'}</button>
+              <button onclick="selectVehicleFilter('${v.vin}')" class="px-2.5 py-1 rounded-full ${isFiltered ? 'bg-[#1473E6] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isFiltered ? 'Show All' : 'Filter'}</button>
+              <button onclick="exportVehicleArchiveJson('${v.vin}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2] ml-auto">Export VIN</button>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function requestDriveWakeLock() {
@@ -3955,17 +4924,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (autoCb && !autoCb.checked) return;
       requestDriveWakeLock();
       const db = await openDriveDb();
+      const activeVin = getActiveVin();
       const session = {
         id: 'drive-' + Date.now(),
         startedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         transport: transportLabel,
-        vin: 'AAVZZZ6RZHU112564',
+        vin: activeVin,
         sampleCount: 0,
         maxRpm: 0,
         maxSpd: 0,
         maxCoolant: 0,
-        syncedToCloud: false
+        syncedToCloud: false,
+        projectFolderSaved: false
       };
       passiveState.activeSessionId = session.id;
       passiveState.activeSession = session;
@@ -3977,7 +4948,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         } catch (_) {}
       }
       updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold animate-pulse');
-      logTerminal(`[PASSIVE] Started on-device drive recording (${session.id}) via ${transportLabel}.`, 'text-[#1473E6] font-semibold');
+      logTerminal(`[PASSIVE] Started on-device drive recording (${session.id}) for VIN ${activeVin} via ${transportLabel}.`, 'text-[#1473E6] font-semibold');
       refreshPassiveSessionsUi();
     }
 
@@ -3995,6 +4966,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const drv = computeDerivedMetrics(d);
       const sample = {
         sessionId: passiveState.activeSessionId,
+        vin: passiveState.activeSession?.vin || getActiveVin(),
         ts: new Date(now).toISOString(),
         rpm: Number((d.rpm || 0).toFixed(1)),
         spd: Math.round(d.spd || 0),
@@ -4053,6 +5025,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       updatePassiveStatusUi();
       if (passiveState.sampleCount % 10 === 1) {
         refreshPassiveSessionsUi();
+        if (appState.projectFolderHandle && passiveState.activeSession) {
+          const sCopy = { ...passiveState.activeSession };
+          getSessionSamples(sCopy.id).then(allFrames => {
+            const veh = appState.vehicleRegistry[sCopy.vin] || appState.activeVehicle;
+            persistSessionToProjectFolder(veh, sCopy, allFrames, null, { quiet: true });
+          }).catch(() => {});
+        }
         if (appState.activeTab === 'history') refreshHistoryTab();
       }
     }
@@ -4071,10 +5050,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
       });
     }
 
+    async function getSessionMeta(sessionId) {
+      if (!sessionId) return null;
+      const sessions = await getAllStoredSessions();
+      return sessions.find(s => s.id === sessionId) || null;
+    }
+
     async function getSessionSamples(sessionId) {
       const db = await openDriveDb();
       if (!db || !sessionId) return [];
-      return new Promise((resolve) => {
+      const rows = await new Promise((resolve) => {
         try {
           const idx = db.transaction('samples', 'readonly').objectStore('samples').index('sessionId');
           const req = idx.getAll(sessionId);
@@ -4084,6 +5069,54 @@ Check your Browserslist config to be sure that your targets are set up correctly
           resolve([]);
         }
       });
+      if (rows.length > 0) return rows;
+
+      // Lazy-hydrate from Project Folder JSON (Linked Directory, Static ./vehicle_history, or Bridge)
+      const meta = await getSessionMeta(sessionId);
+      const vin = (meta && meta.vin) || getActiveVin();
+      const relFile = (meta && meta.file) || `sessions/${sessionId}.json`;
+      let sessJson = null;
+
+      if (appState.projectFolderHandle && await ensureDirHandlePermission(appState.projectFolderHandle, false)) {
+        try {
+          const histDir = await resolveVehicleHistoryDirHandle(appState.projectFolderHandle, false);
+          const vinDir = histDir ? await histDir.getDirectoryHandle(vin, { create: false }) : null;
+          const sessDir = vinDir ? await vinDir.getDirectoryHandle('sessions', { create: false }) : null;
+          if (sessDir) {
+            const fname = relFile.replace(/^sessions\//, '');
+            sessJson = await readJsonFromDirHandle(sessDir, fname);
+          }
+        } catch (_) {}
+      }
+
+      if (!sessJson && typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
+        try {
+          const res = await fetch(`./vehicle_history/${encodeURIComponent(vin)}/${relFile}`, { cache: 'no-store' });
+          if (res.ok) sessJson = await res.json();
+        } catch (_) {}
+      }
+
+      if (!sessJson && appState.bridgeAutoSync) {
+        try {
+          const res = await fetch(`${getBridgeBaseUrl()}/api/vehicle-history?vin=${encodeURIComponent(vin)}&session=${encodeURIComponent(sessionId)}`, { cache: 'no-store' });
+          if (res.ok) sessJson = await res.json();
+        } catch (_) {}
+      }
+
+      if (sessJson && Array.isArray(sessJson.frames) && sessJson.frames.length > 0) {
+        const normalized = sessJson.frames.map(f => ({
+          ...f,
+          sessionId,
+          vin,
+          ...computeDerivedMetrics(f)
+        }));
+        try {
+          const tx = db.transaction('samples', 'readwrite');
+          normalized.forEach(item => tx.objectStore('samples').add(item));
+        } catch (_) {}
+        return normalized;
+      }
+      return [];
     }
 
     async function refreshPassiveSessionsUi() {
@@ -4095,12 +5128,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
         return;
       }
       box.innerHTML = sessions.slice(0, 12).map(s => {
-        const syncPill = s.syncedToCloud
-          ? '<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>'
-          : '<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>';
+        const vinTag = `<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold">${s.vin || getActiveVin()}</span>`;
+        const pills = [];
+        if (s.projectFolderSaved) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Project Folder</span>');
+        if (s.syncedToCloud) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>');
+        if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        const syncPill = pills.join(' ');
         return `
         <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
           <div class="min-w-0 flex flex-wrap items-center gap-1.5">
+            ${vinTag}
             <span class="font-bold text-[#222222] font-mono-num">${new Date(s.startedAt).toLocaleString()}</span>
             <span class="text-[#5A5F6A]">${s.transport} · <strong class="text-[#1473E6]">${s.sampleCount} frames</strong> · Max ${Math.round(s.maxSpd || 0)} km/h · ${Math.round(s.maxRpm || 0)} RPM · ${Math.round(s.maxCoolant || 0)}°C</span>
             ${syncPill}
@@ -4118,6 +5155,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const sessions = await getAllStoredSessions();
       const targetId = sessionId || (sessions[0] && sessions[0].id);
       if (!targetId) return;
+      const meta = sessions.find(s => s.id === targetId);
+      if (meta && meta.vin) {
+        const veh = appState.vehicleRegistry[meta.vin] || { vin: meta.vin };
+        registerOrSwitchVehicle(veh, { activate: true, refreshUi: false });
+      }
       const samples = await getSessionSamples(targetId);
       if (!samples.length) return;
       appState.paused = true;
@@ -4131,22 +5173,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
       renderAllCharts();
       if (appState.activeTab === 'passport') renderAllVariablesTable();
       const badge = document.getElementById('conn-badge');
-      if (badge) badge.textContent = `STORED DRIVE · ${samples.length} frames`;
-      logTerminal(`[STORAGE] Loaded stored drive ${targetId} (${samples.length} frames) into Cockpit & 6 Graphs.`, 'text-[#047857] font-semibold');
+      if (badge) badge.textContent = `STORED DRIVE · ${meta?.vin || getActiveVin()} · ${samples.length} frames`;
+      logTerminal(`[STORAGE] Loaded stored drive ${targetId} (${samples.length} frames) for VIN ${meta?.vin || getActiveVin()}.`, 'text-[#047857] font-semibold');
       switchTab('cockpit');
     }
 
     async function exportStoredDriveCsv(sessionId) {
       const sessions = await getAllStoredSessions();
       const targetId = sessionId || passiveState.activeSessionId || (sessions[0] && sessions[0].id);
+      const meta = sessions.find(s => s.id === targetId);
       const samples = targetId ? await getSessionSamples(targetId) : [];
       if (!samples.length) {
         exportTelemetryCsv();
         return;
       }
-      const headers = ['timestamp,rpm,speed_kmh,calc_load_pct,abs_load_pct,coolant_c,iat_c,ambient_c,catalyst_c,stft_pct,ltft_pct,sec_o2_trim_pct,o2_b1s1_v,o2_b1s2_v,lambda,map_kpa,baro_kpa,rail_mpa,timing_deg,thr_a_pct,thr_b_pct,rel_thr_pct,act_thr_pct,pedal_d_pct,pedal_e_pct,fuel_level_pct,evap_purge_pct,ecu_volt_v,est_fuel_lh,est_l100km,runtime_s'];
+      const headers = ['timestamp,vin,rpm,speed_kmh,calc_load_pct,abs_load_pct,coolant_c,iat_c,ambient_c,catalyst_c,stft_pct,ltft_pct,sec_o2_trim_pct,o2_b1s1_v,o2_b1s2_v,lambda,map_kpa,baro_kpa,rail_mpa,timing_deg,thr_a_pct,thr_b_pct,rel_thr_pct,act_thr_pct,pedal_d_pct,pedal_e_pct,fuel_level_pct,evap_purge_pct,ecu_volt_v,est_fuel_lh,est_l100km,runtime_s'];
+      const rowVin = meta?.vin || getActiveVin();
       const rows = samples.map(h => [
-        h.ts, h.rpm, h.spd, h.load, h.absLoad, h.coolant, h.iat, h.amb, h.cat,
+        h.ts, h.vin || rowVin, h.rpm, h.spd, h.load, h.absLoad, h.coolant, h.iat, h.amb, h.cat,
         h.stft, h.ltft, h.secO2Trim, h.o2s1, h.o2s2, h.lambda, h.map, h.baro, h.rail,
         h.timing, h.thr, h.thrB, h.relThr, h.actThr, h.pedalD, h.pedalE, h.fuel, h.evap,
         h.volt, h.fuelLh, h.l100km, h.runtime
@@ -4154,24 +5198,27 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `pulseobd_${targetId}.csv`;
+      a.download = `pulseobd_${rowVin}_${targetId}.csv`;
       a.click();
     }
 
     async function exportStoredDriveJson(sessionId) {
       const sessions = await getAllStoredSessions();
       const targetId = sessionId || passiveState.activeSessionId || (sessions[0] && sessions[0].id);
+      const meta = sessions.find(s => s.id === targetId);
       const samples = targetId ? await getSessionSamples(targetId) : [];
       if (!samples.length) {
         exportFullJsonSnapshot();
         return;
       }
+      const vin = meta?.vin || getActiveVin();
       const lastSample = samples[samples.length - 1];
       const baseSnap = (lastSample.rpm || 0) < 50 ? SNAPSHOTS.parked_off : SNAPSHOTS.snap1;
       const payload = {
         exportedAt: new Date().toISOString(),
         sessionId: targetId,
-        vin: 'AAVZZZ6RZHU112564',
+        vin,
+        vehicle: appState.vehicleRegistry[vin] || appState.activeVehicle,
         readOnlyEnforced: true,
         frameCount: samples.length,
         latest124Variables: buildCompleteVariableCatalog({ ...baseSnap, ...lastSample }),
@@ -4180,7 +5227,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `pulseobd_${targetId}_124vars.json`;
+      a.download = `pulseobd_${vin}_${targetId}_124vars.json`;
       a.click();
     }
 
@@ -4189,10 +5236,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (db) {
         const stores = ['sessions', 'samples'];
         if (db.objectStoreNames.contains('cloudQueue')) stores.push('cloudQueue');
+        if (db.objectStoreNames.contains('vehicles')) stores.push('vehicles');
         const tx = db.transaction(stores, 'readwrite');
         stores.forEach(st => tx.objectStore(st).clear());
       }
       appState.cloud.offlineQueue = [];
+      appState.vehicleRegistry = { [appState.activeVehicle.vin]: { ...appState.activeVehicle } };
+      appState.historyVinFilter = 'ALL';
       passiveState.activeSessionId = null;
       passiveState.activeSession = null;
       passiveState.sampleCount = 0;
@@ -4203,17 +5253,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
       updateCloudBadges();
       refreshPassiveSessionsUi();
       refreshHistoryTab();
-      logTerminal('[STORAGE] Cleared all locally stored drive sessions.', 'text-[#B45309]');
+      logTerminal('[STORAGE] Cleared locally buffered IndexedDB drive cache (files inside vehicle_history/ remain safe).', 'text-[#B45309]');
     }
 
     // =========================================================================
-    // 10B. DRIVE HISTORY TAB & TIMELINE INSPECTOR
+    // 10B. DRIVE HISTORY TAB & TIMELINE INSPECTOR (PER-VIN ARCHIVE)
     // =========================================================================
     let historyInspectSamples = [];
     let historyInspectSessionId = null;
 
     async function refreshHistoryTab() {
-      const sessions = await getAllStoredSessions();
+      const vehicles = await getAllStoredVehicles();
+      const allSessions = await getAllStoredSessions();
+      renderVehicleArchiveCards(vehicles, allSessions);
+
+      const sessions = (appState.historyVinFilter && appState.historyVinFilter !== 'ALL')
+        ? allSessions.filter(s => (s.vin || DEFAULT_VEHICLE_PROFILE.vin) === appState.historyVinFilter)
+        : allSessions;
+
       const totalFrames = sessions.reduce((acc, s) => acc + (s.sampleCount || 0), 0);
       const maxSpd = sessions.reduce((m, s) => Math.max(m, s.maxSpd || 0), 0);
       const maxRpm = sessions.reduce((m, s) => Math.max(m, s.maxRpm || 0), 0);
@@ -4234,7 +5291,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!listEl) return;
 
       if (!sessions.length) {
-        listEl.innerHTML = '<div class="text-[#5A5F6A] py-4">No drives stored yet. Click <strong>Save Current Drive Now</strong> or connect Bluetooth OBD-II to record automatically.</div>';
+        listEl.innerHTML = '<div class="text-[#5A5F6A] py-4">No drives stored for this filter yet. Click <strong>Save Current Drive Now</strong> or connect Bluetooth OBD-II to record automatically.</div>';
         historyInspectSamples = [];
         historyInspectSessionId = null;
         const sc = document.getElementById('hist-scrubber');
@@ -4256,13 +5313,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
       listEl.innerHTML = sessions.map(s => {
         const isSel = s.id === historyInspectSessionId;
         const borderCls = isSel ? 'border-[#222222] ring-1 ring-[#222222]' : 'border-[#E6E8EE]';
-        const syncPill = s.syncedToCloud
-          ? '<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>'
-          : '<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>';
+        const vin = s.vin || DEFAULT_VEHICLE_PROFILE.vin;
+        const vehObj = appState.vehicleRegistry[vin];
+        const vehLabel = vehObj?.label ? `${vehObj.label} (${vin})` : vin;
+        const pills = [];
+        if (s.projectFolderSaved) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Project Folder</span>');
+        if (s.syncedToCloud) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>');
+        if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        const syncPill = pills.join(' ');
         return `
           <div class="bg-[#F9FAFB] border ${borderCls} rounded-2xl p-3 space-y-2 transition">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
+                <div class="text-[11px] font-mono-num text-[#1473E6] font-bold truncate">${vehLabel}</div>
                 <div class="font-bold text-[#222222] font-mono-num truncate">${new Date(s.startedAt).toLocaleString()}</div>
                 <div class="text-[#5A5F6A] mt-0.5 flex flex-wrap items-center gap-1.5">${s.transport || 'OBD-II'} · <strong class="text-[#1473E6]">${s.sampleCount || 0} frames</strong> ${syncPill}</div>
               </div>
@@ -4299,7 +5362,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const meta = sessions.find(s => s.id === sessionId);
       const titleEl = document.getElementById('hist-inspect-title');
       const metaEl = document.getElementById('hist-inspect-meta');
-      if (titleEl && meta) titleEl.textContent = `Trip: ${new Date(meta.startedAt).toLocaleString()}`;
+      if (titleEl && meta) titleEl.textContent = `${meta.vin || getActiveVin()} · ${new Date(meta.startedAt).toLocaleString()}`;
       if (metaEl && meta) {
         metaEl.textContent = `${samples.length} frames · Peak ${Math.round(meta.maxSpd || 0)} km/h · ${Math.round(meta.maxRpm || 0)} RPM · ${Math.round(meta.maxCoolant || 0)}°C`;
       }
@@ -4311,12 +5374,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
         scrubber.value = Math.max(0, historyInspectSamples.length - 1);
       }
 
-      if (historyInspectSamples.length >= 2) {
+      const plotArr = historyInspectSamples.length === 1
+        ? [historyInspectSamples[0], historyInspectSamples[0]]
+        : historyInspectSamples;
+      if (plotArr.length >= 2) {
         drawMultiLineCanvas('history-inspect-canvas', [
           { key: 'rpm', color: '#1473E6', min: 0, max: 6000, width: 2.3 },
           { key: 'spd', color: '#059669', min: 0, max: 160, width: 2.2 },
           { key: 'coolant', color: '#D92B2B', min: 0, max: 115, width: 1.8 }
-        ], 0, 100, historyInspectSamples);
+        ], 0, 100, plotArr);
       }
       scrubHistoryFrame(Math.max(0, historyInspectSamples.length - 1));
       if (!skipListHighlight) {
@@ -4386,10 +5452,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const frames = (appState.history && appState.history.length) ? appState.history : [appState.current];
       const now = Date.now();
       const sessionId = 'drv_' + now;
+      const activeVeh = appState.activeVehicle || DEFAULT_VEHICLE_PROFILE;
+      const vin = activeVeh.vin || DEFAULT_VEHICLE_PROFILE.vin;
       const samples = frames.map((d, i) => {
         const drv = computeDerivedMetrics(d);
         return {
           sessionId,
+          vin,
           ts: new Date(now - (frames.length - 1 - i) * 200).toISOString(),
           rpm: Number((d.rpm || 0).toFixed(1)),
           spd: Math.round(d.spd || 0),
@@ -4426,7 +5495,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
       const session = {
         id: sessionId,
-        vin: 'AAVZZZ6RZHU112564',
+        vin,
+        file: `sessions/${sessionId}.json`,
         transport: appState.source || 'Live Buffer',
         startedAt: samples[0].ts,
         updatedAt: samples[samples.length - 1].ts,
@@ -4434,7 +5504,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         maxRpm: samples.reduce((m, s) => Math.max(m, s.rpm), 0),
         maxSpd: samples.reduce((m, s) => Math.max(m, s.spd), 0),
         maxCoolant: samples.reduce((m, s) => Math.max(m, s.coolant), 0),
-        syncedToCloud: false
+        syncedToCloud: false,
+        projectFolderSaved: false
       };
 
       const db = await openDriveDb();
@@ -4452,9 +5523,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
         });
       }
       historyInspectSessionId = sessionId;
+      await persistSessionToProjectFolder(activeVeh, session, samples, null, { quiet: false });
       refreshPassiveSessionsUi();
       refreshHistoryTab();
-      logTerminal(`[STORAGE] Saved ${samples.length} buffered frames as drive ${sessionId}.`, 'text-[#047857] font-semibold');
+      logTerminal(`[STORAGE] Saved ${samples.length} buffered frames for VIN ${vin} (${sessionId}).`, 'text-[#047857] font-semibold');
       const cfg = getCloudEndpointConfig();
       if (cfg.autoOnBt && cfg.saveHistory && cfg.prov === 'firebase' && updateNetworkBadgeUi() && isCloudEndpointConfigured(cfg)) {
         syncPendingDrivesToFirebase(false);
@@ -4855,6 +5927,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const r = await sendSerialElm(initCmd, 2500);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
       }
+      await discoverLiveVehicleIdentity(sendSerialElm, 'Web Serial COM3');
       await startPassiveDriveSession('Web Serial COM3');
       maybeAutoStartCloudTx('Web Serial COM3');
       while (appState.serialPollingActive && appState.serialPort) {
@@ -4918,6 +5991,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
         clearInterval(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
       }
+      if (passiveState.activeSession && passiveState.sampleCount > 0) {
+        try {
+          const sCopy = { ...passiveState.activeSession };
+          const allFrames = await getSessionSamples(sCopy.id);
+          const veh = appState.vehicleRegistry[sCopy.vin] || appState.activeVehicle;
+          await persistSessionToProjectFolder(veh, sCopy, allFrames, null, { quiet: false });
+        } catch (_) {}
+      }
       await releaseDriveWakeLock();
       updatePassiveStatusUi('STOPPED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
       try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
@@ -4948,6 +6029,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const r = await sendBleElm(initCmd, 2000);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
       }
+      await discoverLiveVehicleIdentity(sendBleElm, `BLE · ${appState.bleDevice?.name || 'OBDII'}`);
       if (!passiveState.activeSessionId) {
         await startPassiveDriveSession(`BLE · ${appState.bleDevice?.name || 'OBDII'}`);
       } else {
@@ -5074,6 +6156,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const res = await fetch(baseUrl + '/api/live');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      appState.bridgeAutoSync = true;
+      if (data && (data.vehicle || data.vin)) {
+        const prevVin = getActiveVin();
+        const resolved = registerOrSwitchVehicle({
+          ...(data.vehicle || {}),
+          vin: data.vin || data.vehicle?.vin,
+          lastSeenAt: new Date().toISOString()
+        }, { activate: true, refreshUi: false });
+        if (resolved.vin !== prevVin) renderAllVariablesTable();
+      }
       const merged = { ...appState.current, ...data };
       const derived = computeDerivedMetrics(merged);
       appState.current = { ...merged, ...derived };
@@ -5097,11 +6189,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
       logTerminal(`[BRIDGE] Connecting to Windows COM3 read-only bridge at ${baseUrl}/api/live ...`, 'text-[#047857]');
       try {
-        await startPassiveDriveSession('Wi-Fi COM3 Bridge');
         const data = await pollWifiBridgeOnce(baseUrl);
+        appState.bridgeAutoSync = true;
+        updateProjectFolderBadge();
+        await loadProjectHistoryManifest();
+        await startPassiveDriveSession('Wi-Fi COM3 Bridge');
         changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = 'LIVE · Wi-Fi COM3 Bridge · REC';
-        logTerminal(`[BRIDGE] Connected! Live passive recording every 900ms from COM3 (RPM=${data.rpm}, Coolant=${data.coolant}°C)`, 'text-[#047857] font-semibold');
+        document.getElementById('conn-badge').textContent = `LIVE · Bridge (${getActiveVin()}) · REC`;
+        logTerminal(`[BRIDGE] Connected! VIN ${getActiveVin()} · Passive recording every 900ms from COM3 (RPM=${data.rpm}, Coolant=${data.coolant}°C)`, 'text-[#047857] font-semibold');
         appState.wifiPollTimer = setInterval(() => {
           pollWifiBridgeOnce(baseUrl).catch(() => {});
         }, 900);
@@ -5111,33 +6206,316 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
 
-    function importJsonDump(ev) {
-      const file = ev.target.files && ev.target.files[0];
+    async function importJsonDump(ev) {
+      const fileInput = ev && ev.target;
+      const file = fileInput && fileInput.files && fileInput.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
           const parsed = JSON.parse(reader.result);
+          const db = await openDriveDb();
+
+          const getCI = (obj, k) => {
+            if (!obj || typeof obj !== 'object') return '';
+            if (obj[k] !== undefined) return obj[k];
+            const up = k.toUpperCase();
+            for (const key of Object.keys(obj)) {
+              if (key.toUpperCase() === up) return obj[key];
+            }
+            return '';
+          };
+
+          const buildNormalizedSample = (rawFrame, sessionId, vin, fallbackTs) => {
+            const drv = computeDerivedMetrics(rawFrame);
+            return {
+              sessionId,
+              vin,
+              ts: rawFrame.ts || fallbackTs || new Date().toISOString(),
+              rpm: Number((rawFrame.rpm || 0).toFixed ? (rawFrame.rpm || 0).toFixed(1) : rawFrame.rpm || 0),
+              spd: Math.round(rawFrame.spd || 0),
+              load: Number((rawFrame.load || 0).toFixed ? (rawFrame.load || 0).toFixed(1) : rawFrame.load || 0),
+              absLoad: Number((rawFrame.absLoad || 0).toFixed ? (rawFrame.absLoad || 0).toFixed(1) : rawFrame.absLoad || 0),
+              coolant: Math.round(rawFrame.coolant || 0),
+              iat: Math.round(rawFrame.iat || 0),
+              amb: Math.round(rawFrame.amb || 0),
+              cat: Number((rawFrame.cat || 0).toFixed ? (rawFrame.cat || 0).toFixed(1) : rawFrame.cat || 0),
+              stft: Number((rawFrame.stft || 0).toFixed ? (rawFrame.stft || 0).toFixed(2) : rawFrame.stft || 0),
+              ltft: Number((rawFrame.ltft || 0).toFixed ? (rawFrame.ltft || 0).toFixed(2) : rawFrame.ltft || 0),
+              secO2Trim: Number((rawFrame.secO2Trim || 0).toFixed ? (rawFrame.secO2Trim || 0).toFixed(2) : rawFrame.secO2Trim || 0),
+              map: Math.round(rawFrame.map || 0),
+              baro: rawFrame.baro || 100,
+              rail: Number((rawFrame.rail || 0).toFixed ? (rawFrame.rail || 0).toFixed(2) : rawFrame.rail || 0),
+              timing: Number((rawFrame.timing || 0).toFixed ? (rawFrame.timing || 0).toFixed(1) : rawFrame.timing || 0),
+              thr: Number((rawFrame.thr || 0).toFixed ? (rawFrame.thr || 0).toFixed(1) : rawFrame.thr || 0),
+              thrB: Number((rawFrame.thrB || 0).toFixed ? (rawFrame.thrB || 0).toFixed(1) : rawFrame.thrB || 0),
+              relThr: Number((rawFrame.relThr || 0).toFixed ? (rawFrame.relThr || 0).toFixed(1) : rawFrame.relThr || 0),
+              actThr: Number((rawFrame.actThr || 0).toFixed ? (rawFrame.actThr || 0).toFixed(1) : rawFrame.actThr || 0),
+              pedalD: Number((rawFrame.pedalD || 0).toFixed ? (rawFrame.pedalD || 0).toFixed(1) : rawFrame.pedalD || 0),
+              pedalE: Number((rawFrame.pedalE || 0).toFixed ? (rawFrame.pedalE || 0).toFixed(1) : rawFrame.pedalE || 0),
+              o2s1: Number((rawFrame.o2s1 || 0).toFixed ? (rawFrame.o2s1 || 0).toFixed(3) : rawFrame.o2s1 || 0),
+              o2s2: Number((rawFrame.o2s2 || 0).toFixed ? (rawFrame.o2s2 || 0).toFixed(3) : rawFrame.o2s2 || 0),
+              lambda: Number((rawFrame.lambda !== undefined ? rawFrame.lambda : 1).toFixed ? (rawFrame.lambda !== undefined ? rawFrame.lambda : 1).toFixed(4) : 1),
+              fuel: Number((rawFrame.fuel || 0).toFixed ? (rawFrame.fuel || 0).toFixed(1) : rawFrame.fuel || 0),
+              evap: Number((rawFrame.evap || 0).toFixed ? (rawFrame.evap || 0).toFixed(1) : rawFrame.evap || 0),
+              volt: Number((rawFrame.volt || 0).toFixed ? (rawFrame.volt || 0).toFixed(3) : rawFrame.volt || 0),
+              runtime: Math.round(rawFrame.runtime || 0),
+              milOn: Boolean(rawFrame.milOn),
+              dtcCount: rawFrame.dtcCount || 0,
+              fuelLh: Number(drv.fuelLh.toFixed(2)),
+              l100km: Number(drv.l100km.toFixed(1))
+            };
+          };
+
+          const saveSessionRecordToDbAndFolder = async (prof, sessMeta, normFrames, rawDump) => {
+            if (db) {
+              await new Promise((resolve) => {
+                try {
+                  const tx = db.transaction(['sessions', 'samples'], 'readwrite');
+                  tx.objectStore('sessions').put(sessMeta);
+                  normFrames.forEach(s => tx.objectStore('samples').add(s));
+                  tx.oncomplete = () => resolve();
+                  tx.onerror = () => resolve();
+                } catch (_) { resolve(); }
+              });
+            }
+            await persistSessionToProjectFolder(prof, sessMeta, normFrames, rawDump || null, { quiet: true });
+          };
+
+          const loadFramesIntoPausedCockpit = (framesList, vinLabel) => {
+            if (!framesList || !framesList.length) return;
+            appState.paused = true;
+            const expanded = framesList.map(s => ({
+              ...((s.rpm || 0) < 50 ? SNAPSHOTS.parked_off : SNAPSHOTS.snap1),
+              ...s,
+              ...computeDerivedMetrics(s)
+            }));
+            const lastF = expanded[expanded.length - 1];
+            appState.history = expanded.length === 1
+              ? Array.from({ length: 80 }, () => ({ ...lastF }))
+              : expanded.slice(-80);
+            appState.current = { ...lastF };
+            appState.source = (lastF.rpm || 0) < 50 ? 'parked_off' : 'snap1';
+            updateDomMetrics(appState.current);
+            renderAllCharts();
+            renderAllVariablesTable();
+            const badge = document.getElementById('conn-badge');
+            if (badge) badge.textContent = `Imported · ${vinLabel} · ${file.name}`;
+          };
+
           if (parsed && parsed.metrics) {
             applyIncomingCloudPacket(parsed);
+            const badge = document.getElementById('conn-badge');
+            if (badge) badge.textContent = `Imported · ${getActiveVin()} · ${file.name}`;
+          } else if (parsed && (parsed.vehiclesByVin || Array.isArray(parsed.vehicles))) {
+            const entries = [];
+            if (parsed.vehiclesByVin && typeof parsed.vehiclesByVin === 'object') {
+              Object.values(parsed.vehiclesByVin).forEach(entry => {
+                if (entry && (entry.profile || entry.vin)) {
+                  entries.push({
+                    profile: entry.profile || { vin: entry.vin },
+                    sessions: Array.isArray(entry.sessions) ? entry.sessions : []
+                  });
+                }
+              });
+            } else if (Array.isArray(parsed.vehicles)) {
+              parsed.vehicles.forEach(v => {
+                if (v && v.vin) entries.push({ profile: v, sessions: Array.isArray(v.sessions) ? v.sessions : [] });
+              });
+            }
+            let lastProf = null;
+            let lastFrames = null;
+            for (const item of entries) {
+              const prof = registerOrSwitchVehicle(item.profile, { activate: false, refreshUi: false });
+              lastProf = prof;
+              if (item.sessions.length === 0) {
+                await persistSessionToProjectFolder(prof, null, [], null, { quiet: true });
+              } else {
+                for (const s of item.sessions) {
+                  const sid = s.id || ('imp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+                  const rawF = s.frames || s.samples || [];
+                  const normFrames = rawF.map(f => buildNormalizedSample(f, sid, prof.vin, s.updatedAt || s.startedAt));
+                  const meta = {
+                    id: sid,
+                    vin: prof.vin,
+                    file: s.file || `sessions/${sid}.json`,
+                    transport: s.transport || `Import · ${file.name}`,
+                    startedAt: s.startedAt || (normFrames[0] && normFrames[0].ts) || new Date().toISOString(),
+                    updatedAt: s.updatedAt || (normFrames[normFrames.length - 1] && normFrames[normFrames.length - 1].ts) || new Date().toISOString(),
+                    sampleCount: normFrames.length,
+                    maxRpm: s.maxRpm || normFrames.reduce((m, x) => Math.max(m, x.rpm || 0), 0),
+                    maxSpd: s.maxSpd || normFrames.reduce((m, x) => Math.max(m, x.spd || 0), 0),
+                    maxCoolant: s.maxCoolant || normFrames.reduce((m, x) => Math.max(m, x.coolant || 0), 0),
+                    syncedToCloud: Boolean(s.syncedToCloud),
+                    projectFolderSaved: true
+                  };
+                  await saveSessionRecordToDbAndFolder(prof, meta, normFrames, s.rawDump || null);
+                  historyInspectSessionId = sid;
+                  if (normFrames.length) lastFrames = normFrames;
+                }
+              }
+            }
+            if (lastProf) registerOrSwitchVehicle(lastProf, { activate: true, refreshUi: false });
+            if (lastFrames) loadFramesIntoPausedCockpit(lastFrames, getActiveVin());
+            await refreshPassiveSessionsUi();
+            await refreshHistoryTab();
+          } else if (parsed && parsed.vehicle_profile && Array.isArray(parsed.sessions)) {
+            const prof = registerOrSwitchVehicle(parsed.vehicle_profile, { activate: true, refreshUi: false });
+            let lastFrames = null;
+            for (const s of parsed.sessions) {
+              const sid = s.id || ('imp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+              const rawF = s.frames || s.samples || [];
+              const normFrames = rawF.map(f => buildNormalizedSample(f, sid, prof.vin, s.updatedAt || s.startedAt));
+              const meta = {
+                id: sid,
+                vin: prof.vin,
+                file: s.file || `sessions/${sid}.json`,
+                transport: s.transport || `Import · ${file.name}`,
+                startedAt: s.startedAt || (normFrames[0] && normFrames[0].ts) || new Date().toISOString(),
+                updatedAt: s.updatedAt || (normFrames[normFrames.length - 1] && normFrames[normFrames.length - 1].ts) || new Date().toISOString(),
+                sampleCount: normFrames.length,
+                maxRpm: s.maxRpm || normFrames.reduce((m, x) => Math.max(m, x.rpm || 0), 0),
+                maxSpd: s.maxSpd || normFrames.reduce((m, x) => Math.max(m, x.spd || 0), 0),
+                maxCoolant: s.maxCoolant || normFrames.reduce((m, x) => Math.max(m, x.coolant || 0), 0),
+                syncedToCloud: false,
+                projectFolderSaved: true
+              };
+              await saveSessionRecordToDbAndFolder(prof, meta, normFrames, s.rawDump || null);
+              historyInspectSessionId = sid;
+              if (normFrames.length) lastFrames = normFrames;
+            }
+            if (lastFrames) loadFramesIntoPausedCockpit(lastFrames, prof.vin);
+            await refreshPassiveSessionsUi();
+            await refreshHistoryTab();
+          } else if (parsed && (Array.isArray(parsed.frames) || Array.isArray(parsed.samples))) {
+            const rawFrames = parsed.frames || parsed.samples;
+            const rawVin = parsed.vin || parsed.vehicle?.vin || '';
+            const vin = normalizeVinString(rawVin, parsed.partNumber || parsed.vehicle?.partNumber);
+            const prof = registerOrSwitchVehicle({
+              ...(parsed.vehicle || {}),
+              vin,
+              label: parsed.vehicleLabel || parsed.vehicle?.label,
+              engine: parsed.engine || parsed.vehicle?.engine,
+              partNumber: parsed.partNumber || parsed.vehicle?.partNumber,
+              lastSeenAt: parsed.updatedAt || new Date().toISOString()
+            }, { activate: true, refreshUi: false });
+            const sid = parsed.id || parsed.sessionId || ('imp_' + Date.now());
+            const normFrames = rawFrames.map(f => buildNormalizedSample(f, sid, prof.vin, parsed.updatedAt || parsed.startedAt));
+            const meta = {
+              id: sid,
+              vin: prof.vin,
+              file: parsed.file || `sessions/${sid}.json`,
+              transport: parsed.transport || `Import · ${file.name}`,
+              startedAt: parsed.startedAt || (normFrames[0] && normFrames[0].ts) || new Date().toISOString(),
+              updatedAt: parsed.updatedAt || (normFrames[normFrames.length - 1] && normFrames[normFrames.length - 1].ts) || new Date().toISOString(),
+              sampleCount: normFrames.length,
+              maxRpm: parsed.maxRpm || normFrames.reduce((m, x) => Math.max(m, x.rpm || 0), 0),
+              maxSpd: parsed.maxSpd || normFrames.reduce((m, x) => Math.max(m, x.spd || 0), 0),
+              maxCoolant: parsed.maxCoolant || normFrames.reduce((m, x) => Math.max(m, x.coolant || 0), 0),
+              syncedToCloud: false,
+              projectFolderSaved: true
+            };
+            await saveSessionRecordToDbAndFolder(prof, meta, normFrames, parsed.rawDump || null);
+            historyInspectSessionId = sid;
+            if (normFrames.length) loadFramesIntoPausedCockpit(normFrames, prof.vin);
+            await refreshPassiveSessionsUi();
+            await refreshHistoryTab();
+          } else if (parsed && (parsed.mode01Raw || parsed.Mode01 || parsed.mode09Raw || parsed.Mode09 || parsed.uds7E0 || parsed.Uds7E0 || parsed.rawDump)) {
+            const raw = parsed.rawDump ? { ...parsed.rawDump, ...parsed } : parsed;
+            const m09 = raw.mode09Raw || raw.Mode09 || {};
+            const u7 = raw.uds7E0 || raw.Uds7E0 || {};
+            const m01 = raw.mode01Raw || raw.Mode01 || {};
+
+            let vin = decodeElmAscii(getCI(m09, '0902'), 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            if (vin.length < 6) {
+              vin = decodeElmAscii(getCI(u7, '22F190') || getCI(u7, 'F190'), 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            }
+            if (vin.length < 6 && parsed.vin) vin = String(parsed.vin).replace(/[^A-Z0-9]/gi, '').toUpperCase();
+
+            const calid = decodeElmAscii(getCI(m09, '0904'), 3) || parsed.calid || '';
+            const cvn = decodeElmHex(getCI(m09, '0906'), 3) || parsed.cvn || '';
+            const ecuName = decodeElmAscii(getCI(m09, '090A'), 3) || parsed.ecuName || 'ECM-EngineControl';
+            const partNumber = decodeElmAscii(getCI(u7, '22F187') || getCI(u7, 'F187'), 3) || parsed.partNumber || '';
+            const softwareVersion = decodeElmAscii(getCI(u7, '22F189') || getCI(u7, 'F189'), 3) || parsed.softwareVersion || '';
+            const hardwarePart = decodeElmAscii(getCI(u7, '22F191') || getCI(u7, 'F191'), 3) || parsed.hardwarePart || '';
+            const engine = decodeElmAscii(getCI(u7, '22F197') || getCI(u7, 'F197'), 3) || parsed.engine || '';
+
+            const finalVin = normalizeVinString(vin, partNumber);
+            const label = parsed.label || parsed.vehicleLabel || ((engine && partNumber) ? `${engine} (${partNumber})` : (engine || (ecuName !== 'ECM-EngineControl' ? ecuName : `Vehicle ${finalVin}`)));
+            const nowIso = parsed.timestamp || parsed.ts || new Date().toISOString();
+            const prof = registerOrSwitchVehicle({
+              vin: finalVin,
+              label,
+              engine,
+              ecuName,
+              partNumber,
+              softwareVersion,
+              hardwarePart,
+              calid,
+              cvn,
+              lastSeenAt: nowIso
+            }, { activate: true, refreshUi: false });
+
+            // Clean zeroed baseline so missing PIDs do not inherit another vehicle's static numbers
+            appState.current = {
+              ...SNAPSHOTS.parked_off,
+              label: `Imported · ${prof.vin}`,
+              coolant: 0, iat: 0, amb: 0, cat: 0, stft: 0, ltft: 0, secO2Trim: 0,
+              map: 100, baro: 100, rail: 0, timing: 0, thr: 0, thrB: 0, relThr: 0, actThr: 0,
+              pedalD: 0, pedalE: 0, o2s1: 0, o2s2: 0, lambda: 1.0, fuel: 0, evap: 0, volt: 0,
+              atrv: '', fuelSys1: 'Imported OBD-II Dump', milOn: false, dtcCount: 0, runtime: 0
+            };
+
+            if (raw.atrv) applyElmResponseToState('ATRV', String(raw.atrv));
+            const pidEntries = Object.entries(m01).sort(([a], [b]) => (a === '010C' ? -1 : b === '010C' ? 1 : a.localeCompare(b)));
+            for (const [pid, resp] of pidEntries) {
+              if (resp) applyElmResponseToState(String(pid), String(resp));
+            }
+            const derived = computeDerivedMetrics(appState.current);
+            appState.current = { ...appState.current, ...derived };
+
+            const sid = 'imp_' + Date.now();
+            const normFrame = buildNormalizedSample(appState.current, sid, prof.vin, nowIso);
+            const meta = {
+              id: sid,
+              vin: prof.vin,
+              file: `sessions/${sid}.json`,
+              transport: `Raw Dump · ${file.name}`,
+              startedAt: nowIso,
+              updatedAt: nowIso,
+              sampleCount: 1,
+              maxRpm: normFrame.rpm,
+              maxSpd: normFrame.spd,
+              maxCoolant: normFrame.coolant,
+              syncedToCloud: false,
+              projectFolderSaved: true
+            };
+            await saveSessionRecordToDbAndFolder(prof, meta, [normFrame], raw);
+            historyInspectSessionId = sid;
+            loadFramesIntoPausedCockpit([normFrame], prof.vin);
+            await refreshPassiveSessionsUi();
+            await refreshHistoryTab();
           } else {
             changeDataSource('snap1');
           }
-          logTerminal(`[IMPORT] Loaded ${file.name} successfully. All Mode 01/06/09/UDS variables mapped.`, 'text-[#047857] font-semibold');
-          document.getElementById('conn-badge').textContent = `Imported · ${file.name}`;
+
+          logTerminal(`[IMPORT] Loaded ${file.name} for VIN ${getActiveVin()} & archived to vehicle_history/${getActiveVin()}/.`, 'text-[#047857] font-semibold');
         } catch (e) {
           logTerminal(`[IMPORT ERROR] Invalid JSON file: ${e.message}`, 'text-[#D92B2B]');
+        } finally {
+          if (fileInput) fileInput.value = '';
         }
       };
       reader.readAsText(file);
     }
 
     function exportTelemetryCsv() {
+      const vin = getActiveVin();
       const headers = [
-        'index,rpm,speed_kmh,calc_load_pct,abs_load_pct,coolant_c,iat_c,ambient_c,catalyst_c,stft_pct,ltft_pct,sec_o2_trim_pct,total_trim_pct,o2_b1s1_v,o2_b1s2_v,lambda,map_kpa,baro_kpa,boost_vac_kpa,rail_mpa,timing_deg,thr_a_pct,thr_b_pct,rel_thr_pct,act_thr_pct,pedal_d_pct,pedal_e_pct,fuel_level_pct,evap_purge_pct,ecu_volt_v,est_fuel_lh,est_l100km,runtime_s'
+        'vin,index,rpm,speed_kmh,calc_load_pct,abs_load_pct,coolant_c,iat_c,ambient_c,catalyst_c,stft_pct,ltft_pct,sec_o2_trim_pct,total_trim_pct,o2_b1s1_v,o2_b1s2_v,lambda,map_kpa,baro_kpa,boost_vac_kpa,rail_mpa,timing_deg,thr_a_pct,thr_b_pct,rel_thr_pct,act_thr_pct,pedal_d_pct,pedal_e_pct,fuel_level_pct,evap_purge_pct,ecu_volt_v,est_fuel_lh,est_l100km,runtime_s'
       ];
       const rows = appState.history.map((h, i) => [
-        i, Math.round(h.rpm), Math.round(h.spd), h.load.toFixed(1), h.absLoad.toFixed(1),
+        vin, i, Math.round(h.rpm), Math.round(h.spd), h.load.toFixed(1), h.absLoad.toFixed(1),
         Math.round(h.coolant), Math.round(h.iat), Math.round(h.amb), h.cat.toFixed(1),
         h.stft.toFixed(2), h.ltft.toFixed(2), h.secO2Trim.toFixed(2), h.totalTrim.toFixed(2),
         h.o2s1.toFixed(3), h.o2s2.toFixed(3), h.lambda.toFixed(4),
@@ -5150,28 +6528,25 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `vw_polo_tsi_all_variables_${appState.source}.csv`;
+      a.download = `pulseobd_${vin}_${appState.source}_variables.csv`;
       a.click();
     }
 
     function exportFullJsonSnapshot() {
+      const veh = appState.activeVehicle || DEFAULT_VEHICLE_PROFILE;
+      const catalog = buildCompleteVariableCatalog(appState.current);
       const payload = {
         exportedAt: new Date().toISOString(),
-        vehicle: {
-          vin: 'AAVZZZ6RZHU112564',
-          engine: 'R4 1.2l TFS',
-          partNumber: '04E906027LH',
-          software: '3997',
-          hardware: '04E907309AF H24'
-        },
+        vin: veh.vin,
+        vehicle: { ...veh },
         readOnlyEnforced: true,
-        variableCount: 124,
-        variables: buildCompleteVariableCatalog(appState.current)
+        variableCount: catalog.length,
+        variables: catalog
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `vw_polo_tsi_124_variables_snapshot.json`;
+      a.download = `pulseobd_${veh.vin}_124_variables_snapshot.json`;
       a.click();
     }
 
@@ -5280,6 +6655,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     // Load saved Cloud + BT Coexistence configs & auto-connect whenever internet is available
     (function initCloudAndUrlParams() {
+      updateVehicleIdentityDom();
       loadCloudConfig();
       loadBtPrefs();
       loadPassivePrefs();
@@ -5312,6 +6688,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         updateCloudProviderUi();
         updateNetworkBadgeUi();
         updateCloudBadges();
+        updateProjectFolderBadge();
         renderConnectedBtDevicesUi();
 
         if (srcParam && ['snap1', 'snap2', 'parked_off', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
@@ -5331,6 +6708,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         updateCloudProviderUi();
         updateNetworkBadgeUi();
         updateCloudBadges();
+        updateProjectFolderBadge();
         renderConnectedBtDevicesUi();
       }
     })();
@@ -5349,9 +6727,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
     updateDomMetrics(appState.current);
     renderAllChartsNow();
 
-    openDriveDb().then(() => loadOfflineQueueFromDb()).then(() => {
-      evaluateAutoCloudConnection('startup');
-    }).catch(() => {});
+    openDriveDb()
+      .then(() => loadOfflineQueueFromDb())
+      .then(() => loadProjectHistoryManifest())
+      .then(() => {
+        updateVehicleIdentityDom();
+        renderAllVariablesTable();
+        refreshPassiveSessionsUi();
+        refreshHistoryTab();
+        evaluateAutoCloudConnection('startup');
+      })
+      .catch(() => {});
 
     setInterval(() => {
       const online = updateNetworkBadgeUi();

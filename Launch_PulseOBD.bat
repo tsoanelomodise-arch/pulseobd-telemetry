@@ -1,16 +1,17 @@
 @echo off
-title PulseOBD — VW Polo 1.2 TSI Read-Only Telemetry & Firebase Cloud Bridge
+title PulseOBD — Multi-VIN Read-Only Telemetry & Project Archive Bridge
 echo ============================================================================
-echo   PulseOBD — Read-Only OBD-II Telemetry Studio + Firebase Cloud Relay
-echo   Adapter: OBDII (00:10:CC:4F:36:03) on COM3 @ 38400 baud (Strictly Read-Only)
-echo   VIN / Channel: AAVZZZ6RZHU112564 (Firebase /vehicles/^<VIN^> or Auto ntfy)
+echo   PulseOBD — Strictly Read-Only OBD-II Studio + Project Archive Bridge
+echo   Default COM Port: COM3 @ 38400 8N1 (Auto Mode 01/06/09/UDS Read-Only)
+echo   Project History : .\vehicle_history\^<VIN^>\ (Auto-Discovers Each Car)
+echo   Cloud Relay     : Optional Auto-TX (Firebase / ntfy / Supabase)
 echo ============================================================================
 echo.
 echo [1] Opening PulseOBD_Studio.html in your default browser...
 start "" "%~dp0PulseOBD_Studio.html"
 echo.
-echo [2] Starting COM3 Read-Only Bridge on http://localhost:8765 + Auto Cloud TX...
-echo     (BT Audio Coexistence Active + Firebase Live & History when configured)
+echo [2] Starting COM3 Read-Only Bridge on http://localhost:8765 ...
+echo     (Per-VIN History + BT Audio Coexistence + Auto VIN Discovery Active)
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0bridge\start_obd_web_bridge.ps1"
 if errorlevel 1 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start_obd_web_bridge.ps1"
 pause
