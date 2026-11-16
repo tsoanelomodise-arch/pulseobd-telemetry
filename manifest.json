@@ -1,0 +1,10 @@
+{
+  "name": "PulseOBD — VW Polo 1.2 TSI Telemetry",
+  "short_name": "PulseOBD",
+  "description": "Strictly read-only mobile and web OBD-II telemetry studio with live graphs, Mode 06 diagnostics, and real-time cloud streaming.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#222222",
+  "orientation": "any"
+}

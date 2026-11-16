@@ -1,0 +1,7 @@
+*.log
+tmp/
+scratch/
+.DS_Store
+Thumbs.db
+bridge/diagnostics/
+bridge/live_telemetry_latest.json
