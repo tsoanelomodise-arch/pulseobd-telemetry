@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>PulseOBD — Cloud-Connected OBD-II Mobile & Web Telemetry Studio</title>
   <meta name="description" content="Strictly read-only mobile and web OBD-II telemetry cockpit with Real-Time Cloud Streaming for remote viewing of all 124 vehicle variables." />
+  <link rel="icon" href="data:," />
   <script>
 (()=>{var qv=Object.create;var Hi=Object.defineProperty;var $v=Object.getOwnPropertyDescriptor;var Lv=Object.getOwnPropertyNames;var Mv=Object.getPrototypeOf,Nv=Object.prototype.hasOwnProperty;var df=r=>Hi(r,"__esModule",{value:!0});var hf=r=>{if(typeof require!="undefined")return require(r);throw new Error('Dynamic require of "'+r+'" is not supported')};var P=(r,e)=>()=>(r&&(e=r(r=0)),e);var x=(r,e)=>()=>(e||r((e={exports:{}}).exports,e),e.exports),Ge=(r,e)=>{df(r);for(var t in e)Hi(r,t,{get:e[t],enumerable:!0})},Bv=(r,e,t)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of Lv(e))!Nv.call(r,i)&&i!=="default"&&Hi(r,i,{get:()=>e[i],enumerable:!(t=$v(e,i))||t.enumerable});return r},pe=r=>Bv(df(Hi(r!=null?qv(Mv(r)):{},"default",r&&r.__esModule&&"default"in r?{get:()=>r.default,enumerable:!0}:{value:r,enumerable:!0})),r);var m,u=P(()=>{m={platform:"",env:{},versions:{node:"14.17.6"}}});var Fv,be,ft=P(()=>{u();Fv=0,be={readFileSync:r=>self[r]||"",statSync:()=>({mtimeMs:Fv++}),promises:{readFile:r=>Promise.resolve(self[r]||"")}}});var Fs=x((oP,gf)=>{u();"use strict";var mf=class{constructor(e={}){if(!(e.maxSize&&e.maxSize>0))throw new TypeError("`maxSize` must be a number greater than 0");if(typeof e.maxAge=="number"&&e.maxAge===0)throw new TypeError("`maxAge` must be a number greater than 0");this.maxSize=e.maxSize,this.maxAge=e.maxAge||1/0,this.onEviction=e.onEviction,this.cache=new Map,this.oldCache=new Map,this._size=0}_emitEvictions(e){if(typeof this.onEviction=="function")for(let[t,i]of e)this.onEviction(t,i.value)}_deleteIfExpired(e,t){return typeof t.expiry=="number"&&t.expiry<=Date.now()?(typeof this.onEviction=="function"&&this.onEviction(e,t.value),this.delete(e)):!1}_getOrDeleteIfExpired(e,t){if(this._deleteIfExpired(e,t)===!1)return t.value}_getItemValue(e,t){return t.expiry?this._getOrDeleteIfExpired(e,t):t.value}_peek(e,t){let i=t.get(e);return this._getItemValue(e,i)}_set(e,t){this.cache.set(e,t),this._size++,this._size>=this.maxSize&&(this._size=0,this._emitEvictions(this.oldCache),this.oldCache=this.cache,this.cache=new Map)}_moveToRecent(e,t){this.oldCache.delete(e),this._set(e,t)}*_entriesAscending(){for(let e of this.oldCache){let[t,i]=e;this.cache.has(t)||this._deleteIfExpired(t,i)===!1&&(yield e)}for(let e of this.cache){let[t,i]=e;this._deleteIfExpired(t,i)===!1&&(yield e)}}get(e){if(this.cache.has(e)){let t=this.cache.get(e);return this._getItemValue(e,t)}if(this.oldCache.has(e)){let t=this.oldCache.get(e);if(this._deleteIfExpired(e,t)===!1)return this._moveToRecent(e,t),t.value}}set(e,t,{maxAge:i=this.maxAge===1/0?void 0:Date.now()+this.maxAge}={}){this.cache.has(e)?this.cache.set(e,{value:t,maxAge:i}):this._set(e,{value:t,expiry:i})}has(e){return this.cache.has(e)?!this._deleteIfExpired(e,this.cache.get(e)):this.oldCache.has(e)?!this._deleteIfExpired(e,this.oldCache.get(e)):!1}peek(e){if(this.cache.has(e))return this._peek(e,this.cache);if(this.oldCache.has(e))return this._peek(e,this.oldCache)}delete(e){let t=this.cache.delete(e);return t&&this._size--,this.oldCache.delete(e)||t}clear(){this.cache.clear(),this.oldCache.clear(),this._size=0}resize(e){if(!(e&&e>0))throw new TypeError("`maxSize` must be a number greater than 0");let t=[...this._entriesAscending()],i=t.length-e;i<0?(this.cache=new Map(t),this.oldCache=new Map,this._size=t.length):(i>0&&this._emitEvictions(t.slice(0,i)),this.oldCache=new Map(t.slice(i)),this.cache=new Map,this._size=0),this.maxSize=e}*keys(){for(let[e]of this)yield e}*values(){for(let[,e]of this)yield e}*[Symbol.iterator](){for(let e of this.cache){let[t,i]=e;this._deleteIfExpired(t,i)===!1&&(yield[t,i.value])}for(let e of this.oldCache){let[t,i]=e;this.cache.has(t)||this._deleteIfExpired(t,i)===!1&&(yield[t,i.value])}}*entriesDescending(){let e=[...this.cache];for(let t=e.length-1;t>=0;--t){let i=e[t],[n,s]=i;this._deleteIfExpired(n,s)===!1&&(yield[n,s.value])}e=[...this.oldCache];for(let t=e.length-1;t>=0;--t){let i=e[t],[n,s]=i;this.cache.has(n)||this._deleteIfExpired(n,s)===!1&&(yield[n,s.value])}}*entriesAscending(){for(let[e,t]of this._entriesAscending())yield[e,t.value]}get size(){if(!this._size)return this.oldCache.size;let e=0;for(let t of this.oldCache.keys())this.cache.has(t)||e++;return Math.min(this._size+e,this.maxSize)}};gf.exports=mf});var yf,bf=P(()=>{u();yf=r=>r&&r._hash});function Wi(r){return yf(r,{ignoreUnknown:!0})}var wf=P(()=>{u();bf()});function xt(r){if(r=`${r}`,r==="0")return"0";if(/^[+-]?(\d+|\d*\.\d+)(e[+-]?\d+)?(%|\w+)?$/.test(r))return r.replace(/^[+-]?/,t=>t==="-"?"":"-");let e=["var","calc","min","max","clamp"];for(let t of e)if(r.includes(`${t}(`))return`calc(${r} * -1)`}var Gi=P(()=>{u()});var vf,xf=P(()=>{u();vf=["preflight","container","accessibility","pointerEvents","visibility","position","inset","isolation","zIndex","order","gridColumn","gridColumnStart","gridColumnEnd","gridRow","gridRowStart","gridRowEnd","float","clear","margin","boxSizing","lineClamp","display","aspectRatio","size","height","maxHeight","minHeight","width","minWidth","maxWidth","flex","flexShrink","flexGrow","flexBasis","tableLayout","captionSide","borderCollapse","borderSpacing","transformOrigin","translate","rotate","skew","scale","transform","animation","cursor","touchAction","userSelect","resize","scrollSnapType","scrollSnapAlign","scrollSnapStop","scrollMargin","scrollPadding","listStylePosition","listStyleType","listStyleImage","appearance","columns","breakBefore","breakInside","breakAfter","gridAutoColumns","gridAutoFlow","gridAutoRows","gridTemplateColumns","gridTemplateRows","flexDirection","flexWrap","placeContent","placeItems","alignContent","alignItems","justifyContent","justifyItems","gap","space","divideWidth","divideStyle","divideColor","divideOpacity","placeSelf","alignSelf","justifySelf","overflow","overscrollBehavior","scrollBehavior","textOverflow","hyphens","whitespace","textWrap","wordBreak","borderRadius","borderWidth","borderStyle","borderColor","borderOpacity","backgroundColor","backgroundOpacity","backgroundImage","gradientColorStops","boxDecorationBreak","backgroundSize","backgroundAttachment","backgroundClip","backgroundPosition","backgroundRepeat","backgroundOrigin","fill","stroke","strokeWidth","objectFit","objectPosition","padding","textAlign","textIndent","verticalAlign","fontFamily","fontSize","fontWeight","textTransform","fontStyle","fontVariantNumeric","lineHeight","letterSpacing","textColor","textOpacity","textDecoration","textDecorationColor","textDecorationStyle","textDecorationThickness","textUnderlineOffset","fontSmoothing","placeholderColor","placeholderOpacity","caretColor","accentColor","opacity","backgroundBlendMode","mixBlendMode","boxShadow","boxShadowColor","outlineStyle","outlineWidth","outlineOffset","outlineColor","ringWidth","ringColor","ringOpacity","ringOffsetWidth","ringOffsetColor","blur","brightness","contrast","dropShadow","grayscale","hueRotate","invert","saturate","sepia","filter","backdropBlur","backdropBrightness","backdropContrast","backdropGrayscale","backdropHueRotate","backdropInvert","backdropOpacity","backdropSaturate","backdropSepia","backdropFilter","transitionProperty","transitionDelay","transitionDuration","transitionTimingFunction","willChange","contain","content","forcedColorAdjust"]});function kf(r,e){return r===void 0?e:Array.isArray(r)?r:[...new Set(e.filter(i=>r!==!1&&r[i]!==!1).concat(Object.keys(r).filter(i=>r[i]!==!1)))]}var Sf=P(()=>{u()});var Af={};Ge(Af,{default:()=>Qe});var Qe,Qi=P(()=>{u();Qe=new Proxy({},{get:()=>String})});function js(r,e,t){typeof m!="undefined"&&m.env.JEST_WORKER_ID||t&&Cf.has(t)||(t&&Cf.add(t),console.warn(""),e.forEach(i=>console.warn(r,"-",i)))}function zs(r){return Qe.dim(r)}var Cf,G,Be=P(()=>{u();Qi();Cf=new Set;G={info(r,e){js(Qe.bold(Qe.cyan("info")),...Array.isArray(r)?[r]:[e,r])},warn(r,e){["content-problems"].includes(r)||js(Qe.bold(Qe.yellow("warn")),...Array.isArray(r)?[r]:[e,r])},risk(r,e){js(Qe.bold(Qe.magenta("risk")),...Array.isArray(r)?[r]:[e,r])}}});var _f={};Ge(_f,{default:()=>Us});function qr({version:r,from:e,to:t}){G.warn(`${e}-color-renamed`,[`As of Tailwind CSS ${r}, \`${e}\` has been renamed to \`${t}\`.`,"Update your configuration file to silence this warning."])}var Us,Vs=P(()=>{u();Be();Us={inherit:"inherit",current:"currentColor",transparent:"transparent",black:"#000",white:"#fff",slate:{50:"#f8fafc",100:"#f1f5f9",200:"#e2e8f0",300:"#cbd5e1",400:"#94a3b8",500:"#64748b",600:"#475569",700:"#334155",800:"#1e293b",900:"#0f172a",950:"#020617"},gray:{50:"#f9fafb",100:"#f3f4f6",200:"#e5e7eb",300:"#d1d5db",400:"#9ca3af",500:"#6b7280",600:"#4b5563",700:"#374151",800:"#1f2937",900:"#111827",950:"#030712"},zinc:{50:"#fafafa",100:"#f4f4f5",200:"#e4e4e7",300:"#d4d4d8",400:"#a1a1aa",500:"#71717a",600:"#52525b",700:"#3f3f46",800:"#27272a",900:"#18181b",950:"#09090b"},neutral:{50:"#fafafa",100:"#f5f5f5",200:"#e5e5e5",300:"#d4d4d4",400:"#a3a3a3",500:"#737373",600:"#525252",700:"#404040",800:"#262626",900:"#171717",950:"#0a0a0a"},stone:{50:"#fafaf9",100:"#f5f5f4",200:"#e7e5e4",300:"#d6d3d1",400:"#a8a29e",500:"#78716c",600:"#57534e",700:"#44403c",800:"#292524",900:"#1c1917",950:"#0c0a09"},red:{50:"#fef2f2",100:"#fee2e2",200:"#fecaca",300:"#fca5a5",400:"#f87171",500:"#ef4444",600:"#dc2626",700:"#b91c1c",800:"#991b1b",900:"#7f1d1d",950:"#450a0a"},orange:{50:"#fff7ed",100:"#ffedd5",200:"#fed7aa",300:"#fdba74",400:"#fb923c",500:"#f97316",600:"#ea580c",700:"#c2410c",800:"#9a3412",900:"#7c2d12",950:"#431407"},amber:{50:"#fffbeb",100:"#fef3c7",200:"#fde68a",300:"#fcd34d",400:"#fbbf24",500:"#f59e0b",600:"#d97706",700:"#b45309",800:"#92400e",900:"#78350f",950:"#451a03"},yellow:{50:"#fefce8",100:"#fef9c3",200:"#fef08a",300:"#fde047",400:"#facc15",500:"#eab308",600:"#ca8a04",700:"#a16207",800:"#854d0e",900:"#713f12",950:"#422006"},lime:{50:"#f7fee7",100:"#ecfccb",200:"#d9f99d",300:"#bef264",400:"#a3e635",500:"#84cc16",600:"#65a30d",700:"#4d7c0f",800:"#3f6212",900:"#365314",950:"#1a2e05"},green:{50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",400:"#4ade80",500:"#22c55e",600:"#16a34a",700:"#15803d",800:"#166534",900:"#14532d",950:"#052e16"},emerald:{50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",300:"#6ee7b7",400:"#34d399",500:"#10b981",600:"#059669",700:"#047857",800:"#065f46",900:"#064e3b",950:"#022c22"},teal:{50:"#f0fdfa",100:"#ccfbf1",200:"#99f6e4",300:"#5eead4",400:"#2dd4bf",500:"#14b8a6",600:"#0d9488",700:"#0f766e",800:"#115e59",900:"#134e4a",950:"#042f2e"},cyan:{50:"#ecfeff",100:"#cffafe",200:"#a5f3fc",300:"#67e8f9",400:"#22d3ee",500:"#06b6d4",600:"#0891b2",700:"#0e7490",800:"#155e75",900:"#164e63",950:"#083344"},sky:{50:"#f0f9ff",100:"#e0f2fe",200:"#bae6fd",300:"#7dd3fc",400:"#38bdf8",500:"#0ea5e9",600:"#0284c7",700:"#0369a1",800:"#075985",900:"#0c4a6e",950:"#082f49"},blue:{50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",400:"#60a5fa",500:"#3b82f6",600:"#2563eb",700:"#1d4ed8",800:"#1e40af",900:"#1e3a8a",950:"#172554"},indigo:{50:"#eef2ff",100:"#e0e7ff",200:"#c7d2fe",300:"#a5b4fc",400:"#818cf8",500:"#6366f1",600:"#4f46e5",700:"#4338ca",800:"#3730a3",900:"#312e81",950:"#1e1b4b"},violet:{50:"#f5f3ff",100:"#ede9fe",200:"#ddd6fe",300:"#c4b5fd",400:"#a78bfa",500:"#8b5cf6",600:"#7c3aed",700:"#6d28d9",800:"#5b21b6",900:"#4c1d95",950:"#2e1065"},purple:{50:"#faf5ff",100:"#f3e8ff",200:"#e9d5ff",300:"#d8b4fe",400:"#c084fc",500:"#a855f7",600:"#9333ea",700:"#7e22ce",800:"#6b21a8",900:"#581c87",950:"#3b0764"},fuchsia:{50:"#fdf4ff",100:"#fae8ff",200:"#f5d0fe",300:"#f0abfc",400:"#e879f9",500:"#d946ef",600:"#c026d3",700:"#a21caf",800:"#86198f",900:"#701a75",950:"#4a044e"},pink:{50:"#fdf2f8",100:"#fce7f3",200:"#fbcfe8",300:"#f9a8d4",400:"#f472b6",500:"#ec4899",600:"#db2777",700:"#be185d",800:"#9d174d",900:"#831843",950:"#500724"},rose:{50:"#fff1f2",100:"#ffe4e6",200:"#fecdd3",300:"#fda4af",400:"#fb7185",500:"#f43f5e",600:"#e11d48",700:"#be123c",800:"#9f1239",900:"#881337",950:"#4c0519"},get lightBlue(){return qr({version:"v2.2",from:"lightBlue",to:"sky"}),this.sky},get warmGray(){return qr({version:"v3.0",from:"warmGray",to:"stone"}),this.stone},get trueGray(){return qr({version:"v3.0",from:"trueGray",to:"neutral"}),this.neutral},get coolGray(){return qr({version:"v3.0",from:"coolGray",to:"gray"}),this.gray},get blueGray(){return qr({version:"v3.0",from:"blueGray",to:"slate"}),this.slate}}});function Hs(r,...e){for(let t of e){for(let i in t)r?.hasOwnProperty?.(i)||(r[i]=t[i]);for(let i of Object.getOwnPropertySymbols(t))r?.hasOwnProperty?.(i)||(r[i]=t[i])}return r}var Ef=P(()=>{u()});function kt(r){if(Array.isArray(r))return r;let e=r.split("[").length-1,t=r.split("]").length-1;if(e!==t)throw new Error(`Path is invalid. Has unbalanced brackets: ${r}`);return r.split(/\.(?![^\[]*\])|[\[\]]/g).filter(Boolean)}var Yi=P(()=>{u()});function we(r,e){return Ki.future.includes(e)?r.future==="all"||(r?.future?.[e]??Of[e]??!1):Ki.experimental.includes(e)?r.experimental==="all"||(r?.experimental?.[e]??Of[e]??!1):!1}function Tf(r){return r.experimental==="all"?Ki.experimental:Object.keys(r?.experimental??{}).filter(e=>Ki.experimental.includes(e)&&r.experimental[e])}function Rf(r){if(m.env.JEST_WORKER_ID===void 0&&Tf(r).length>0){let e=Tf(r).map(t=>Qe.yellow(t)).join(", ");G.warn("experimental-flags-enabled",[`You have enabled experimental features: ${e}`,"Experimental features in Tailwind CSS are not covered by semver, may introduce breaking changes, and can change at any time."])}}var Of,Ki,ct=P(()=>{u();Qi();Be();Of={optimizeUniversalDefaults:!1,generalizedModifiers:!0,disableColorOpacityUtilitiesByDefault:!1,relativeContentPathsByDefault:!1},Ki={future:["hoverOnlyWhenSupported","respectDefaultRingColorOpacity","disableColorOpacityUtilitiesByDefault","relativeContentPathsByDefault"],experimental:["optimizeUniversalDefaults","generalizedModifiers"]}});function Pf(r){(()=>{if(r.purge||!r.content||!Array.isArray(r.content)&&!(typeof r.content=="object"&&r.content!==null))return!1;if(Array.isArray(r.content))return r.content.every(t=>typeof t=="string"?!0:!(typeof t?.raw!="string"||t?.extension&&typeof t?.extension!="string"));if(typeof r.content=="object"&&r.content!==null){if(Object.keys(r.content).some(t=>!["files","relative","extract","transform"].includes(t)))return!1;if(Array.isArray(r.content.files)){if(!r.content.files.every(t=>typeof t=="string"?!0:!(typeof t?.raw!="string"||t?.extension&&typeof t?.extension!="string")))return!1;if(typeof r.content.extract=="object"){for(let t of Object.values(r.content.extract))if(typeof t!="function")return!1}else if(!(r.content.extract===void 0||typeof r.content.extract=="function"))return!1;if(typeof r.content.transform=="object"){for(let t of Object.values(r.content.transform))if(typeof t!="function")return!1}else if(!(r.content.transform===void 0||typeof r.content.transform=="function"))return!1;if(typeof r.content.relative!="boolean"&&typeof r.content.relative!="undefined")return!1}return!0}return!1})()||G.warn("purge-deprecation",["The `purge`/`content` options have changed in Tailwind CSS v3.0.","Update your configuration file to eliminate this warning.","https://tailwindcss.com/docs/upgrade-guide#configure-content-sources"]),r.safelist=(()=>{let{content:t,purge:i,safelist:n}=r;return Array.isArray(n)?n:Array.isArray(t?.safelist)?t.safelist:Array.isArray(i?.safelist)?i.safelist:Array.isArray(i?.options?.safelist)?i.options.safelist:[]})(),r.blocklist=(()=>{let{blocklist:t}=r;if(Array.isArray(t)){if(t.every(i=>typeof i=="string"))return t;G.warn("blocklist-invalid",["The `blocklist` option must be an array of strings.","https://tailwindcss.com/docs/content-configuration#discarding-classes"])}return[]})(),typeof r.prefix=="function"?(G.warn("prefix-function",["As of Tailwind CSS v3.0, `prefix` cannot be a function.","Update `prefix` in your configuration to be a string to eliminate this warning.","https://tailwindcss.com/docs/upgrade-guide#prefix-cannot-be-a-function"]),r.prefix=""):r.prefix=r.prefix??"",r.content={relative:(()=>{let{content:t}=r;return t?.relative?t.relative:we(r,"relativeContentPathsByDefault")})(),files:(()=>{let{content:t,purge:i}=r;return Array.isArray(i)?i:Array.isArray(i?.content)?i.content:Array.isArray(t)?t:Array.isArray(t?.content)?t.content:Array.isArray(t?.files)?t.files:[]})(),extract:(()=>{let t=(()=>r.purge?.extract?r.purge.extract:r.content?.extract?r.content.extract:r.purge?.extract?.DEFAULT?r.purge.extract.DEFAULT:r.content?.extract?.DEFAULT?r.content.extract.DEFAULT:r.purge?.options?.extractors?r.purge.options.extractors:r.content?.options?.extractors?r.content.options.extractors:{})(),i={},n=(()=>{if(r.purge?.options?.defaultExtractor)return r.purge.options.defaultExtractor;if(r.content?.options?.defaultExtractor)return r.content.options.defaultExtractor})();if(n!==void 0&&(i.DEFAULT=n),typeof t=="function")i.DEFAULT=t;else if(Array.isArray(t))for(let{extensions:s,extractor:a}of t??[])for(let o of s)i[o]=a;else typeof t=="object"&&t!==null&&Object.assign(i,t);return i})(),transform:(()=>{let t=(()=>r.purge?.transform?r.purge.transform:r.content?.transform?r.content.transform:r.purge?.transform?.DEFAULT?r.purge.transform.DEFAULT:r.content?.transform?.DEFAULT?r.content.transform.DEFAULT:{})(),i={};return typeof t=="function"?i.DEFAULT=t:typeof t=="object"&&t!==null&&Object.assign(i,t),i})()};for(let t of r.content.files)if(typeof t=="string"&&/{([^,]*?)}/g.test(t)){G.warn("invalid-glob-braces",[`The glob pattern ${zs(t)} in your Tailwind CSS configuration is invalid.`,`Update it to ${zs(t.replace(/{([^,]*?)}/g,"$1"))} to silence this warning.`]);break}return r}var If=P(()=>{u();ct();Be()});function ke(r){if(Object.prototype.toString.call(r)!=="[object Object]")return!1;let e=Object.getPrototypeOf(r);return e===null||Object.getPrototypeOf(e)===null}var Kt=P(()=>{u()});function St(r){return Array.isArray(r)?r.map(e=>St(e)):typeof r=="object"&&r!==null?Object.fromEntries(Object.entries(r).map(([e,t])=>[e,St(t)])):r}var Xi=P(()=>{u()});function jt(r){return r.replace(/\\,/g,"\\2c ")}var Zi=P(()=>{u()});var Ws,Df=P(()=>{u();Ws={aliceblue:[240,248,255],antiquewhite:[250,235,215],aqua:[0,255,255],aquamarine:[127,255,212],azure:[240,255,255],beige:[245,245,220],bisque:[255,228,196],black:[0,0,0],blanchedalmond:[255,235,205],blue:[0,0,255],blueviolet:[138,43,226],brown:[165,42,42],burlywood:[222,184,135],cadetblue:[95,158,160],chartreuse:[127,255,0],chocolate:[210,105,30],coral:[255,127,80],cornflowerblue:[100,149,237],cornsilk:[255,248,220],crimson:[220,20,60],cyan:[0,255,255],darkblue:[0,0,139],darkcyan:[0,139,139],darkgoldenrod:[184,134,11],darkgray:[169,169,169],darkgreen:[0,100,0],darkgrey:[169,169,169],darkkhaki:[189,183,107],darkmagenta:[139,0,139],darkolivegreen:[85,107,47],darkorange:[255,140,0],darkorchid:[153,50,204],darkred:[139,0,0],darksalmon:[233,150,122],darkseagreen:[143,188,143],darkslateblue:[72,61,139],darkslategray:[47,79,79],darkslategrey:[47,79,79],darkturquoise:[0,206,209],darkviolet:[148,0,211],deeppink:[255,20,147],deepskyblue:[0,191,255],dimgray:[105,105,105],dimgrey:[105,105,105],dodgerblue:[30,144,255],firebrick:[178,34,34],floralwhite:[255,250,240],forestgreen:[34,139,34],fuchsia:[255,0,255],gainsboro:[220,220,220],ghostwhite:[248,248,255],gold:[255,215,0],goldenrod:[218,165,32],gray:[128,128,128],green:[0,128,0],greenyellow:[173,255,47],grey:[128,128,128],honeydew:[240,255,240],hotpink:[255,105,180],indianred:[205,92,92],indigo:[75,0,130],ivory:[255,255,240],khaki:[240,230,140],lavender:[230,230,250],lavenderblush:[255,240,245],lawngreen:[124,252,0],lemonchiffon:[255,250,205],lightblue:[173,216,230],lightcoral:[240,128,128],lightcyan:[224,255,255],lightgoldenrodyellow:[250,250,210],lightgray:[211,211,211],lightgreen:[144,238,144],lightgrey:[211,211,211],lightpink:[255,182,193],lightsalmon:[255,160,122],lightseagreen:[32,178,170],lightskyblue:[135,206,250],lightslategray:[119,136,153],lightslategrey:[119,136,153],lightsteelblue:[176,196,222],lightyellow:[255,255,224],lime:[0,255,0],limegreen:[50,205,50],linen:[250,240,230],magenta:[255,0,255],maroon:[128,0,0],mediumaquamarine:[102,205,170],mediumblue:[0,0,205],mediumorchid:[186,85,211],mediumpurple:[147,112,219],mediumseagreen:[60,179,113],mediumslateblue:[123,104,238],mediumspringgreen:[0,250,154],mediumturquoise:[72,209,204],mediumvioletred:[199,21,133],midnightblue:[25,25,112],mintcream:[245,255,250],mistyrose:[255,228,225],moccasin:[255,228,181],navajowhite:[255,222,173],navy:[0,0,128],oldlace:[253,245,230],olive:[128,128,0],olivedrab:[107,142,35],orange:[255,165,0],orangered:[255,69,0],orchid:[218,112,214],palegoldenrod:[238,232,170],palegreen:[152,251,152],paleturquoise:[175,238,238],palevioletred:[219,112,147],papayawhip:[255,239,213],peachpuff:[255,218,185],peru:[205,133,63],pink:[255,192,203],plum:[221,160,221],powderblue:[176,224,230],purple:[128,0,128],rebeccapurple:[102,51,153],red:[255,0,0],rosybrown:[188,143,143],royalblue:[65,105,225],saddlebrown:[139,69,19],salmon:[250,128,114],sandybrown:[244,164,96],seagreen:[46,139,87],seashell:[255,245,238],sienna:[160,82,45],silver:[192,192,192],skyblue:[135,206,235],slateblue:[106,90,205],slategray:[112,128,144],slategrey:[112,128,144],snow:[255,250,250],springgreen:[0,255,127],steelblue:[70,130,180],tan:[210,180,140],teal:[0,128,128],thistle:[216,191,216],tomato:[255,99,71],turquoise:[64,224,208],violet:[238,130,238],wheat:[245,222,179],white:[255,255,255],whitesmoke:[245,245,245],yellow:[255,255,0],yellowgreen:[154,205,50]}});function $r(r,{loose:e=!1}={}){if(typeof r!="string")return null;if(r=r.trim(),r==="transparent")return{mode:"rgb",color:["0","0","0"],alpha:"0"};if(r in Ws)return{mode:"rgb",color:Ws[r].map(s=>s.toString())};let t=r.replace(zv,(s,a,o,l,c)=>["#",a,a,o,o,l,l,c?c+c:""].join("")).match(jv);if(t!==null)return{mode:"rgb",color:[parseInt(t[1],16),parseInt(t[2],16),parseInt(t[3],16)].map(s=>s.toString()),alpha:t[4]?(parseInt(t[4],16)/255).toString():void 0};let i=r.match(Uv)??r.match(Vv);if(i===null)return null;let n=[i[2],i[3],i[4]].filter(Boolean).map(s=>s.toString());return n.length===2&&n[0].startsWith("var(")?{mode:i[1],color:[n[0]],alpha:n[1]}:!e&&n.length!==3||n.length<3&&!n.some(s=>/^var\(.*?\)$/.test(s))?null:{mode:i[1],color:n,alpha:i[5]?.toString?.()}}function Gs({mode:r,color:e,alpha:t}){let i=t!==void 0;return r==="rgba"||r==="hsla"?`${r}(${e.join(", ")}${i?`, ${t}`:""})`:`${r}(${e.join(" ")}${i?` / ${t}`:""})`}var jv,zv,At,Ji,qf,Ct,Uv,Vv,Qs=P(()=>{u();Df();jv=/^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i,zv=/^#([a-f\d])([a-f\d])([a-f\d])([a-f\d])?$/i,At=/(?:\d+|\d*\.\d+)%?/,Ji=/(?:\s*,\s*|\s+)/,qf=/\s*[,/]\s*/,Ct=/var\(--(?:[^ )]*?)(?:,(?:[^ )]*?|var\(--[^ )]*?\)))?\)/,Uv=new RegExp(`^(rgba?)\\(\\s*(${At.source}|${Ct.source})(?:${Ji.source}(${At.source}|${Ct.source}))?(?:${Ji.source}(${At.source}|${Ct.source}))?(?:${qf.source}(${At.source}|${Ct.source}))?\\s*\\)$`),Vv=new RegExp(`^(hsla?)\\(\\s*((?:${At.source})(?:deg|rad|grad|turn)?|${Ct.source})(?:${Ji.source}(${At.source}|${Ct.source}))?(?:${Ji.source}(${At.source}|${Ct.source}))?(?:${qf.source}(${At.source}|${Ct.source}))?\\s*\\)$`)});function Je(r,e,t){if(typeof r=="function")return r({opacityValue:e});let i=$r(r,{loose:!0});return i===null?t:Gs({...i,alpha:e})}function Ae({color:r,property:e,variable:t}){let i=[].concat(e);if(typeof r=="function")return{[t]:"1",...Object.fromEntries(i.map(s=>[s,r({opacityVariable:t,opacityValue:`var(${t}, 1)`})]))};let n=$r(r);return n===null?Object.fromEntries(i.map(s=>[s,r])):n.alpha!==void 0?Object.fromEntries(i.map(s=>[s,r])):{[t]:"1",...Object.fromEntries(i.map(s=>[s,Gs({...n,alpha:`var(${t}, 1)`})]))}}var Lr=P(()=>{u();Qs()});function ve(r,e){let t=[],i=[],n=0,s=!1;for(let a=0;a<r.length;a++){let o=r[a];t.length===0&&o===e[0]&&!s&&(e.length===1||r.slice(a,a+e.length)===e)&&(i.push(r.slice(n,a)),n=a+e.length),s=s?!1:o==="\\",o==="("||o==="["||o==="{"?t.push(o):(o===")"&&t[t.length-1]==="("||o==="]"&&t[t.length-1]==="["||o==="}"&&t[t.length-1]==="{")&&t.pop()}return i.push(r.slice(n)),i}var zt=P(()=>{u()});function en(r){return ve(r,",").map(t=>{let i=t.trim(),n={raw:i},s=i.split(Wv),a=new Set;for(let o of s)$f.lastIndex=0,!a.has("KEYWORD")&&Hv.has(o)?(n.keyword=o,a.add("KEYWORD")):$f.test(o)?a.has("X")?a.has("Y")?a.has("BLUR")?a.has("SPREAD")||(n.spread=o,a.add("SPREAD")):(n.blur=o,a.add("BLUR")):(n.y=o,a.add("Y")):(n.x=o,a.add("X")):n.color?(n.unknown||(n.unknown=[]),n.unknown.push(o)):n.color=o;return n.valid=n.x!==void 0&&n.y!==void 0,n})}function Lf(r){return r.map(e=>e.valid?[e.keyword,e.x,e.y,e.blur,e.spread,e.color].filter(Boolean).join(" "):e.raw).join(", ")}var Hv,Wv,$f,Ys=P(()=>{u();zt();Hv=new Set(["inset","inherit","initial","revert","unset"]),Wv=/\ +(?![^(]*\))/g,$f=/^-?(\d+|\.\d+)(.*?)$/g});function Ks(r){return Gv.some(e=>new RegExp(`^${e}\\(.*\\)`).test(r))}function K(r,e=null,t=!0){let i=e&&Qv.has(e.property);return r.startsWith("--")&&!i?`var(${r})`:r.includes("url(")?r.split(/(url\(.*?\))/g).filter(Boolean).map(n=>/^url\(.*?\)$/.test(n)?n:K(n,e,!1)).join(""):(r=r.replace(/([^\\])_+/g,(n,s)=>s+" ".repeat(n.length-1)).replace(/^_/g," ").replace(/\\_/g,"_"),t&&(r=r.trim()),r=Yv(r),r)}function Ye(r){return r.includes("=")&&(r=r.replace(/(=.*)/g,(e,t)=>{if(t[1]==="'"||t[1]==='"')return t;if(t.length>2){let i=t[t.length-1];if(t[t.length-2]===" "&&(i==="i"||i==="I"||i==="s"||i==="S"))return`="${t.slice(1,-2)}" ${t[t.length-1]}`}return`="${t.slice(1)}"`})),r}function Yv(r){let e=["theme"],t=["min-content","max-content","fit-content","safe-area-inset-top","safe-area-inset-right","safe-area-inset-bottom","safe-area-inset-left","titlebar-area-x","titlebar-area-y","titlebar-area-width","titlebar-area-height","keyboard-inset-top","keyboard-inset-right","keyboard-inset-bottom","keyboard-inset-left","keyboard-inset-width","keyboard-inset-height","radial-gradient","linear-gradient","conic-gradient","repeating-radial-gradient","repeating-linear-gradient","repeating-conic-gradient","anchor-size"];return r.replace(/(calc|min|max|clamp)\(.+\)/g,i=>{let n="";function s(){let a=n.trimEnd();return a[a.length-1]}for(let a=0;a<i.length;a++){let o=function(f){return f.split("").every((d,p)=>i[a+p]===d)},l=function(f){let d=1/0;for(let h of f){let b=i.indexOf(h,a);b!==-1&&b<d&&(d=b)}let p=i.slice(a,d);return a+=p.length-1,p},c=i[a];if(o("var"))n+=l([")",","]);else if(t.some(f=>o(f))){let f=t.find(d=>o(d));n+=f,a+=f.length-1}else e.some(f=>o(f))?n+=l([")"]):o("[")?n+=l(["]"]):["+","-","*","/"].includes(c)&&!["(","+","-","*","/",","].includes(s())?n+=` ${c} `:n+=c}return n.replace(/\s+/g," ")})}function Xs(r){return r.startsWith("url(")}function Zs(r){return!isNaN(Number(r))||Ks(r)}function Mr(r){return r.endsWith("%")&&Zs(r.slice(0,-1))||Ks(r)}function Nr(r){return r==="0"||new RegExp(`^[+-]?[0-9]*.?[0-9]+(?:[eE][+-]?[0-9]+)?${Xv}$`).test(r)||Ks(r)}function Mf(r){return Zv.has(r)}function Nf(r){let e=en(K(r));for(let t of e)if(!t.valid)return!1;return!0}function Bf(r){let e=0;return ve(r,"_").every(i=>(i=K(i),i.startsWith("var(")?!0:$r(i,{loose:!0})!==null?(e++,!0):!1))?e>0:!1}function Ff(r){let e=0;return ve(r,",").every(i=>(i=K(i),i.startsWith("var(")?!0:Xs(i)||ex(i)||["element(","image(","cross-fade(","image-set("].some(n=>i.startsWith(n))?(e++,!0):!1))?e>0:!1}function ex(r){r=K(r);for(let e of Jv)if(r.startsWith(`${e}(`))return!0;return!1}function jf(r){let e=0;return ve(r,"_").every(i=>(i=K(i),i.startsWith("var(")?!0:tx.has(i)||Nr(i)||Mr(i)?(e++,!0):!1))?e>0:!1}function zf(r){let e=0;return ve(r,",").every(i=>(i=K(i),i.startsWith("var(")?!0:i.includes(" ")&&!/(['"])([^"']+)\1/g.test(i)||/^\d/g.test(i)?!1:(e++,!0)))?e>0:!1}function Uf(r){return rx.has(r)}function Vf(r){return ix.has(r)}function Hf(r){return nx.has(r)}var Gv,Qv,Kv,Xv,Zv,Jv,tx,rx,ix,nx,Br=P(()=>{u();Qs();Ys();zt();Gv=["min","max","clamp","calc"];Qv=new Set(["scroll-timeline-name","timeline-scope","view-timeline-name","font-palette","anchor-name","anchor-scope","position-anchor","position-try-options","scroll-timeline","animation-timeline","view-timeline","position-try"]);Kv=["cm","mm","Q","in","pc","pt","px","em","ex","ch","rem","lh","rlh","vw","vh","vmin","vmax","vb","vi","svw","svh","lvw","lvh","dvw","dvh","cqw","cqh","cqi","cqb","cqmin","cqmax"],Xv=`(?:${Kv.join("|")})`;Zv=new Set(["thin","medium","thick"]);Jv=new Set(["conic-gradient","linear-gradient","radial-gradient","repeating-conic-gradient","repeating-linear-gradient","repeating-radial-gradient"]);tx=new Set(["center","top","right","bottom","left"]);rx=new Set(["serif","sans-serif","monospace","cursive","fantasy","system-ui","ui-serif","ui-sans-serif","ui-monospace","ui-rounded","math","emoji","fangsong"]);ix=new Set(["xx-small","x-small","small","medium","large","x-large","xx-large","xxx-large"]);nx=new Set(["larger","smaller"])});function Wf(r){let e=["cover","contain"];return ve(r,",").every(t=>{let i=ve(t,"_").filter(Boolean);return i.length===1&&e.includes(i[0])?!0:i.length!==1&&i.length!==2?!1:i.every(n=>Nr(n)||Mr(n)||n==="auto")})}var Gf=P(()=>{u();Br();zt()});function Qf(r,e){r.walkClasses(t=>{t.value=e(t.value),t.raws&&t.raws.value&&(t.raws.value=jt(t.raws.value))})}function Yf(r,e){if(!_t(r))return;let t=r.slice(1,-1);if(!!e(t))return K(t)}function sx(r,e={},t){let i=e[r];if(i!==void 0)return xt(i);if(_t(r)){let n=Yf(r,t);return n===void 0?void 0:xt(n)}}function tn(r,e={},{validate:t=()=>!0}={}){let i=e.values?.[r];return i!==void 0?i:e.supportsNegativeValues&&r.startsWith("-")?sx(r.slice(1),e.values,t):Yf(r,t)}function _t(r){return r.startsWith("[")&&r.endsWith("]")}function Kf(r){let e=r.lastIndexOf("/"),t=r.lastIndexOf("[",e),i=r.indexOf("]",e);return r[e-1]==="]"||r[e+1]==="["||t!==-1&&i!==-1&&t<e&&e<i&&(e=r.lastIndexOf("/",t)),e===-1||e===r.length-1?[r,void 0]:_t(r)&&!r.includes("]/[")?[r,void 0]:[r.slice(0,e),r.slice(e+1)]}function Xt(r){if(typeof r=="string"&&r.includes("<alpha-value>")){let e=r;return({opacityValue:t=1})=>e.replace(/<alpha-value>/g,t)}return r}function Xf(r){return K(r.slice(1,-1))}function ax(r,e={},{tailwindConfig:t={}}={}){if(e.values?.[r]!==void 0)return Xt(e.values?.[r]);let[i,n]=Kf(r);if(n!==void 0){let s=e.values?.[i]??(_t(i)?i.slice(1,-1):void 0);return s===void 0?void 0:(s=Xt(s),_t(n)?Je(s,Xf(n)):t.theme?.opacity?.[n]===void 0?void 0:Je(s,t.theme.opacity[n]))}return tn(r,e,{validate:Bf})}function ox(r,e={}){return e.values?.[r]}function qe(r){return(e,t)=>tn(e,t,{validate:r})}function lx(r,e){let t=r.indexOf(e);return t===-1?[void 0,r]:[r.slice(0,t),r.slice(t+1)]}function ea(r,e,t,i){if(t.values&&e in t.values)for(let{type:s}of r??[]){let a=Js[s](e,t,{tailwindConfig:i});if(a!==void 0)return[a,s,null]}if(_t(e)){let s=e.slice(1,-1),[a,o]=lx(s,":");if(!/^[\w-_]+$/g.test(a))o=s;else if(a!==void 0&&!Zf.includes(a))return[];if(o.length>0&&Zf.includes(a))return[tn(`[${o}]`,t),a,null]}let n=ta(r,e,t,i);for(let s of n)return s;return[]}function*ta(r,e,t,i){let n=we(i,"generalizedModifiers"),[s,a]=Kf(e);if(n&&t.modifiers!=null&&(t.modifiers==="any"||typeof t.modifiers=="object"&&(a&&_t(a)||a in t.modifiers))||(s=e,a=void 0),a!==void 0&&s===""&&(s="DEFAULT"),a!==void 0&&typeof t.modifiers=="object"){let l=t.modifiers?.[a]??null;l!==null?a=l:_t(a)&&(a=Xf(a))}for(let{type:l}of r??[]){let c=Js[l](s,t,{tailwindConfig:i});c!==void 0&&(yield[c,l,a??null])}}var Js,Zf,Fr=P(()=>{u();Zi();Lr();Br();Gi();Gf();ct();Js={any:tn,color:ax,url:qe(Xs),image:qe(Ff),length:qe(Nr),percentage:qe(Mr),position:qe(jf),lookup:ox,"generic-name":qe(Uf),"family-name":qe(zf),number:qe(Zs),"line-width":qe(Mf),"absolute-size":qe(Vf),"relative-size":qe(Hf),shadow:qe(Nf),size:qe(Wf)},Zf=Object.keys(Js)});function X(r){return typeof r=="function"?r({}):r}var ra=P(()=>{u()});function Zt(r){return typeof r=="function"}function jr(r,...e){let t=e.pop();for(let i of e)for(let n in i){let s=t(r[n],i[n]);s===void 0?ke(r[n])&&ke(i[n])?r[n]=jr({},r[n],i[n],t):r[n]=i[n]:r[n]=s}return r}function ux(r,...e){return Zt(r)?r(...e):r}function fx(r){return r.reduce((e,{extend:t})=>jr(e,t,(i,n)=>i===void 0?[n]:Array.isArray(i)?[n,...i]:[n,i]),{})}function cx(r){return{...r.reduce((e,t)=>Hs(e,t),{}),extend:fx(r)}}function Jf(r,e){if(Array.isArray(r)&&ke(r[0]))return r.concat(e);if(Array.isArray(e)&&ke(e[0])&&ke(r))return[r,...e];if(Array.isArray(e))return e}function px({extend:r,...e}){return jr(e,r,(t,i)=>!Zt(t)&&!i.some(Zt)?jr({},t,...i,Jf):(n,s)=>jr({},...[t,...i].map(a=>ux(a,n,s)),Jf))}function*dx(r){let e=kt(r);if(e.length===0||(yield e,Array.isArray(r)))return;let t=/^(.*?)\s*\/\s*([^/]+)$/,i=r.match(t);if(i!==null){let[,n,s]=i,a=kt(n);a.alpha=s,yield a}}function hx(r){let e=(t,i)=>{for(let n of dx(t)){let s=0,a=r;for(;a!=null&&s<n.length;)a=a[n[s++]],a=Zt(a)&&(n.alpha===void 0||s<=n.length-1)?a(e,ia):a;if(a!==void 0){if(n.alpha!==void 0){let o=Xt(a);return Je(o,n.alpha,X(o))}return ke(a)?St(a):a}}return i};return Object.assign(e,{theme:e,...ia}),Object.keys(r).reduce((t,i)=>(t[i]=Zt(r[i])?r[i](e,ia):r[i],t),{})}function ec(r){let e=[];return r.forEach(t=>{e=[...e,t];let i=t?.plugins??[];i.length!==0&&i.forEach(n=>{n.__isOptionsFunction&&(n=n()),e=[...e,...ec([n?.config??{}])]})}),e}function mx(r){return[...r].reduceRight((t,i)=>Zt(i)?i({corePlugins:t}):kf(i,t),vf)}function gx(r){return[...r].reduceRight((t,i)=>[...t,...i],[])}function na(r){let e=[...ec(r),{prefix:"",important:!1,separator:":"}];return Pf(Hs({theme:hx(px(cx(e.map(t=>t?.theme??{})))),corePlugins:mx(e.map(t=>t.corePlugins)),plugins:gx(r.map(t=>t?.plugins??[]))},...e))}var ia,tc=P(()=>{u();Gi();xf();Sf();Vs();Ef();Yi();If();Kt();Xi();Fr();Lr();ra();ia={colors:Us,negative(r){return Object.keys(r).filter(e=>r[e]!=="0").reduce((e,t)=>{let i=xt(r[t]);return i!==void 0&&(e[`-${t}`]=i),e},{})},breakpoints(r){return Object.keys(r).filter(e=>typeof r[e]=="string").reduce((e,t)=>({...e,[`screen-${t}`]:r[t]}),{})}}});var rn=x((f3,rc)=>{u();rc.exports={content:[],presets:[],darkMode:"media",theme:{accentColor:({theme:r})=>({...r("colors"),auto:"auto"}),animation:{none:"none",spin:"spin 1s linear infinite",ping:"ping 1s cubic-bezier(0, 0, 0.2, 1) infinite",pulse:"pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",bounce:"bounce 1s infinite"},aria:{busy:'busy="true"',checked:'checked="true"',disabled:'disabled="true"',expanded:'expanded="true"',hidden:'hidden="true"',pressed:'pressed="true"',readonly:'readonly="true"',required:'required="true"',selected:'selected="true"'},aspectRatio:{auto:"auto",square:"1 / 1",video:"16 / 9"},backdropBlur:({theme:r})=>r("blur"),backdropBrightness:({theme:r})=>r("brightness"),backdropContrast:({theme:r})=>r("contrast"),backdropGrayscale:({theme:r})=>r("grayscale"),backdropHueRotate:({theme:r})=>r("hueRotate"),backdropInvert:({theme:r})=>r("invert"),backdropOpacity:({theme:r})=>r("opacity"),backdropSaturate:({theme:r})=>r("saturate"),backdropSepia:({theme:r})=>r("sepia"),backgroundColor:({theme:r})=>r("colors"),backgroundImage:{none:"none","gradient-to-t":"linear-gradient(to top, var(--tw-gradient-stops))","gradient-to-tr":"linear-gradient(to top right, var(--tw-gradient-stops))","gradient-to-r":"linear-gradient(to right, var(--tw-gradient-stops))","gradient-to-br":"linear-gradient(to bottom right, var(--tw-gradient-stops))","gradient-to-b":"linear-gradient(to bottom, var(--tw-gradient-stops))","gradient-to-bl":"linear-gradient(to bottom left, var(--tw-gradient-stops))","gradient-to-l":"linear-gradient(to left, var(--tw-gradient-stops))","gradient-to-tl":"linear-gradient(to top left, var(--tw-gradient-stops))"},backgroundOpacity:({theme:r})=>r("opacity"),backgroundPosition:{bottom:"bottom",center:"center",left:"left","left-bottom":"left bottom","left-top":"left top",right:"right","right-bottom":"right bottom","right-top":"right top",top:"top"},backgroundSize:{auto:"auto",cover:"cover",contain:"contain"},blur:{0:"0",none:"",sm:"4px",DEFAULT:"8px",md:"12px",lg:"16px",xl:"24px","2xl":"40px","3xl":"64px"},borderColor:({theme:r})=>({...r("colors"),DEFAULT:r("colors.gray.200","currentColor")}),borderOpacity:({theme:r})=>r("opacity"),borderRadius:{none:"0px",sm:"0.125rem",DEFAULT:"0.25rem",md:"0.375rem",lg:"0.5rem",xl:"0.75rem","2xl":"1rem","3xl":"1.5rem",full:"9999px"},borderSpacing:({theme:r})=>({...r("spacing")}),borderWidth:{DEFAULT:"1px",0:"0px",2:"2px",4:"4px",8:"8px"},boxShadow:{sm:"0 1px 2px 0 rgb(0 0 0 / 0.05)",DEFAULT:"0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",md:"0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",lg:"0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",xl:"0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)","2xl":"0 25px 50px -12px rgb(0 0 0 / 0.25)",inner:"inset 0 2px 4px 0 rgb(0 0 0 / 0.05)",none:"none"},boxShadowColor:({theme:r})=>r("colors"),brightness:{0:"0",50:".5",75:".75",90:".9",95:".95",100:"1",105:"1.05",110:"1.1",125:"1.25",150:"1.5",200:"2"},caretColor:({theme:r})=>r("colors"),colors:({colors:r})=>({inherit:r.inherit,current:r.current,transparent:r.transparent,black:r.black,white:r.white,slate:r.slate,gray:r.gray,zinc:r.zinc,neutral:r.neutral,stone:r.stone,red:r.red,orange:r.orange,amber:r.amber,yellow:r.yellow,lime:r.lime,green:r.green,emerald:r.emerald,teal:r.teal,cyan:r.cyan,sky:r.sky,blue:r.blue,indigo:r.indigo,violet:r.violet,purple:r.purple,fuchsia:r.fuchsia,pink:r.pink,rose:r.rose}),columns:{auto:"auto",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12","3xs":"16rem","2xs":"18rem",xs:"20rem",sm:"24rem",md:"28rem",lg:"32rem",xl:"36rem","2xl":"42rem","3xl":"48rem","4xl":"56rem","5xl":"64rem","6xl":"72rem","7xl":"80rem"},container:{},content:{none:"none"},contrast:{0:"0",50:".5",75:".75",100:"1",125:"1.25",150:"1.5",200:"2"},cursor:{auto:"auto",default:"default",pointer:"pointer",wait:"wait",text:"text",move:"move",help:"help","not-allowed":"not-allowed",none:"none","context-menu":"context-menu",progress:"progress",cell:"cell",crosshair:"crosshair","vertical-text":"vertical-text",alias:"alias",copy:"copy","no-drop":"no-drop",grab:"grab",grabbing:"grabbing","all-scroll":"all-scroll","col-resize":"col-resize","row-resize":"row-resize","n-resize":"n-resize","e-resize":"e-resize","s-resize":"s-resize","w-resize":"w-resize","ne-resize":"ne-resize","nw-resize":"nw-resize","se-resize":"se-resize","sw-resize":"sw-resize","ew-resize":"ew-resize","ns-resize":"ns-resize","nesw-resize":"nesw-resize","nwse-resize":"nwse-resize","zoom-in":"zoom-in","zoom-out":"zoom-out"},divideColor:({theme:r})=>r("borderColor"),divideOpacity:({theme:r})=>r("borderOpacity"),divideWidth:({theme:r})=>r("borderWidth"),dropShadow:{sm:"0 1px 1px rgb(0 0 0 / 0.05)",DEFAULT:["0 1px 2px rgb(0 0 0 / 0.1)","0 1px 1px rgb(0 0 0 / 0.06)"],md:["0 4px 3px rgb(0 0 0 / 0.07)","0 2px 2px rgb(0 0 0 / 0.06)"],lg:["0 10px 8px rgb(0 0 0 / 0.04)","0 4px 3px rgb(0 0 0 / 0.1)"],xl:["0 20px 13px rgb(0 0 0 / 0.03)","0 8px 5px rgb(0 0 0 / 0.08)"],"2xl":"0 25px 25px rgb(0 0 0 / 0.15)",none:"0 0 #0000"},fill:({theme:r})=>({none:"none",...r("colors")}),flex:{1:"1 1 0%",auto:"1 1 auto",initial:"0 1 auto",none:"none"},flexBasis:({theme:r})=>({auto:"auto",...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%","1/5":"20%","2/5":"40%","3/5":"60%","4/5":"80%","1/6":"16.666667%","2/6":"33.333333%","3/6":"50%","4/6":"66.666667%","5/6":"83.333333%","1/12":"8.333333%","2/12":"16.666667%","3/12":"25%","4/12":"33.333333%","5/12":"41.666667%","6/12":"50%","7/12":"58.333333%","8/12":"66.666667%","9/12":"75%","10/12":"83.333333%","11/12":"91.666667%",full:"100%"}),flexGrow:{0:"0",DEFAULT:"1"},flexShrink:{0:"0",DEFAULT:"1"},fontFamily:{sans:["ui-sans-serif","system-ui","sans-serif",'"Apple Color Emoji"','"Segoe UI Emoji"','"Segoe UI Symbol"','"Noto Color Emoji"'],serif:["ui-serif","Georgia","Cambria",'"Times New Roman"',"Times","serif"],mono:["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas",'"Liberation Mono"','"Courier New"',"monospace"]},fontSize:{xs:["0.75rem",{lineHeight:"1rem"}],sm:["0.875rem",{lineHeight:"1.25rem"}],base:["1rem",{lineHeight:"1.5rem"}],lg:["1.125rem",{lineHeight:"1.75rem"}],xl:["1.25rem",{lineHeight:"1.75rem"}],"2xl":["1.5rem",{lineHeight:"2rem"}],"3xl":["1.875rem",{lineHeight:"2.25rem"}],"4xl":["2.25rem",{lineHeight:"2.5rem"}],"5xl":["3rem",{lineHeight:"1"}],"6xl":["3.75rem",{lineHeight:"1"}],"7xl":["4.5rem",{lineHeight:"1"}],"8xl":["6rem",{lineHeight:"1"}],"9xl":["8rem",{lineHeight:"1"}]},fontWeight:{thin:"100",extralight:"200",light:"300",normal:"400",medium:"500",semibold:"600",bold:"700",extrabold:"800",black:"900"},gap:({theme:r})=>r("spacing"),gradientColorStops:({theme:r})=>r("colors"),gradientColorStopPositions:{"0%":"0%","5%":"5%","10%":"10%","15%":"15%","20%":"20%","25%":"25%","30%":"30%","35%":"35%","40%":"40%","45%":"45%","50%":"50%","55%":"55%","60%":"60%","65%":"65%","70%":"70%","75%":"75%","80%":"80%","85%":"85%","90%":"90%","95%":"95%","100%":"100%"},grayscale:{0:"0",DEFAULT:"100%"},gridAutoColumns:{auto:"auto",min:"min-content",max:"max-content",fr:"minmax(0, 1fr)"},gridAutoRows:{auto:"auto",min:"min-content",max:"max-content",fr:"minmax(0, 1fr)"},gridColumn:{auto:"auto","span-1":"span 1 / span 1","span-2":"span 2 / span 2","span-3":"span 3 / span 3","span-4":"span 4 / span 4","span-5":"span 5 / span 5","span-6":"span 6 / span 6","span-7":"span 7 / span 7","span-8":"span 8 / span 8","span-9":"span 9 / span 9","span-10":"span 10 / span 10","span-11":"span 11 / span 11","span-12":"span 12 / span 12","span-full":"1 / -1"},gridColumnEnd:{auto:"auto",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12",13:"13"},gridColumnStart:{auto:"auto",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12",13:"13"},gridRow:{auto:"auto","span-1":"span 1 / span 1","span-2":"span 2 / span 2","span-3":"span 3 / span 3","span-4":"span 4 / span 4","span-5":"span 5 / span 5","span-6":"span 6 / span 6","span-7":"span 7 / span 7","span-8":"span 8 / span 8","span-9":"span 9 / span 9","span-10":"span 10 / span 10","span-11":"span 11 / span 11","span-12":"span 12 / span 12","span-full":"1 / -1"},gridRowEnd:{auto:"auto",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12",13:"13"},gridRowStart:{auto:"auto",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12",13:"13"},gridTemplateColumns:{none:"none",subgrid:"subgrid",1:"repeat(1, minmax(0, 1fr))",2:"repeat(2, minmax(0, 1fr))",3:"repeat(3, minmax(0, 1fr))",4:"repeat(4, minmax(0, 1fr))",5:"repeat(5, minmax(0, 1fr))",6:"repeat(6, minmax(0, 1fr))",7:"repeat(7, minmax(0, 1fr))",8:"repeat(8, minmax(0, 1fr))",9:"repeat(9, minmax(0, 1fr))",10:"repeat(10, minmax(0, 1fr))",11:"repeat(11, minmax(0, 1fr))",12:"repeat(12, minmax(0, 1fr))"},gridTemplateRows:{none:"none",subgrid:"subgrid",1:"repeat(1, minmax(0, 1fr))",2:"repeat(2, minmax(0, 1fr))",3:"repeat(3, minmax(0, 1fr))",4:"repeat(4, minmax(0, 1fr))",5:"repeat(5, minmax(0, 1fr))",6:"repeat(6, minmax(0, 1fr))",7:"repeat(7, minmax(0, 1fr))",8:"repeat(8, minmax(0, 1fr))",9:"repeat(9, minmax(0, 1fr))",10:"repeat(10, minmax(0, 1fr))",11:"repeat(11, minmax(0, 1fr))",12:"repeat(12, minmax(0, 1fr))"},height:({theme:r})=>({auto:"auto",...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%","1/5":"20%","2/5":"40%","3/5":"60%","4/5":"80%","1/6":"16.666667%","2/6":"33.333333%","3/6":"50%","4/6":"66.666667%","5/6":"83.333333%",full:"100%",screen:"100vh",svh:"100svh",lvh:"100lvh",dvh:"100dvh",min:"min-content",max:"max-content",fit:"fit-content"}),hueRotate:{0:"0deg",15:"15deg",30:"30deg",60:"60deg",90:"90deg",180:"180deg"},inset:({theme:r})=>({auto:"auto",...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%",full:"100%"}),invert:{0:"0",DEFAULT:"100%"},keyframes:{spin:{to:{transform:"rotate(360deg)"}},ping:{"75%, 100%":{transform:"scale(2)",opacity:"0"}},pulse:{"50%":{opacity:".5"}},bounce:{"0%, 100%":{transform:"translateY(-25%)",animationTimingFunction:"cubic-bezier(0.8,0,1,1)"},"50%":{transform:"none",animationTimingFunction:"cubic-bezier(0,0,0.2,1)"}}},letterSpacing:{tighter:"-0.05em",tight:"-0.025em",normal:"0em",wide:"0.025em",wider:"0.05em",widest:"0.1em"},lineHeight:{none:"1",tight:"1.25",snug:"1.375",normal:"1.5",relaxed:"1.625",loose:"2",3:".75rem",4:"1rem",5:"1.25rem",6:"1.5rem",7:"1.75rem",8:"2rem",9:"2.25rem",10:"2.5rem"},listStyleType:{none:"none",disc:"disc",decimal:"decimal"},listStyleImage:{none:"none"},margin:({theme:r})=>({auto:"auto",...r("spacing")}),lineClamp:{1:"1",2:"2",3:"3",4:"4",5:"5",6:"6"},maxHeight:({theme:r})=>({...r("spacing"),none:"none",full:"100%",screen:"100vh",svh:"100svh",lvh:"100lvh",dvh:"100dvh",min:"min-content",max:"max-content",fit:"fit-content"}),maxWidth:({theme:r,breakpoints:e})=>({...r("spacing"),none:"none",xs:"20rem",sm:"24rem",md:"28rem",lg:"32rem",xl:"36rem","2xl":"42rem","3xl":"48rem","4xl":"56rem","5xl":"64rem","6xl":"72rem","7xl":"80rem",full:"100%",min:"min-content",max:"max-content",fit:"fit-content",prose:"65ch",...e(r("screens"))}),minHeight:({theme:r})=>({...r("spacing"),full:"100%",screen:"100vh",svh:"100svh",lvh:"100lvh",dvh:"100dvh",min:"min-content",max:"max-content",fit:"fit-content"}),minWidth:({theme:r})=>({...r("spacing"),full:"100%",min:"min-content",max:"max-content",fit:"fit-content"}),objectPosition:{bottom:"bottom",center:"center",left:"left","left-bottom":"left bottom","left-top":"left top",right:"right","right-bottom":"right bottom","right-top":"right top",top:"top"},opacity:{0:"0",5:"0.05",10:"0.1",15:"0.15",20:"0.2",25:"0.25",30:"0.3",35:"0.35",40:"0.4",45:"0.45",50:"0.5",55:"0.55",60:"0.6",65:"0.65",70:"0.7",75:"0.75",80:"0.8",85:"0.85",90:"0.9",95:"0.95",100:"1"},order:{first:"-9999",last:"9999",none:"0",1:"1",2:"2",3:"3",4:"4",5:"5",6:"6",7:"7",8:"8",9:"9",10:"10",11:"11",12:"12"},outlineColor:({theme:r})=>r("colors"),outlineOffset:{0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},outlineWidth:{0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},padding:({theme:r})=>r("spacing"),placeholderColor:({theme:r})=>r("colors"),placeholderOpacity:({theme:r})=>r("opacity"),ringColor:({theme:r})=>({DEFAULT:r("colors.blue.500","#3b82f6"),...r("colors")}),ringOffsetColor:({theme:r})=>r("colors"),ringOffsetWidth:{0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},ringOpacity:({theme:r})=>({DEFAULT:"0.5",...r("opacity")}),ringWidth:{DEFAULT:"3px",0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},rotate:{0:"0deg",1:"1deg",2:"2deg",3:"3deg",6:"6deg",12:"12deg",45:"45deg",90:"90deg",180:"180deg"},saturate:{0:"0",50:".5",100:"1",150:"1.5",200:"2"},scale:{0:"0",50:".5",75:".75",90:".9",95:".95",100:"1",105:"1.05",110:"1.1",125:"1.25",150:"1.5"},screens:{sm:"640px",md:"768px",lg:"1024px",xl:"1280px","2xl":"1536px"},scrollMargin:({theme:r})=>({...r("spacing")}),scrollPadding:({theme:r})=>r("spacing"),sepia:{0:"0",DEFAULT:"100%"},skew:{0:"0deg",1:"1deg",2:"2deg",3:"3deg",6:"6deg",12:"12deg"},space:({theme:r})=>({...r("spacing")}),spacing:{px:"1px",0:"0px",.5:"0.125rem",1:"0.25rem",1.5:"0.375rem",2:"0.5rem",2.5:"0.625rem",3:"0.75rem",3.5:"0.875rem",4:"1rem",5:"1.25rem",6:"1.5rem",7:"1.75rem",8:"2rem",9:"2.25rem",10:"2.5rem",11:"2.75rem",12:"3rem",14:"3.5rem",16:"4rem",20:"5rem",24:"6rem",28:"7rem",32:"8rem",36:"9rem",40:"10rem",44:"11rem",48:"12rem",52:"13rem",56:"14rem",60:"15rem",64:"16rem",72:"18rem",80:"20rem",96:"24rem"},stroke:({theme:r})=>({none:"none",...r("colors")}),strokeWidth:{0:"0",1:"1",2:"2"},supports:{},data:{},textColor:({theme:r})=>r("colors"),textDecorationColor:({theme:r})=>r("colors"),textDecorationThickness:{auto:"auto","from-font":"from-font",0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},textIndent:({theme:r})=>({...r("spacing")}),textOpacity:({theme:r})=>r("opacity"),textUnderlineOffset:{auto:"auto",0:"0px",1:"1px",2:"2px",4:"4px",8:"8px"},transformOrigin:{center:"center",top:"top","top-right":"top right",right:"right","bottom-right":"bottom right",bottom:"bottom","bottom-left":"bottom left",left:"left","top-left":"top left"},transitionDelay:{0:"0s",75:"75ms",100:"100ms",150:"150ms",200:"200ms",300:"300ms",500:"500ms",700:"700ms",1e3:"1000ms"},transitionDuration:{DEFAULT:"150ms",0:"0s",75:"75ms",100:"100ms",150:"150ms",200:"200ms",300:"300ms",500:"500ms",700:"700ms",1e3:"1000ms"},transitionProperty:{none:"none",all:"all",DEFAULT:"color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter",colors:"color, background-color, border-color, text-decoration-color, fill, stroke",opacity:"opacity",shadow:"box-shadow",transform:"transform"},transitionTimingFunction:{DEFAULT:"cubic-bezier(0.4, 0, 0.2, 1)",linear:"linear",in:"cubic-bezier(0.4, 0, 1, 1)",out:"cubic-bezier(0, 0, 0.2, 1)","in-out":"cubic-bezier(0.4, 0, 0.2, 1)"},translate:({theme:r})=>({...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%",full:"100%"}),size:({theme:r})=>({auto:"auto",...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%","1/5":"20%","2/5":"40%","3/5":"60%","4/5":"80%","1/6":"16.666667%","2/6":"33.333333%","3/6":"50%","4/6":"66.666667%","5/6":"83.333333%","1/12":"8.333333%","2/12":"16.666667%","3/12":"25%","4/12":"33.333333%","5/12":"41.666667%","6/12":"50%","7/12":"58.333333%","8/12":"66.666667%","9/12":"75%","10/12":"83.333333%","11/12":"91.666667%",full:"100%",min:"min-content",max:"max-content",fit:"fit-content"}),width:({theme:r})=>({auto:"auto",...r("spacing"),"1/2":"50%","1/3":"33.333333%","2/3":"66.666667%","1/4":"25%","2/4":"50%","3/4":"75%","1/5":"20%","2/5":"40%","3/5":"60%","4/5":"80%","1/6":"16.666667%","2/6":"33.333333%","3/6":"50%","4/6":"66.666667%","5/6":"83.333333%","1/12":"8.333333%","2/12":"16.666667%","3/12":"25%","4/12":"33.333333%","5/12":"41.666667%","6/12":"50%","7/12":"58.333333%","8/12":"66.666667%","9/12":"75%","10/12":"83.333333%","11/12":"91.666667%",full:"100%",screen:"100vw",svw:"100svw",lvw:"100lvw",dvw:"100dvw",min:"min-content",max:"max-content",fit:"fit-content"}),willChange:{auto:"auto",scroll:"scroll-position",contents:"contents",transform:"transform"},zIndex:{auto:"auto",0:"0",10:"10",20:"20",30:"30",40:"40",50:"50"}},plugins:[]}});function nn(r){let e=(r?.presets??[ic.default]).slice().reverse().flatMap(n=>nn(n instanceof Function?n():n)),t={respectDefaultRingColorOpacity:{theme:{ringColor:({theme:n})=>({DEFAULT:"#3b82f67f",...n("colors")})}},disableColorOpacityUtilitiesByDefault:{corePlugins:{backgroundOpacity:!1,borderOpacity:!1,divideOpacity:!1,placeholderOpacity:!1,ringOpacity:!1,textOpacity:!1}}},i=Object.keys(t).filter(n=>we(r,n)).map(n=>t[n]);return[r,...i,...e]}var ic,nc=P(()=>{u();ic=pe(rn());ct()});var sc={};Ge(sc,{default:()=>zr});function zr(...r){let[,...e]=nn(r[0]);return na([...r,...e])}var sa=P(()=>{u();tc();nc()});var Ur={};Ge(Ur,{default:()=>me});var me,et=P(()=>{u();me={resolve:r=>r,extname:r=>"."+r.split(".").pop()}});function sn(r){return typeof r=="object"&&r!==null}function bx(r){return Object.keys(r).length===0}function ac(r){return typeof r=="string"||r instanceof String}function aa(r){return sn(r)&&r.config===void 0&&!bx(r)?null:sn(r)&&r.config!==void 0&&ac(r.config)?me.resolve(r.config):sn(r)&&r.config!==void 0&&sn(r.config)?null:ac(r)?me.resolve(r):wx()}function wx(){for(let r of yx)try{let e=me.resolve(r);return be.accessSync(e),e}catch(e){}return null}var yx,oc=P(()=>{u();ft();et();yx=["./tailwind.config.js","./tailwind.config.cjs","./tailwind.config.mjs","./tailwind.config.ts","./tailwind.config.cts","./tailwind.config.mts"]});var lc={};Ge(lc,{default:()=>oa});var oa,la=P(()=>{u();oa={parse:r=>({href:r})}});var ua=x(()=>{u()});var an=x((v3,cc)=>{u();"use strict";var uc=(Qi(),Af),fc=ua(),Jt=class extends Error{constructor(e,t,i,n,s,a){super(e);this.name="CssSyntaxError",this.reason=e,s&&(this.file=s),n&&(this.source=n),a&&(this.plugin=a),typeof t!="undefined"&&typeof i!="undefined"&&(typeof t=="number"?(this.line=t,this.column=i):(this.line=t.line,this.column=t.column,this.endLine=i.line,this.endColumn=i.column)),this.setMessage(),Error.captureStackTrace&&Error.captureStackTrace(this,Jt)}setMessage(){this.message=this.plugin?this.plugin+": ":"",this.message+=this.file?this.file:"<css input>",typeof this.line!="undefined"&&(this.message+=":"+this.line+":"+this.column),this.message+=": "+this.reason}showSourceCode(e){if(!this.source)return"";let t=this.source;e==null&&(e=uc.isColorSupported);let i=f=>f,n=f=>f,s=f=>f;if(e){let{bold:f,gray:d,red:p}=uc.createColors(!0);n=h=>f(p(h)),i=h=>d(h),fc&&(s=h=>fc(h))}let a=t.split(/\r?\n/),o=Math.max(this.line-3,0),l=Math.min(this.line+2,a.length),c=String(l).length;return a.slice(o,l).map((f,d)=>{let p=o+1+d,h=" "+(" "+p).slice(-c)+" | ";if(p===this.line){if(f.length>160){let v=20,y=Math.max(0,this.column-v),w=Math.max(this.column+v,this.endColumn+v),k=f.slice(y,w),S=i(h.replace(/\d/g," "))+f.slice(0,Math.min(this.column-1,v-1)).replace(/[^\t]/g," ");return n(">")+i(h)+s(k)+`
  `+S+n("^")}let b=i(h.replace(/\d/g," "))+f.slice(0,this.column-1).replace(/[^\t]/g," ");return n(">")+i(h)+s(f)+`
@@ -119,6 +120,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
     .tabular { font-variant-numeric: tabular-nums; }
     .acro-glass {
+      background-color: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(20px) saturate(160%);
       -webkit-backdrop-filter: blur(20px) saturate(160%);
     }
@@ -234,7 +236,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
   <div id="app-shell" class="flex flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-8 bg-white overflow-x-clip">
 
     <!-- Top Minimal Sticky Navigation Bar -->
-    <header class="sticky top-0 z-30 bg-white/88 acro-glass border-b border-[#ECEEF2] px-3 sm:px-6 py-2">
+    <header class="sticky top-0 z-30 bg-white/95 acro-glass border-b border-[#ECEEF2] px-3 sm:px-6 py-2">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-[#D92B2B] flex items-center justify-center text-white shadow-sm">
@@ -746,10 +748,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-base font-bold text-[#222222]">Drive History &amp; On-Device Trip Archive</h2>
-            <p class="text-xs text-[#5A5F6A]">All drives passively recorded in IndexedDB (<code class="font-mono-num">PulseOBD_DriveDB</code>). Inspect timelines, scrub frames, or replay into the Cockpit.</p>
+            <p class="text-xs text-[#5A5F6A]">All drives passively recorded in IndexedDB (<code class="font-mono-num">PulseOBD_DriveDB</code>) and auto-synced to Firebase when online.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button onclick="saveCurrentBufferAsDrive()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Save Current Drive Now</button>
+            <button onclick="syncPendingDrivesToFirebase(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Sync Drives to Firebase</button>
             <button onclick="clearStoredDrives()" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear History</button>
           </div>
         </div>
@@ -1047,25 +1050,26 @@ Check your Browserslist config to be sure that your targets are set up correctly
       </section>
 
       <!-- =================================================================== -->
-      <!-- TAB 5: REAL-TIME CLOUD TELEMETRY STREAM (OPTION 2 REMOTE VIEWING)   -->
+      <!-- TAB 5: REAL-TIME CLOUD TELEMETRY STREAM (FIREBASE AUTO-SYNC)        -->
       <!-- =================================================================== -->
       <section id="tab-cloud" class="hidden space-y-4">
 
         <!-- Soft Pastel Mesh Cloud Overview Banner -->
         <div class="rounded-3xl p-5 border border-[#E6E8EE] flex flex-wrap items-center justify-between gap-4" style="background: linear-gradient(120deg, rgba(255,140,174,0.16), rgba(186,208,252,0.22), rgba(255,154,116,0.16));">
-          <div class="flex items-center gap-3.5">
+          <div class="flex items-center gap-3.5 min-w-0">
             <div class="w-11 h-11 rounded-2xl bg-[#222222] text-white flex items-center justify-center shrink-0 shadow-sm">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
             </div>
-            <div>
+            <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-base font-bold text-[#222222]">Real-Time Cloud Telemetry Relay (Remote Live Viewing)</h2>
-                <span id="cloud-status-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-mono-num font-bold">STANDBY</span>
+                <h2 class="text-base font-bold text-[#222222]">Real-Time Cloud Telemetry Relay (Firebase Auto-Sync)</h2>
+                <span id="cloud-status-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-mono-num font-bold">AUTO-CONNECT ARMED</span>
+                <span id="cloud-net-pill" class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold">ONLINE</span>
               </div>
               <p class="text-xs text-[#4A4E57] mt-0.5">
-                Streams all 124 vehicle variables online from your in-car phone or Windows laptop so you can watch the live cockpit &amp; 6 graphs from any browser anywhere.
+                Automatically connects whenever internet is available, streams live telemetry, and saves timestamped trip history logs to Firebase (<span class="font-mono-num">latest</span> + <span class="font-mono-num">history/</span>).
               </p>
             </div>
           </div>
@@ -1081,7 +1085,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <strong id="cloud-rx-count" class="text-[#047857] text-sm font-bold">0</strong>
             </div>
             <div class="bg-white border border-[#E6E8EE] rounded-2xl px-3.5 py-2 text-center shadow-sm">
-              <span class="text-[#5A5F6A] block font-medium">Offline Queue</span>
+              <span class="text-[#5A5F6A] block font-medium">Queued Offline</span>
               <strong id="cloud-queue-count" class="text-[#B45309] text-sm font-bold">0</strong>
             </div>
           </div>
@@ -1093,18 +1097,18 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <!-- Card 1: Cloud Provider & Private Channel Key -->
           <div class="acro-card rounded-3xl p-5 flex flex-col justify-between space-y-3">
             <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">1. Cloud Relay Channel</span>
-              <h3 class="text-base font-bold text-[#222222] mt-0.5">Firebase, Supabase, ntfy.sh or HTTPS</h3>
+              <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">1. Firebase &amp; Cloud Relay Channel</span>
+              <h3 class="text-base font-bold text-[#222222] mt-0.5">Firebase RTDB (Default) &amp; Fallbacks</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Ready out-of-the-box with zero-setup HTTPS/SSE, or connect your own free Firebase Realtime Database, Supabase table, or custom webhook.
+                Enter your Firebase Database URL once — it saves privately in this device&apos;s <span class="font-mono-num">localStorage</span> (never stored in public HTML/GitHub).
               </p>
 
               <div class="mt-3 space-y-2.5 text-xs">
                 <div>
                   <label class="text-[#5A5F6A] block mb-1 font-semibold">Cloud Provider</label>
-                  <select id="cloud-provider" onchange="updateCloudProviderUi(); saveCloudConfig();" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 font-semibold text-[#222222] focus:outline-none">
-                    <option value="ntfy">Instant Cloud Pub/Sub (ntfy.sh HTTPS/SSE — Zero Setup)</option>
-                    <option value="firebase">Firebase Realtime Database (REST + SSE Stream)</option>
+                  <select id="cloud-provider" onchange="updateCloudProviderUi(); saveCloudConfig(); evaluateAutoCloudConnection('provider-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 font-semibold text-[#222222] focus:outline-none">
+                    <option value="firebase" selected>Firebase Realtime Database (Default · Live + History)</option>
+                    <option value="ntfy">Instant Cloud Pub/Sub (ntfy.sh HTTPS/SSE — Fallback)</option>
                     <option value="supabase">Supabase Table (REST POST/GET)</option>
                     <option value="webhook">Custom HTTPS Webhook / Cloud Worker</option>
                   </select>
@@ -1115,18 +1119,21 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <input id="cloud-channel-id" type="text" oninput="saveCloudConfig()" value="pulseobd-polo-aavzzz6rzhu112564-7d4e9b" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
 
-                <div id="custom-url-group" class="hidden space-y-2">
+                <div id="custom-url-group" class="space-y-2">
                   <div>
-                    <label id="custom-url-label" class="text-[#5A5F6A] block mb-1 font-semibold">Database / Webhook HTTPS Endpoint</label>
-                    <input id="cloud-custom-url" type="text" oninput="saveCloudConfig()" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                    <label id="custom-url-label" class="text-[#5A5F6A] block mb-1 font-semibold">Firebase Realtime Database URL</label>
+                    <input id="cloud-custom-url" type="text" oninput="onCloudEndpointInput()" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  </div>
+                  <div id="firebase-setup-hint" class="acro-well rounded-xl p-2.5 text-[11px] text-[#4A4E57]">
+                    <span id="firebase-url-status-text">Paste your Firebase RTDB URL above to start saving live frames &amp; trip history automatically whenever online.</span>
                   </div>
                   <div id="supabase-table-group" class="hidden">
                     <label class="text-[#5A5F6A] block mb-1 font-semibold">Supabase Table Name</label>
                     <input id="cloud-supabase-table" type="text" oninput="saveCloudConfig()" value="pulseobd_telemetry" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <div>
-                    <label id="api-key-label" class="text-[#5A5F6A] block mb-1 font-semibold">API Key / Auth Secret (Optional)</label>
-                    <input id="cloud-api-key" type="password" oninput="saveCloudConfig()" placeholder="Supabase anon key, Firebase auth secret, or Bearer token" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                    <label id="api-key-label" class="text-[#5A5F6A] block mb-1 font-semibold">Firebase Database Auth / Secret (Optional)</label>
+                    <input id="cloud-api-key" type="password" oninput="saveCloudConfig()" placeholder="Leave blank if RTDB rules allow channel read/write" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <details id="supabase-sql-tip" class="hidden acro-well rounded-xl p-2.5 text-xs text-[#4A4E57]">
                     <summary class="cursor-pointer font-semibold text-[#222222]">Show 1-Click Supabase SQL Table Setup</summary>
@@ -1162,32 +1169,46 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#E13C7A]">2. In-Vehicle Sender (TX)</span>
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#FDF2F8] text-[#BE185D] font-mono-num font-bold">CAR → CLOUD</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#FDF2F8] text-[#BE185D] font-mono-num font-bold">CAR → FIREBASE</span>
               </div>
-              <h3 class="text-base font-bold text-[#222222] mt-0.5">Broadcast All 124 Vars Online</h3>
+              <h3 class="text-base font-bold text-[#222222] mt-0.5">Auto-Save Live &amp; Trip History</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Streams over mobile data while your phone or laptop is connected to Bluetooth OBD (<span class="font-mono-num font-semibold text-[#222222]">Web Serial / BLE</span> or <span class="font-mono-num font-semibold text-[#222222]">start_obd_web_bridge.ps1</span>).
+                Streams all 124 variables to <span class="font-mono-num text-[#222222]">latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
               </p>
 
               <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
                 <div class="flex justify-between">
-                  <span class="text-[#5A5F6A]">Payload Coverage</span>
-                  <strong class="font-mono-num text-[#047857]">All 124 Variables</strong>
+                  <span class="text-[#5A5F6A]">Firebase Live + History</span>
+                  <strong class="font-mono-num text-[#047857]">latest + /history/frames</strong>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Offline Dead-Zone Buffer</span>
-                  <strong class="font-mono-num text-[#222222]">Auto-Queue &amp; Flush</strong>
+                  <strong class="font-mono-num text-[#222222]">IndexedDB + Auto-Flush</strong>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-[#5A5F6A]">Last Cloud Push</span>
-                  <strong id="cloud-last-tx" class="font-mono-num text-[#5A5F6A]">Not started</strong>
+                  <span class="text-[#5A5F6A]">Last Firebase / Cloud TX</span>
+                  <strong id="cloud-last-tx" class="font-mono-num text-[#5A5F6A]">Standby</strong>
                 </div>
               </div>
 
-              <label class="mt-3 flex items-center gap-2 text-xs text-[#222222] font-medium cursor-pointer select-none">
-                <input id="cloud-auto-on-bt" type="checkbox" checked class="w-4 h-4 accent-[#222222] rounded" />
-                <span>Auto-start Cloud TX when Bluetooth / Serial connects</span>
-              </label>
+              <div class="mt-3 space-y-2 text-xs text-[#222222]">
+                <div>
+                  <label class="text-[#5A5F6A] block mb-1 font-semibold">Auto-Connect Mode (When Internet Is Available)</label>
+                  <select id="cloud-auto-role" onchange="saveCloudConfig(); evaluateAutoCloudConnection('role-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-semibold text-[#222222] focus:outline-none">
+                    <option value="smart" selected>Smart Auto (TX on OBD/Queue · RX on Remote)</option>
+                    <option value="tx_always">Always Auto-TX whenever Online</option>
+                    <option value="rx_always">Always Auto-Watch (RX) whenever Online</option>
+                  </select>
+                </div>
+                <label class="flex items-center gap-2 font-medium cursor-pointer select-none">
+                  <input id="cloud-auto-on-bt" type="checkbox" checked onchange="saveCloudConfig(); evaluateAutoCloudConnection('toggle');" class="w-4 h-4 accent-[#222222] rounded" />
+                  <span>Always auto-connect cloud when online / OBD active</span>
+                </label>
+                <label class="flex items-center gap-2 font-medium cursor-pointer select-none">
+                  <input id="cloud-save-history" type="checkbox" checked onchange="saveCloudConfig()" class="w-4 h-4 accent-[#222222] rounded" />
+                  <span>Save full timestamped trip logs to Firebase <span class="font-mono-num">history/</span></span>
+                </label>
+              </div>
             </div>
 
             <div class="space-y-2">
@@ -1195,7 +1216,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 Start Broadcasting to Cloud (TX)
               </button>
               <button onclick="pushSingleCloudFrameNow()" class="w-full py-2.5 px-4 acro-pill-secondary text-xs">
-                Send Immediate 124-Var Packet Now
+                Push Frame &amp; Flush Queue Now
               </button>
             </div>
           </div>
@@ -1205,17 +1226,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#047857]">3. Remote Viewer (RX)</span>
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] font-mono-num font-bold">CLOUD → SCREEN</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] font-mono-num font-bold">FIREBASE → SCREEN</span>
               </div>
               <h3 class="text-base font-bold text-[#222222] mt-0.5">Watch Live From Anywhere</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Open this app on any remote computer or phone and click <strong class="text-[#222222]">Watch Remote Vehicle Stream</strong> to subscribe via real-time Server-Sent Events (SSE) + REST polling.
+                Open on any computer or phone to watch live Firebase RTDB Server-Sent Events (SSE) with automatic reconnect when signal returns.
               </p>
 
               <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Stream Protocol</span>
-                  <strong id="cloud-rx-proto" class="font-mono-num text-[#1473E6]">SSE Real-Time + REST</strong>
+                  <strong id="cloud-rx-proto" class="font-mono-num text-[#1473E6]">Firebase SSE Stream + REST</strong>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Remote Vehicle VIN</span>
@@ -1233,7 +1254,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 Watch Remote Vehicle Stream (RX)
               </button>
               <button onclick="fetchLatestCloudSnapshot()" class="w-full py-2.5 px-4 acro-pill-secondary text-xs">
-                Fetch Latest Cloud Snapshot
+                Fetch Latest Firebase Snapshot
               </button>
             </div>
           </div>
@@ -1244,14 +1265,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="acro-card rounded-3xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div>
-              <h3 class="text-sm font-bold text-[#222222]">Live Cloud Telemetry Stream Log</h3>
-              <p class="text-xs text-[#5A5F6A]">Real-time log of outbound (<span class="font-mono-num">TX</span>) and inbound (<span class="font-mono-num">RX</span>) cloud telemetry frames</p>
+              <h3 class="text-sm font-bold text-[#222222]">Live Cloud &amp; Firebase Sync Log</h3>
+              <p class="text-xs text-[#5A5F6A]">Real-time log of auto-connect events, Firebase <span class="font-mono-num">TX</span> (<span class="font-mono-num">latest</span> + <span class="font-mono-num">history</span>), offline flushes, and <span class="font-mono-num">RX</span></p>
             </div>
             <button onclick="clearCloudLog()" class="text-xs px-3 py-1 acro-pill-secondary">Clear Log</button>
           </div>
           <div id="cloud-log" class="acro-well rounded-2xl p-3.5 h-44 overflow-y-auto font-mono-num text-xs space-y-1">
-            <div class="text-[#1473E6] font-semibold">[CLOUD] Real-Time Cloud Telemetry Engine ready. Channel: pulseobd-polo-aavzzz6rzhu112564-7d4e9b</div>
-            <div class="text-[#5A5F6A]">[INFO] Select ntfy.sh (zero setup), Firebase RTDB, Supabase, or Custom HTTPS and start TX/RX streaming.</div>
+            <div class="text-[#1473E6] font-semibold">[CLOUD] Firebase Smart Auto-Connect ready. Channel: pulseobd-polo-aavzzz6rzhu112564-7d4e9b</div>
+            <div class="text-[#5A5F6A]">[INFO] Paste your Firebase Realtime Database URL once to persist on this device and auto-save live + history whenever online.</div>
           </div>
         </div>
 
@@ -1359,6 +1380,55 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
         </div>
 
+        <!-- Bluetooth Audio & Multi-Device Coexistence (Car Stereo, Calls, Smartwatch, Extra BLE) -->
+        <div id="bt-coexist-card" class="acro-card rounded-3xl p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Multi-Device &amp; Car Audio Safe</span>
+                <span id="bt-coexist-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold">COEXISTENCE ACTIVE</span>
+              </div>
+              <h3 class="text-sm font-bold text-[#222222] mt-0.5">Connect Other Bluetooth Devices While Connected to OBD-II</h3>
+              <p class="text-xs text-[#5A5F6A]">Uses <span class="font-mono-num text-[#222222]">writeValueWithoutResponse</span> + cooperative RF idle slots so your phone stays connected to car stereo audio (A2DP), calls (HFP), earbuds, smartwatch, or extra BLE sensors without dropouts.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btn-yield-pairing" onclick="yieldObdForPairing(15000)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Yield 15s to Pair Phone Device</button>
+              <button onclick="connectCompanionBleDevice()" class="text-xs px-3.5 py-1.5 acro-pill-primary">+ Add Extra BLE Device</button>
+              <button onclick="refreshPermittedBleDevices()" class="text-xs px-3 py-1.5 acro-pill-secondary">Saved BT</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="acro-well rounded-2xl p-3">
+              <label class="text-[#5A5F6A] block mb-1 font-semibold">RF Radio Coexistence Profile</label>
+              <select id="ble-coexist-mode" onchange="saveBtPrefs()" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-2.5 py-1.5 font-semibold text-[#222222] focus:outline-none">
+                <option value="coexist" selected>Balanced Coexistence (240ms + Audio Safe)</option>
+                <option value="audio_priority">Audio / Call Priority (450ms Quiet Link)</option>
+                <option value="performance">High-Speed Telemetry (80ms Max Rate)</option>
+              </select>
+            </div>
+            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
+              <span class="text-[#5A5F6A] font-semibold block">ATT GATT Write Strategy</span>
+              <div class="flex items-center justify-between mt-1">
+                <strong id="bt-write-mode-lbl" class="font-mono-num text-[#1473E6]">WriteWithoutResponse Ready</strong>
+                <span class="text-[11px] text-[#047857] font-semibold">Low Airtime</span>
+              </div>
+              <label class="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#222222] cursor-pointer select-none">
+                <input id="ble-yield-on-scan" type="checkbox" checked onchange="saveBtPrefs()" class="w-3.5 h-3.5 accent-[#222222] rounded" />
+                <span>Auto-pause OBD TX while scanning BT devices</span>
+              </label>
+            </div>
+            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
+              <span class="text-[#5A5F6A] font-semibold block">Phone Multipoint Tip</span>
+              <p class="text-[11px] text-[#4A4E57] mt-1 leading-snug">Car stereo, headphones &amp; watch connect natively alongside BLE OBD. Use <strong class="text-[#222222]">Yield 15s</strong> when pairing a brand-new accessory in Phone Bluetooth Settings.</p>
+            </div>
+          </div>
+
+          <div id="bt-connected-devices-list" class="acro-well rounded-2xl p-3 text-xs space-y-1.5">
+            <div class="text-[#5A5F6A]">No active browser BLE link yet. Connect OBD-II above or add a companion BLE sensor without disconnecting OBD.</div>
+          </div>
+        </div>
+
         <!-- Passive Phone Drive Recorder & On-Device Storage (IndexedDB) -->
         <div class="acro-card rounded-3xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -1441,7 +1511,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     </main>
 
     <!-- Bottom Mobile Navigation Bar -->
-    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/94 acro-glass border-t border-[#E6E8EE] px-1.5 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 acro-glass border-t border-[#E6E8EE] px-1.5 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
       <div class="max-w-lg mx-auto grid grid-cols-7 gap-0.5 text-center">
         <button onclick="switchTab('cockpit')" id="mtab-cockpit" class="flex flex-col items-center py-1 rounded-xl text-[#222222] font-bold text-[10px]">
           <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1657,6 +1727,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // 4. APPLICATION & CLOUD RELAY STATE
     // =========================================================================
     const CLOUD_STORAGE_KEY = 'pulseobd_cloud_cfg_v1';
+    const BT_PREFS_KEY = 'pulseobd_bt_prefs_v1';
+    const DEVICE_ROLE_KEY = 'pulseobd_device_role_v1';
     const appState = {
       activeTab: 'cockpit',
       source: 'snap1',
@@ -1669,7 +1741,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
       bleDevice: null,
       bleServer: null,
       bleWriteChar: null,
+      bleCanWriteWithoutResp: false,
       blePollingActive: false,
+      bleCoexistMode: 'coexist',
+      bleYieldUntil: 0,
+      bleYieldTimer: null,
+      companionBleDevices: [],
       serialPollingActive: false,
       wifiPollTimer: null,
       current: { ...SNAPSHOTS.snap1 },
@@ -1680,10 +1757,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
         txTimer: null,
         sseSource: null,
         rxPollTimer: null,
+        rxReconnectTimer: null,
+        rxReconnectAttempts: 0,
         txCount: 0,
         rxCount: 0,
         lastRxTs: '',
-        offlineQueue: []
+        offlineQueue: [],
+        flushingQueue: false,
+        syncingDrives: false,
+        historySeq: 0,
+        lastHistoryMetaMs: 0,
+        firebaseReachable: false
       }
     };
 
@@ -1697,7 +1781,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     seedHistory(SNAPSHOTS.snap1);
 
     // =========================================================================
-    // 5. REAL-TIME CLOUD TELEMETRY RELAY ENGINE (TX + RX, ALL 124 VARIABLES)
+    // 5. REAL-TIME CLOUD TELEMETRY RELAY ENGINE (FIREBASE DEFAULT & AUTO-CONNECT)
     // =========================================================================
     function logCloud(msg, cls = 'text-[#5A5F6A]') {
       const box = document.getElementById('cloud-log');
@@ -1716,15 +1800,42 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (box) box.innerHTML = '';
     }
 
+    function isLocalObdActive() {
+      return Boolean(appState.blePollingActive || appState.serialPollingActive || appState.wifiPollTimer);
+    }
+
+    function getRememberedDeviceRole() {
+      try {
+        return localStorage.getItem(DEVICE_ROLE_KEY) || '';
+      } catch (_) {
+        return '';
+      }
+    }
+
+    function setRememberedDeviceRole(role) {
+      try {
+        if (role) localStorage.setItem(DEVICE_ROLE_KEY, role);
+      } catch (_) {}
+    }
+
     function getCloudEndpointConfig() {
-      const prov = document.getElementById('cloud-provider')?.value || 'ntfy';
+      const prov = document.getElementById('cloud-provider')?.value || 'firebase';
       const channel = (document.getElementById('cloud-channel-id')?.value || 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b').trim();
       const customUrl = (document.getElementById('cloud-custom-url')?.value || '').trim();
       const supabaseTable = (document.getElementById('cloud-supabase-table')?.value || 'pulseobd_telemetry').trim() || 'pulseobd_telemetry';
       const apiKey = (document.getElementById('cloud-api-key')?.value || '').trim();
       const intervalMs = parseInt(document.getElementById('cloud-interval-ms')?.value || '3000', 10);
-      const autoOnBt = Boolean(document.getElementById('cloud-auto-on-bt')?.checked);
-      return { prov, channel, customUrl, supabaseTable, apiKey, intervalMs, autoOnBt };
+      const autoOnBt = document.getElementById('cloud-auto-on-bt') ? Boolean(document.getElementById('cloud-auto-on-bt').checked) : true;
+      const saveHistory = document.getElementById('cloud-save-history') ? Boolean(document.getElementById('cloud-save-history').checked) : true;
+      const autoRole = document.getElementById('cloud-auto-role')?.value || 'smart';
+      return { prov, channel, customUrl, supabaseTable, apiKey, intervalMs, autoOnBt, saveHistory, autoRole };
+    }
+
+    function isCloudEndpointConfigured(cfg) {
+      if (!cfg) return false;
+      if (cfg.prov === 'ntfy') return Boolean(cfg.channel);
+      if (!cfg.customUrl) return false;
+      return /^https?:\/\/.+/i.test(cfg.customUrl);
     }
 
     function saveCloudConfig() {
@@ -1746,11 +1857,25 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (cfg.apiKey !== undefined && document.getElementById('cloud-api-key')) document.getElementById('cloud-api-key').value = cfg.apiKey;
         if (cfg.intervalMs && document.getElementById('cloud-interval-ms')) document.getElementById('cloud-interval-ms').value = String(cfg.intervalMs);
         if (cfg.autoOnBt !== undefined && document.getElementById('cloud-auto-on-bt')) document.getElementById('cloud-auto-on-bt').checked = Boolean(cfg.autoOnBt);
+        if (cfg.saveHistory !== undefined && document.getElementById('cloud-save-history')) document.getElementById('cloud-save-history').checked = Boolean(cfg.saveHistory);
+        if (cfg.autoRole && document.getElementById('cloud-auto-role')) document.getElementById('cloud-auto-role').value = cfg.autoRole;
       } catch (_) {}
     }
 
+    let _endpointDebounceTimer = null;
+    function onCloudEndpointInput() {
+      saveCloudConfig();
+      updateCloudProviderUi();
+      updateCloudBadges();
+      clearTimeout(_endpointDebounceTimer);
+      _endpointDebounceTimer = setTimeout(() => {
+        evaluateAutoCloudConnection('url-updated');
+      }, 650);
+    }
+
     function updateCloudProviderUi() {
-      const prov = document.getElementById('cloud-provider')?.value || 'ntfy';
+      const cfg = getCloudEndpointConfig();
+      const prov = cfg.prov;
       const chGroup = document.getElementById('channel-id-group');
       const urlGroup = document.getElementById('custom-url-group');
       const sbGroup = document.getElementById('supabase-table-group');
@@ -1760,6 +1885,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const keyLabel = document.getElementById('api-key-label');
       const keyInput = document.getElementById('cloud-api-key');
       const rxProto = document.getElementById('cloud-rx-proto');
+      const fbHint = document.getElementById('firebase-setup-hint');
+      const fbStatusText = document.getElementById('firebase-url-status-text');
 
       chGroup?.classList.remove('hidden');
 
@@ -1767,20 +1894,32 @@ Check your Browserslist config to be sure that your targets are set up correctly
         urlGroup?.classList.add('hidden');
         sbGroup?.classList.add('hidden');
         sbTip?.classList.add('hidden');
+        fbHint?.classList.add('hidden');
         if (rxProto) rxProto.textContent = 'SSE Real-Time + REST';
       } else if (prov === 'firebase') {
         urlGroup?.classList.remove('hidden');
         sbGroup?.classList.add('hidden');
         sbTip?.classList.add('hidden');
+        fbHint?.classList.remove('hidden');
         if (urlLabel) urlLabel.textContent = 'Firebase Realtime Database URL';
         if (urlInput) urlInput.placeholder = 'https://your-project-default-rtdb.firebaseio.com';
         if (keyLabel) keyLabel.textContent = 'Firebase Database Auth / Secret (Optional)';
         if (keyInput) keyInput.placeholder = 'Leave blank if RTDB rules allow channel read/write';
         if (rxProto) rxProto.textContent = 'Firebase SSE Stream + REST';
+        if (fbStatusText && fbHint) {
+          if (isCloudEndpointConfigured(cfg)) {
+            fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] font-medium';
+            fbStatusText.textContent = 'Firebase RTDB URL saved privately on this device. Auto-connect & history sync armed whenever online.';
+          } else {
+            fbHint.className = 'rounded-xl p-2.5 text-[11px] bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-medium';
+            fbStatusText.textContent = 'Paste your Firebase RTDB URL above once (saved only on this device) so data automatically uploads when online.';
+          }
+        }
       } else if (prov === 'supabase') {
         urlGroup?.classList.remove('hidden');
         sbGroup?.classList.remove('hidden');
         sbTip?.classList.remove('hidden');
+        fbHint?.classList.add('hidden');
         if (urlLabel) urlLabel.textContent = 'Supabase Project URL';
         if (urlInput) urlInput.placeholder = 'https://your-project-ref.supabase.co';
         if (keyLabel) keyLabel.textContent = 'Supabase Anon / Publishable API Key';
@@ -1790,6 +1929,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         urlGroup?.classList.remove('hidden');
         sbGroup?.classList.add('hidden');
         sbTip?.classList.add('hidden');
+        fbHint?.classList.add('hidden');
         if (urlLabel) urlLabel.textContent = 'Custom HTTPS Endpoint URL';
         if (urlInput) urlInput.placeholder = 'https://your-worker.workers.dev/telemetry';
         if (keyLabel) keyLabel.textContent = 'Bearer Token / Header Secret (Optional)';
@@ -1798,17 +1938,40 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
 
-    function buildFirebaseUrl(cfg) {
+    function buildFirebasePaths(cfg, sessionId) {
       let base = (cfg.customUrl || '').replace(/\/+$/, '');
-      if (!base) return '';
-      if (!base.endsWith('.json')) {
-        base = `${base}/pulseobd/${encodeURIComponent(cfg.channel)}.json`;
+      if (!base) {
+        return { latestUrl: '', rootLegacyUrl: '', historyFramesUrl: '', historyMetaUrl: '', historyRootUrl: '' };
       }
-      if (cfg.apiKey) {
-        const sep = base.includes('?') ? '&' : '?';
-        base += `${sep}auth=${encodeURIComponent(cfg.apiKey)}`;
+      const authQ = cfg.apiKey ? `auth=${encodeURIComponent(cfg.apiKey)}` : '';
+      const appendAuth = (u) => {
+        if (!authQ) return u;
+        return u + (u.includes('?') ? '&' : '?') + authQ;
+      };
+      if (base.endsWith('.json')) {
+        const prefix = base.slice(0, -5);
+        const safeSess = encodeURIComponent(sessionId || 'live_session');
+        return {
+          latestUrl: appendAuth(`${prefix}/latest.json`),
+          rootLegacyUrl: appendAuth(base),
+          historyFramesUrl: appendAuth(`${prefix}/history/${safeSess}/frames.json`),
+          historyMetaUrl: appendAuth(`${prefix}/history/${safeSess}/meta.json`),
+          historyRootUrl: appendAuth(`${prefix}/history.json`)
+        };
       }
-      return base;
+      const rootPath = `${base}/pulseobd/${encodeURIComponent(cfg.channel)}`;
+      const safeSess = encodeURIComponent(sessionId || 'live_session');
+      return {
+        latestUrl: appendAuth(`${rootPath}/latest.json`),
+        rootLegacyUrl: appendAuth(`${rootPath}.json`),
+        historyFramesUrl: appendAuth(`${rootPath}/history/${safeSess}/frames.json`),
+        historyMetaUrl: appendAuth(`${rootPath}/history/${safeSess}/meta.json`),
+        historyRootUrl: appendAuth(`${rootPath}/history.json`)
+      };
+    }
+
+    function buildFirebaseUrl(cfg) {
+      return buildFirebasePaths(cfg, passiveState.activeSessionId || 'live_session').latestUrl;
     }
 
     function buildSupabaseUrls(cfg) {
@@ -1823,9 +1986,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
     function buildCloudPacket(includeFullCatalog) {
       const d = appState.current;
       const drv = computeDerivedMetrics(d);
+      const sessionId = passiveState.activeSessionId || ('session_' + new Date().toISOString().slice(0, 10));
       const packet = {
-        v: 2,
+        v: 3,
         ts: new Date().toISOString(),
+        sessionId,
         vin: 'AAVZZZ6RZHU112564',
         src: appState.source,
         variableCount: 124,
@@ -1894,8 +2059,50 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return packet;
     }
 
+    function buildFirebaseHistorySample(packet) {
+      const m = packet.metrics || {};
+      const drv = packet.derived || {};
+      return {
+        ts: packet.ts || new Date().toISOString(),
+        src: packet.src || 'live',
+        rpm: m.rpm || 0,
+        spd: m.spd || 0,
+        load: m.load || 0,
+        coolant: m.coolant || 0,
+        iat: m.iat || 0,
+        cat: m.cat || 0,
+        map: m.map || 0,
+        rail: m.rail || 0,
+        stft: m.stft || 0,
+        ltft: m.ltft || 0,
+        lambda: m.lambda || 1,
+        thr: m.thr || 0,
+        pedalD: m.pedalD || 0,
+        fuel: m.fuel || 0,
+        volt: m.volt || 0,
+        fuelLh: drv.fuelLh || 0,
+        l100km: drv.l100km || 0
+      };
+    }
+
+    function updateNetworkBadgeUi() {
+      const online = (typeof navigator === 'undefined' || navigator.onLine !== false);
+      const pill = document.getElementById('cloud-net-pill');
+      if (pill) {
+        pill.textContent = online ? 'ONLINE' : 'OFFLINE (QUEUING)';
+        pill.className = online
+          ? 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold'
+          : 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold';
+      }
+      return online;
+    }
+
     function updateCloudBadges() {
+      const online = updateNetworkBadgeUi();
+      const cfg = getCloudEndpointConfig();
+      const configured = isCloudEndpointConfigured(cfg);
       const { txActive, rxActive, txCount, rxCount, offlineQueue } = appState.cloud;
+
       const elTx = document.getElementById('cloud-tx-count');
       const elRx = document.getElementById('cloud-rx-count');
       const elQ = document.getElementById('cloud-queue-count');
@@ -1908,30 +2115,82 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const statusBadge = document.getElementById('cloud-status-badge');
       const advState = document.getElementById('adv-cloud-state');
 
+      if (!online) {
+        if (pillText) pillText.textContent = `OFFLINE QUEUE (${offlineQueue.length})`;
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#F59E0B]';
+        if (statusBadge) statusBadge.textContent = `OFFLINE · BUFFERING LOCALLY (${offlineQueue.length})`;
+        if (advState) advState.textContent = `Offline (${offlineQueue.length} Queued)`;
+        return;
+      }
+
       if (txActive && rxActive) {
-        if (pillText) pillText.textContent = `CLOUD TX+RX LIVE (${txCount}/${rxCount})`;
+        if (pillText) pillText.textContent = `${cfg.prov.toUpperCase()} TX+RX LIVE (${txCount}/${rxCount})`;
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse';
-        if (statusBadge) statusBadge.textContent = 'TX + RX LOOPBACK LIVE';
-        if (advState) advState.textContent = 'Broadcasting + Watching';
+        if (statusBadge) statusBadge.textContent = 'FIREBASE TX + RX LIVE';
+        if (advState) advState.textContent = 'Auto Sync + Watch Live';
       } else if (txActive) {
-        if (pillText) pillText.textContent = `CLOUD TX LIVE (#${txCount})`;
+        if (pillText) pillText.textContent = `${cfg.prov.toUpperCase()} AUTO-TX (#${txCount})`;
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#E13C7A] animate-pulse';
-        if (statusBadge) statusBadge.textContent = 'BROADCASTING FROM VEHICLE (TX)';
-        if (advState) advState.textContent = `TX Live (#${txCount})`;
+        if (statusBadge) statusBadge.textContent = `SAVING TO ${cfg.prov.toUpperCase()} (LIVE + HISTORY)`;
+        if (advState) advState.textContent = `Auto-Saving (#${txCount})`;
       } else if (rxActive) {
-        if (pillText) pillText.textContent = `REMOTE RX LIVE (#${rxCount})`;
+        if (pillText) pillText.textContent = `${cfg.prov.toUpperCase()} RX LIVE (#${rxCount})`;
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse';
-        if (statusBadge) statusBadge.textContent = 'WATCHING REMOTE STREAM (RX)';
+        if (statusBadge) statusBadge.textContent = `WATCHING ${cfg.prov.toUpperCase()} STREAM (RX)`;
         if (advState) advState.textContent = `Remote RX (#${rxCount})`;
+      } else if (!configured && cfg.prov === 'firebase') {
+        if (pillText) pillText.textContent = 'FIREBASE URL NEEDED';
+        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#F59E0B]';
+        if (statusBadge) statusBadge.textContent = 'ENTER FIREBASE URL';
+        if (advState) advState.textContent = 'Set Firebase DB URL';
       } else {
-        if (pillText) pillText.textContent = 'CLOUD RELAY READY';
+        if (pillText) pillText.textContent = `${cfg.prov.toUpperCase()} AUTO-ARMED`;
         if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-[#1473E6]';
-        if (statusBadge) statusBadge.textContent = 'STANDBY';
-        if (advState) advState.textContent = 'Tap to Stream';
+        if (statusBadge) statusBadge.textContent = 'AUTO-CONNECT ARMED';
+        if (advState) advState.textContent = `${cfg.prov.toUpperCase()} Ready`;
       }
     }
 
-    async function sendPacketToCloud(cfg, packet) {
+    async function persistOfflinePacketToDb(packet) {
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('cloudQueue')) return;
+      try {
+        const tx = db.transaction('cloudQueue', 'readwrite');
+        tx.objectStore('cloudQueue').add({ ts: packet.ts, packet });
+      } catch (_) {}
+    }
+
+    async function loadOfflineQueueFromDb() {
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('cloudQueue')) return;
+      await new Promise((resolve) => {
+        try {
+          const req = db.transaction('cloudQueue', 'readonly').objectStore('cloudQueue').getAll();
+          req.onsuccess = () => {
+            const rows = (req.result || []).slice(-300);
+            if (rows.length > 0 && appState.cloud.offlineQueue.length === 0) {
+              appState.cloud.offlineQueue = rows.map(r => r.packet).filter(Boolean);
+              updateCloudBadges();
+            }
+            resolve();
+          };
+          req.onerror = () => resolve();
+        } catch (_) {
+          resolve();
+        }
+      });
+    }
+
+    async function clearPersistedCloudQueueFromDb() {
+      const db = await openDriveDb();
+      if (!db || !db.objectStoreNames.contains('cloudQueue')) return;
+      try {
+        const tx = db.transaction('cloudQueue', 'readwrite');
+        tx.objectStore('cloudQueue').clear();
+      } catch (_) {}
+    }
+
+    async function sendPacketToCloud(cfg, packet, options = {}) {
       let targetUrl = '';
       let method = 'POST';
       const headers = { 'Content-Type': 'application/json' };
@@ -1941,8 +2200,50 @@ Check your Browserslist config to be sure that your targets are set up correctly
         targetUrl = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}`;
         method = 'POST';
       } else if (cfg.prov === 'firebase') {
-        targetUrl = buildFirebaseUrl(cfg);
-        method = 'PUT';
+        const paths = buildFirebasePaths(cfg, packet.sessionId || passiveState.activeSessionId);
+        if (!paths.latestUrl) throw new Error('Enter Firebase Realtime Database URL');
+        if (!options.historyOnly) {
+          const resLive = await fetch(paths.latestUrl, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(packet)
+          });
+          if (!resLive.ok) {
+            const errText = await resLive.text().catch(() => '');
+            throw new Error(`Firebase PUT HTTP ${resLive.status}${errText ? ' · ' + errText.slice(0, 80) : ''}`);
+          }
+        }
+        if (cfg.saveHistory && !options.skipHistory) {
+          const histEntry = buildFirebaseHistorySample(packet);
+          const resHist = await fetch(paths.historyFramesUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(histEntry)
+          });
+          if (!resHist.ok) {
+            const errText = await resHist.text().catch(() => '');
+            throw new Error(`Firebase History POST HTTP ${resHist.status}${errText ? ' · ' + errText.slice(0, 80) : ''}`);
+          }
+          const nowMs = Date.now();
+          if (nowMs - appState.cloud.lastHistoryMetaMs > 12000) {
+            appState.cloud.lastHistoryMetaMs = nowMs;
+            const sessMeta = {
+              id: packet.sessionId || 'live_session',
+              vin: packet.vin || 'AAVZZZ6RZHU112564',
+              transport: packet.src || 'live',
+              updatedAt: packet.ts,
+              lastRpm: packet.metrics?.rpm || 0,
+              lastSpd: packet.metrics?.spd || 0,
+              lastCoolant: packet.metrics?.coolant || 0
+            };
+            fetch(paths.historyMetaUrl, {
+              method: 'PATCH',
+              headers,
+              body: JSON.stringify(sessMeta)
+            }).catch(() => {});
+          }
+        }
+        return true;
       } else if (cfg.prov === 'supabase') {
         const urls = buildSupabaseUrls(cfg);
         targetUrl = urls.txUrl;
@@ -1973,36 +2274,77 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return true;
     }
 
+    async function flushCloudOfflineQueue() {
+      if (appState.cloud.flushingQueue || appState.cloud.offlineQueue.length === 0) return 0;
+      const online = updateNetworkBadgeUi();
+      const cfg = getCloudEndpointConfig();
+      if (!online || !isCloudEndpointConfigured(cfg)) return 0;
+
+      appState.cloud.flushingQueue = true;
+      let flushed = 0;
+      try {
+        while (appState.cloud.offlineQueue.length > 0) {
+          const isLast = appState.cloud.offlineQueue.length === 1;
+          const queued = appState.cloud.offlineQueue[0];
+          await sendPacketToCloud(cfg, queued, { historyOnly: !isLast });
+          appState.cloud.offlineQueue.shift();
+          appState.cloud.txCount++;
+          flushed++;
+          updateCloudBadges();
+        }
+        if (flushed > 0) {
+          await clearPersistedCloudQueueFromDb();
+          const elLast = document.getElementById('cloud-last-tx');
+          if (elLast) elLast.textContent = new Date().toLocaleTimeString();
+          logCloud(`[AUTO-FLUSH] Uploaded ${flushed} offline-buffered frame(s) to ${cfg.prov.toUpperCase()}!`, 'text-[#047857] font-semibold');
+        }
+      } catch (err) {
+        logCloud(`[FLUSH PAUSED] ${err.message} — ${appState.cloud.offlineQueue.length} remaining in queue.`, 'text-[#B45309]');
+      } finally {
+        appState.cloud.flushingQueue = false;
+      }
+      return flushed;
+    }
+
     async function pushSingleCloudFrameNow() {
       const cfg = getCloudEndpointConfig();
       const includeFull = (cfg.prov !== 'ntfy');
       const packet = buildCloudPacket(includeFull);
 
+      if (!updateNetworkBadgeUi() || !isCloudEndpointConfigured(cfg)) {
+        appState.cloud.offlineQueue.push(packet);
+        if (appState.cloud.offlineQueue.length > 300) appState.cloud.offlineQueue.shift();
+        await persistOfflinePacketToDb(packet);
+        updateCloudBadges();
+        const reason = !updateNetworkBadgeUi() ? 'Offline' : 'Waiting for Firebase URL';
+        logCloud(`[TX QUEUED · ${reason}] Buffered locally (${appState.cloud.offlineQueue.length} waiting). Will auto-upload when ready.`, 'text-[#B45309]');
+        return;
+      }
+
       try {
+        if (appState.cloud.offlineQueue.length > 0) {
+          await flushCloudOfflineQueue();
+        }
         await sendPacketToCloud(cfg, packet);
         appState.cloud.txCount++;
+        appState.cloud.firebaseReachable = true;
         const elLast = document.getElementById('cloud-last-tx');
         if (elLast) elLast.textContent = new Date().toLocaleTimeString();
         updateCloudBadges();
-        logCloud(`[TX #${appState.cloud.txCount}] Pushed 124-var frame → ${cfg.prov.toUpperCase()} (${packet.metrics.rpm} RPM, ${packet.metrics.spd} km/h, Rail ${packet.metrics.rail} MPa)`, 'text-[#1473E6] font-semibold');
-
-        while (appState.cloud.offlineQueue.length > 0) {
-          const queued = appState.cloud.offlineQueue[0];
-          await sendPacketToCloud(cfg, queued);
-          appState.cloud.offlineQueue.shift();
-          updateCloudBadges();
-        }
+        const histNote = (cfg.prov === 'firebase' && cfg.saveHistory) ? ' + /history' : '';
+        logCloud(`[TX #${appState.cloud.txCount}] Saved 124-var frame → ${cfg.prov.toUpperCase()}${histNote} (${packet.metrics.rpm} RPM, ${packet.metrics.spd} km/h)`, 'text-[#1473E6] font-semibold');
       } catch (err) {
         appState.cloud.offlineQueue.push(packet);
-        if (appState.cloud.offlineQueue.length > 100) appState.cloud.offlineQueue.shift();
+        if (appState.cloud.offlineQueue.length > 300) appState.cloud.offlineQueue.shift();
+        await persistOfflinePacketToDb(packet);
         updateCloudBadges();
         logCloud(`[TX QUEUED] ${err.message} — buffered in Offline Queue (${appState.cloud.offlineQueue.length} queued).`, 'text-[#B45309]');
       }
     }
 
-    function toggleCloudBroadcast() {
+    function toggleCloudBroadcast(forceStart) {
       const btn = document.getElementById('btn-toggle-tx');
-      if (appState.cloud.txActive) {
+      if (appState.cloud.txActive && forceStart !== true) {
         appState.cloud.txActive = false;
         if (appState.cloud.txTimer) clearInterval(appState.cloud.txTimer);
         appState.cloud.txTimer = null;
@@ -2011,15 +2353,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
           btn.className = 'w-full py-2.5 px-4 acro-pill-primary text-xs shadow-sm';
         }
         logCloud('[TX STOPPED] Stopped vehicle cloud broadcast.', 'text-[#B45309]');
-      } else {
+      } else if (!appState.cloud.txActive) {
         const cfg = getCloudEndpointConfig();
         saveCloudConfig();
+        setRememberedDeviceRole('sender');
         appState.cloud.txActive = true;
         if (btn) {
           btn.textContent = 'Stop Cloud Broadcast (TX Active)';
           btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
         }
-        logCloud(`[TX STARTED] Broadcasting all 124 vars every ${(cfg.intervalMs/1000).toFixed(1)}s via ${cfg.prov.toUpperCase()} (channel "${cfg.channel}")...`, 'text-[#1473E6] font-bold');
+        logCloud(`[TX STARTED] Streaming every ${(cfg.intervalMs / 1000).toFixed(1)}s → ${cfg.prov.toUpperCase()} (live + history)...`, 'text-[#1473E6] font-bold');
         pushSingleCloudFrameNow();
         appState.cloud.txTimer = setInterval(pushSingleCloudFrameNow, cfg.intervalMs);
       }
@@ -2060,6 +2403,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     async function fetchLatestCloudSnapshot() {
       const cfg = getCloudEndpointConfig();
+      if (!updateNetworkBadgeUi()) return null;
       try {
         if (cfg.prov === 'ntfy') {
           const url = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}/json?poll=1&since=30m`;
@@ -2073,7 +2417,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               const body = env.message ? JSON.parse(env.message) : env;
               if (body && body.metrics) {
                 applyIncomingCloudPacket(body);
-                applied = true;
+                applied = body;
                 break;
               }
             } catch (_) {}
@@ -2081,17 +2425,29 @@ Check your Browserslist config to be sure that your targets are set up correctly
           if (!applied && appState.cloud.rxCount === 0) {
             logCloud('[RX POLL] ntfy.sh channel connected — waiting for first packet in last 30m.', 'text-[#5A5F6A]');
           }
+          return applied;
         } else if (cfg.prov === 'firebase') {
-          const fbUrl = buildFirebaseUrl(cfg);
-          if (!fbUrl) throw new Error('Enter Firebase Realtime Database URL');
-          const res = await fetch(fbUrl);
+          const paths = buildFirebasePaths(cfg);
+          if (!paths.latestUrl) throw new Error('Enter Firebase Realtime Database URL');
+          let body = null;
+          const res = await fetch(paths.latestUrl);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const body = await res.json();
+          body = await res.json();
+          if (!body || !body.metrics) {
+            const legRes = await fetch(paths.rootLegacyUrl);
+            if (legRes.ok) {
+              const leg = await legRes.json();
+              if (leg && leg.latest && leg.latest.metrics) body = leg.latest;
+              else if (leg && leg.metrics) body = leg;
+            }
+          }
           if (body && body.metrics) {
             applyIncomingCloudPacket(body);
+            return body;
           } else if (appState.cloud.rxCount === 0) {
             logCloud('[RX FIREBASE] Connected — no packet stored at this channel path yet.', 'text-[#5A5F6A]');
           }
+          return null;
         } else if (cfg.prov === 'supabase') {
           const { rxUrl } = buildSupabaseUrls(cfg);
           if (!rxUrl) throw new Error('Enter Supabase Project URL');
@@ -2106,9 +2462,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
           const latest = Array.isArray(rows) && rows.length > 0 ? rows[0].payload : null;
           if (latest && latest.metrics) {
             applyIncomingCloudPacket(latest);
+            return latest;
           } else if (appState.cloud.rxCount === 0) {
             logCloud('[RX SUPABASE] Table connected — no rows found for this channel ID yet.', 'text-[#5A5F6A]');
           }
+          return null;
         } else if (cfg.customUrl) {
           const headers = {};
           if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
@@ -2116,17 +2474,88 @@ Check your Browserslist config to be sure that your targets are set up correctly
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const body = await res.json();
           const pkt = body && body.metrics ? body : (body && body.payload ? body.payload : null);
-          if (pkt) applyIncomingCloudPacket(pkt);
+          if (pkt) {
+            applyIncomingCloudPacket(pkt);
+            return pkt;
+          }
         }
       } catch (err) {
         logCloud(`[RX POLL NOTE] Could not reach cloud relay (${err.message}).`, 'text-[#B45309]');
       }
+      return null;
     }
 
-    function toggleCloudViewer() {
+    function openCloudEventSource(cfg) {
+      if (typeof EventSource === 'undefined') return;
+      if (appState.cloud.sseSource) {
+        try { appState.cloud.sseSource.close(); } catch (_) {}
+        appState.cloud.sseSource = null;
+      }
+      if (cfg.prov === 'ntfy') {
+        const sseUrl = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}/sse`;
+        logCloud(`[RX SSE] Subscribed to live Server-Sent Events stream: ${sseUrl}`, 'text-[#047857] font-bold');
+        try {
+          const es = new EventSource(sseUrl);
+          es.onmessage = (ev) => {
+            try {
+              const env = JSON.parse(ev.data);
+              const pkt = env.message ? JSON.parse(env.message) : env;
+              if (pkt && pkt.metrics) {
+                appState.cloud.rxReconnectAttempts = 0;
+                applyIncomingCloudPacket(pkt);
+              }
+            } catch (_) {}
+          };
+          es.onerror = () => scheduleRxSseReconnect();
+          appState.cloud.sseSource = es;
+        } catch (_) {}
+      } else if (cfg.prov === 'firebase') {
+        const paths = buildFirebasePaths(cfg);
+        if (paths.latestUrl) {
+          logCloud(`[RX FIREBASE SSE] Subscribed to live Firebase RTDB stream...`, 'text-[#047857] font-bold');
+          try {
+            const es = new EventSource(paths.latestUrl);
+            const handleFb = (ev) => {
+              try {
+                const frame = JSON.parse(ev.data);
+                const pkt = frame && frame.data ? frame.data : frame;
+                if (pkt && pkt.metrics) {
+                  appState.cloud.rxReconnectAttempts = 0;
+                  applyIncomingCloudPacket(pkt);
+                }
+              } catch (_) {}
+            };
+            es.addEventListener('put', handleFb);
+            es.addEventListener('patch', handleFb);
+            es.onerror = () => scheduleRxSseReconnect();
+            appState.cloud.sseSource = es;
+          } catch (_) {}
+        }
+      }
+    }
+
+    function scheduleRxSseReconnect() {
+      if (!appState.cloud.rxActive || !updateNetworkBadgeUi()) return;
+      if (appState.cloud.rxReconnectTimer) return;
+      appState.cloud.rxReconnectAttempts = Math.min(6, (appState.cloud.rxReconnectAttempts || 0) + 1);
+      const delayMs = Math.min(20000, 2500 * appState.cloud.rxReconnectAttempts);
+      appState.cloud.rxReconnectTimer = setTimeout(() => {
+        appState.cloud.rxReconnectTimer = null;
+        if (appState.cloud.rxActive && updateNetworkBadgeUi()) {
+          openCloudEventSource(getCloudEndpointConfig());
+          fetchLatestCloudSnapshot();
+        }
+      }, delayMs);
+    }
+
+    function toggleCloudViewer(forceStart) {
       const btn = document.getElementById('btn-toggle-rx');
-      if (appState.cloud.rxActive) {
+      if (appState.cloud.rxActive && forceStart !== true) {
         appState.cloud.rxActive = false;
+        if (appState.cloud.rxReconnectTimer) {
+          clearTimeout(appState.cloud.rxReconnectTimer);
+          appState.cloud.rxReconnectTimer = null;
+        }
         if (appState.cloud.sseSource) {
           appState.cloud.sseSource.close();
           appState.cloud.sseSource = null;
@@ -2140,9 +2569,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
           btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm';
         }
         logCloud('[RX STOPPED] Disconnected from remote cloud stream.', 'text-[#B45309]');
-      } else {
+      } else if (!appState.cloud.rxActive) {
         const cfg = getCloudEndpointConfig();
         saveCloudConfig();
+        setRememberedDeviceRole('viewer');
         appState.cloud.rxActive = true;
         appState.source = 'remote_cloud';
         const sel = document.getElementById('source-select');
@@ -2155,45 +2585,192 @@ Check your Browserslist config to be sure that your targets are set up correctly
           btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
         }
 
-        if (cfg.prov === 'ntfy' && typeof EventSource !== 'undefined') {
-          const sseUrl = `https://ntfy.sh/${encodeURIComponent(cfg.channel)}/sse`;
-          logCloud(`[RX SSE] Subscribed to live Server-Sent Events stream: ${sseUrl}`, 'text-[#047857] font-bold');
-          try {
-            const es = new EventSource(sseUrl);
-            es.onmessage = (ev) => {
-              try {
-                const env = JSON.parse(ev.data);
-                const pkt = env.message ? JSON.parse(env.message) : env;
-                if (pkt && pkt.metrics) applyIncomingCloudPacket(pkt);
-              } catch (_) {}
-            };
-            appState.cloud.sseSource = es;
-          } catch (_) {}
-        } else if (cfg.prov === 'firebase' && typeof EventSource !== 'undefined') {
-          const fbUrl = buildFirebaseUrl(cfg);
-          if (fbUrl) {
-            logCloud(`[RX FIREBASE SSE] Subscribed to real-time RTDB stream...`, 'text-[#047857] font-bold');
-            try {
-              const es = new EventSource(fbUrl);
-              const handleFb = (ev) => {
-                try {
-                  const frame = JSON.parse(ev.data);
-                  const pkt = frame && frame.data ? frame.data : frame;
-                  if (pkt && pkt.metrics) applyIncomingCloudPacket(pkt);
-                } catch (_) {}
-              };
-              es.addEventListener('put', handleFb);
-              es.addEventListener('patch', handleFb);
-              appState.cloud.sseSource = es;
-            } catch (_) {}
-          }
-        }
+        openCloudEventSource(cfg);
         fetchLatestCloudSnapshot();
         const pollMs = cfg.prov === 'supabase' || cfg.prov === 'webhook' ? Math.max(1500, cfg.intervalMs) : 4000;
         appState.cloud.rxPollTimer = setInterval(fetchLatestCloudSnapshot, pollMs);
       }
       updateCloudBadges();
     }
+
+    async function syncPendingDrivesToFirebase(manualTrigger) {
+      if (appState.cloud.syncingDrives) return 0;
+      const cfg = getCloudEndpointConfig();
+      if (!updateNetworkBadgeUi() || !isCloudEndpointConfigured(cfg)) {
+        if (manualTrigger) {
+          logCloud('[SYNC] Enter your Firebase DB URL & ensure internet is online to sync drives.', 'text-[#B45309]');
+          switchTab('cloud');
+        }
+        return 0;
+      }
+      if (cfg.prov !== 'firebase') {
+        if (manualTrigger) logCloud('[SYNC] Full drive history batch archive applies to Firebase RTDB.', 'text-[#5A5F6A]');
+        return 0;
+      }
+      appState.cloud.syncingDrives = true;
+      let syncedCount = 0;
+      try {
+        const sessions = await getAllStoredSessions();
+        const unsynced = sessions.filter(s =>
+          !s.syncedToCloud &&
+          (s.sampleCount || 0) > 0 &&
+          (manualTrigger || !(isLocalObdActive() && s.id === passiveState.activeSessionId))
+        );
+        if (!unsynced.length) {
+          if (manualTrigger) logCloud('[SYNC] All recorded local drives are already synced to Firebase.', 'text-[#047857] font-semibold');
+          return 0;
+        }
+        const db = await openDriveDb();
+        for (const sess of unsynced) {
+          const samples = await getSessionSamples(sess.id);
+          if (!samples.length) continue;
+          const paths = buildFirebasePaths(cfg, sess.id);
+          const payloadMap = {};
+          samples.forEach((s, idx) => {
+            payloadMap[`f_${String(idx).padStart(4, '0')}`] = {
+              ts: s.ts,
+              rpm: s.rpm,
+              spd: s.spd,
+              load: s.load,
+              coolant: s.coolant,
+              iat: s.iat,
+              cat: s.cat,
+              map: s.map,
+              rail: s.rail,
+              stft: s.stft,
+              ltft: s.ltft,
+              lambda: s.lambda,
+              thr: s.thr,
+              pedalD: s.pedalD,
+              fuel: s.fuel,
+              volt: s.volt,
+              fuelLh: s.fuelLh,
+              l100km: s.l100km
+            };
+          });
+          const resF = await fetch(paths.historyFramesUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadMap)
+          });
+          if (!resF.ok) throw new Error(`HTTP ${resF.status}`);
+          const resM = await fetch(paths.historyMetaUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: sess.id,
+              vin: sess.vin || 'AAVZZZ6RZHU112564',
+              transport: sess.transport || 'OBD-II',
+              startedAt: sess.startedAt,
+              updatedAt: sess.updatedAt,
+              sampleCount: samples.length,
+              maxRpm: sess.maxRpm || 0,
+              maxSpd: sess.maxSpd || 0,
+              maxCoolant: sess.maxCoolant || 0,
+              syncedAt: new Date().toISOString()
+            })
+          });
+          if (resM.ok && db) {
+            sess.syncedToCloud = true;
+            try {
+              db.transaction('sessions', 'readwrite').objectStore('sessions').put(sess);
+            } catch (_) {}
+          }
+          syncedCount++;
+          appState.cloud.txCount += samples.length;
+        }
+        if (syncedCount > 0) {
+          logCloud(`[FIREBASE SYNC] Archived ${syncedCount} drive session(s) to Firebase /history/.`, 'text-[#047857] font-bold');
+          refreshPassiveSessionsUi();
+          refreshHistoryTab();
+          updateCloudBadges();
+        }
+      } catch (err) {
+        logCloud(`[FIREBASE SYNC NOTE] Could not finish drive archive (${err.message}). Will retry when online.`, 'text-[#B45309]');
+      } finally {
+        appState.cloud.syncingDrives = false;
+      }
+      return syncedCount;
+    }
+
+    async function evaluateAutoCloudConnection(reason) {
+      const online = updateNetworkBadgeUi();
+      const cfg = getCloudEndpointConfig();
+      const configured = isCloudEndpointConfigured(cfg);
+      updateCloudBadges();
+
+      if (!cfg.autoOnBt || !online || !configured) {
+        return;
+      }
+
+      if (appState.cloud.offlineQueue.length > 0) {
+        await flushCloudOfflineQueue();
+      }
+      if (cfg.prov === 'firebase' && cfg.saveHistory) {
+        syncPendingDrivesToFirebase(false);
+      }
+
+      const role = cfg.autoRole || 'smart';
+      const obdActive = isLocalObdActive();
+      const remembered = getRememberedDeviceRole();
+
+      if (obdActive || role === 'tx_always') {
+        if (!appState.cloud.txActive) {
+          logCloud(`[AUTO-CLOUD · ${reason}] Connection available — auto-starting ${cfg.prov.toUpperCase()} TX (live + history)...`, 'text-[#1473E6] font-bold');
+          toggleCloudBroadcast(true);
+        }
+        return;
+      }
+
+      if (role === 'rx_always' || (!obdActive && remembered === 'viewer')) {
+        if (!appState.cloud.rxActive) {
+          logCloud(`[AUTO-CLOUD · ${reason}] Online — auto-connecting Remote ${cfg.prov.toUpperCase()} Viewer (RX)...`, 'text-[#047857] font-bold');
+          toggleCloudViewer(true);
+        }
+        return;
+      }
+
+      if (role === 'smart' && !obdActive && cfg.prov === 'firebase' && !appState.cloud.rxActive && ['startup', 'url-updated', 'online-restored', 'role-change', 'provider-change'].includes(reason)) {
+        try {
+          const paths = buildFirebasePaths(cfg);
+          if (paths.latestUrl) {
+            const res = await fetch(paths.latestUrl);
+            if (res.ok) {
+              const latest = await res.json();
+              appState.cloud.firebaseReachable = true;
+              updateCloudBadges();
+              if (latest && latest.metrics && latest.ts) {
+                const ageMs = Date.now() - Date.parse(latest.ts);
+                if (!Number.isNaN(ageMs) && ageMs >= 0 && ageMs < 180000) {
+                  logCloud('[SMART AUTO] Active remote car stream detected on Firebase — connecting RX live!', 'text-[#047857] font-bold');
+                  toggleCloudViewer(true);
+                } else {
+                  logCloud('[SMART AUTO] Firebase online & connected. Local drive history ready; RX watches automatically during live drives.', 'text-[#1473E6]');
+                }
+              } else {
+                logCloud('[SMART AUTO] Firebase RTDB reachable & ready — offline queue and future OBD drives will auto-save online.', 'text-[#047857] font-semibold');
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    window.addEventListener('online', () => {
+      updateNetworkBadgeUi();
+      logCloud('[NETWORK ONLINE] Internet connection detected — auto-reconnecting Cloud & syncing Firebase...', 'text-[#047857] font-bold');
+      if (appState.cloud.rxActive) {
+        openCloudEventSource(getCloudEndpointConfig());
+        fetchLatestCloudSnapshot();
+      }
+      evaluateAutoCloudConnection('online-restored');
+    });
+
+    window.addEventListener('offline', () => {
+      updateNetworkBadgeUi();
+      updateCloudBadges();
+      logCloud('[NETWORK OFFLINE] No internet connection — saving telemetry locally in IndexedDB until back online.', 'text-[#B45309] font-semibold');
+    });
 
     function copyRemoteViewerLink() {
       const cfg = getCloudEndpointConfig();
@@ -2791,11 +3368,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
 
     function maybeAutoStartCloudTx(transportLabel) {
-      const autoCb = document.getElementById('cloud-auto-on-bt');
-      if (autoCb && autoCb.checked && !appState.cloud.txActive) {
-        logCloud(`[AUTO-TX] ${transportLabel} connected — starting automatic Real-Time Cloud Stream (TX)...`, 'text-[#1473E6] font-bold');
-        toggleCloudBroadcast();
+      setRememberedDeviceRole('sender');
+      const cfg = getCloudEndpointConfig();
+      if (!cfg.autoOnBt || !isCloudEndpointConfigured(cfg)) {
+        updateCloudBadges();
+        return;
       }
+      if (!appState.cloud.txActive) {
+        logCloud(`[AUTO-TX] ${transportLabel} connected — auto-starting ${cfg.prov.toUpperCase()} TX (live + /history)...`, 'text-[#1473E6] font-bold');
+        toggleCloudBroadcast(true);
+      }
+      evaluateAutoCloudConnection(transportLabel);
     }
 
     function parseElmCanBytes(rawResp) {
@@ -2880,7 +3463,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     const PASSIVE_PREFS_KEY = 'pulseobd_passive_prefs_v1';
     const LAST_FRAME_KEY = 'pulseobd_last_live_frame_v1';
     const DRIVE_DB_NAME = 'PulseOBD_DriveDB';
-    const DRIVE_DB_VERSION = 1;
+    const DRIVE_DB_VERSION = 2;
 
     const passiveState = {
       db: null,
@@ -2929,6 +3512,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
             if (!db.objectStoreNames.contains('samples')) {
               const store = db.createObjectStore('samples', { keyPath: 'id', autoIncrement: true });
               store.createIndex('sessionId', 'sessionId', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('cloudQueue')) {
+              db.createObjectStore('cloudQueue', { keyPath: 'id', autoIncrement: true });
             }
           };
           req.onsuccess = (ev) => {
@@ -3018,7 +3604,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         sampleCount: 0,
         maxRpm: 0,
         maxSpd: 0,
-        maxCoolant: 0
+        maxCoolant: 0,
+        syncedToCloud: false
       };
       passiveState.activeSessionId = session.id;
       passiveState.activeSession = session;
@@ -3085,6 +3672,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (passiveState.activeSession) {
         passiveState.activeSession.sampleCount = passiveState.sampleCount;
         passiveState.activeSession.updatedAt = sample.ts;
+        passiveState.activeSession.syncedToCloud = false;
         passiveState.activeSession.maxRpm = Math.max(passiveState.activeSession.maxRpm, sample.rpm);
         passiveState.activeSession.maxSpd = Math.max(passiveState.activeSession.maxSpd, sample.spd);
         passiveState.activeSession.maxCoolant = Math.max(passiveState.activeSession.maxCoolant, sample.coolant);
@@ -3146,18 +3734,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
         box.innerHTML = '<div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>';
         return;
       }
-      box.innerHTML = sessions.slice(0, 12).map(s => `
+      box.innerHTML = sessions.slice(0, 12).map(s => {
+        const syncPill = s.syncedToCloud
+          ? '<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>';
+        return `
         <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
-          <div class="min-w-0">
+          <div class="min-w-0 flex flex-wrap items-center gap-1.5">
             <span class="font-bold text-[#222222] font-mono-num">${new Date(s.startedAt).toLocaleString()}</span>
-            <span class="text-[#5A5F6A] ml-2">${s.transport} · <strong class="text-[#1473E6]">${s.sampleCount} frames</strong> · Max ${Math.round(s.maxSpd || 0)} km/h · ${Math.round(s.maxRpm || 0)} RPM · ${Math.round(s.maxCoolant || 0)}°C</span>
+            <span class="text-[#5A5F6A]">${s.transport} · <strong class="text-[#1473E6]">${s.sampleCount} frames</strong> · Max ${Math.round(s.maxSpd || 0)} km/h · ${Math.round(s.maxRpm || 0)} RPM · ${Math.round(s.maxCoolant || 0)}°C</span>
+            ${syncPill}
           </div>
           <div class="flex items-center gap-1.5">
             <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
             <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#222222] text-white font-semibold">CSV</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     async function loadStoredDriveSession(sessionId) {
@@ -3227,10 +3821,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
     async function clearStoredDrives() {
       const db = await openDriveDb();
       if (db) {
-        const tx = db.transaction(['sessions', 'samples'], 'readwrite');
-        tx.objectStore('sessions').clear();
-        tx.objectStore('samples').clear();
+        const stores = ['sessions', 'samples'];
+        if (db.objectStoreNames.contains('cloudQueue')) stores.push('cloudQueue');
+        const tx = db.transaction(stores, 'readwrite');
+        stores.forEach(st => tx.objectStore(st).clear());
       }
+      appState.cloud.offlineQueue = [];
       passiveState.activeSessionId = null;
       passiveState.activeSession = null;
       passiveState.sampleCount = 0;
@@ -3238,6 +3834,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       historyInspectSessionId = null;
       try { localStorage.removeItem(LAST_FRAME_KEY); } catch (_) {}
       updatePassiveStatusUi('STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+      updateCloudBadges();
       refreshPassiveSessionsUi();
       refreshHistoryTab();
       logTerminal('[STORAGE] Cleared all locally stored drive sessions.', 'text-[#B45309]');
@@ -3293,12 +3890,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
       listEl.innerHTML = sessions.map(s => {
         const isSel = s.id === historyInspectSessionId;
         const borderCls = isSel ? 'border-[#222222] ring-1 ring-[#222222]' : 'border-[#E6E8EE]';
+        const syncPill = s.syncedToCloud
+          ? '<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>';
         return `
           <div class="bg-[#F9FAFB] border ${borderCls} rounded-2xl p-3 space-y-2 transition">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <div class="font-bold text-[#222222] font-mono-num truncate">${new Date(s.startedAt).toLocaleString()}</div>
-                <div class="text-[#5A5F6A] mt-0.5">${s.transport || 'OBD-II'} · <strong class="text-[#1473E6]">${s.sampleCount || 0} frames</strong></div>
+                <div class="text-[#5A5F6A] mt-0.5 flex flex-wrap items-center gap-1.5">${s.transport || 'OBD-II'} · <strong class="text-[#1473E6]">${s.sampleCount || 0} frames</strong> ${syncPill}</div>
               </div>
               <span class="font-mono-num px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222] font-semibold shrink-0">${Math.round(s.maxSpd || 0)} km/h</span>
             </div>
@@ -3463,7 +4063,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         sampleCount: samples.length,
         maxRpm: samples.reduce((m, s) => Math.max(m, s.rpm), 0),
         maxSpd: samples.reduce((m, s) => Math.max(m, s.spd), 0),
-        maxCoolant: samples.reduce((m, s) => Math.max(m, s.coolant), 0)
+        maxCoolant: samples.reduce((m, s) => Math.max(m, s.coolant), 0),
+        syncedToCloud: false
       };
 
       const db = await openDriveDb();
@@ -3484,6 +4085,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
       refreshPassiveSessionsUi();
       refreshHistoryTab();
       logTerminal(`[STORAGE] Saved ${samples.length} buffered frames as drive ${sessionId}.`, 'text-[#047857] font-semibold');
+      const cfg = getCloudEndpointConfig();
+      if (cfg.autoOnBt && cfg.saveHistory && cfg.prov === 'firebase' && updateNetworkBadgeUi() && isCloudEndpointConfigured(cfg)) {
+        syncPendingDrivesToFirebase(false);
+      }
     }
 
     function commitLiveFrame() {
@@ -3526,6 +4131,273 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return buf.replace(/>/g, '').trim();
     }
 
+    // =========================================================================
+    // 10C. BLUETOOTH RF COEXISTENCE & MULTI-DEVICE COMPANION ENGINE
+    // =========================================================================
+    function getBtPacingConfig() {
+      const mode = document.getElementById('ble-coexist-mode')?.value || appState.bleCoexistMode || 'coexist';
+      if (mode === 'audio_priority') {
+        return { mode, gapMs: 36, framePauseMs: 450, useWithoutResp: true };
+      }
+      if (mode === 'performance') {
+        return { mode, gapMs: 4, framePauseMs: 80, useWithoutResp: false };
+      }
+      return { mode: 'coexist', gapMs: 18, framePauseMs: 240, useWithoutResp: true };
+    }
+
+    function saveBtPrefs() {
+      const mode = document.getElementById('ble-coexist-mode')?.value || 'coexist';
+      const yieldOnScan = document.getElementById('ble-yield-on-scan') ? Boolean(document.getElementById('ble-yield-on-scan').checked) : true;
+      appState.bleCoexistMode = mode;
+      try {
+        localStorage.setItem(BT_PREFS_KEY, JSON.stringify({ mode, yieldOnScan }));
+      } catch (_) {}
+      updateBtCoexistUi();
+      logTerminal(`[BT COEXIST] Profile set to "${mode}" (Audio / Calls / Smartwatch coexistence safe).`, 'text-[#1473E6]');
+    }
+
+    function loadBtPrefs() {
+      try {
+        const raw = localStorage.getItem(BT_PREFS_KEY);
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (p.mode && document.getElementById('ble-coexist-mode')) {
+            document.getElementById('ble-coexist-mode').value = p.mode;
+            appState.bleCoexistMode = p.mode;
+          }
+          if (p.yieldOnScan !== undefined && document.getElementById('ble-yield-on-scan')) {
+            document.getElementById('ble-yield-on-scan').checked = Boolean(p.yieldOnScan);
+          }
+        }
+      } catch (_) {}
+      updateBtCoexistUi();
+    }
+
+    function updateBtCoexistUi() {
+      const badge = document.getElementById('bt-coexist-badge');
+      const writeLbl = document.getElementById('bt-write-mode-lbl');
+      const yieldBtn = document.getElementById('btn-yield-pairing');
+      const now = Date.now();
+      const remainingMs = Math.max(0, (appState.bleYieldUntil || 0) - now);
+      const pacing = getBtPacingConfig();
+
+      if (badge) {
+        if (remainingMs > 0) {
+          const secs = Math.ceil(remainingMs / 1000);
+          badge.textContent = `PAIRING YIELD · ${secs}s`;
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold';
+        } else if (pacing.mode === 'audio_priority') {
+          badge.textContent = 'AUDIO PRIORITY (450ms)';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold';
+        } else if (pacing.mode === 'performance') {
+          badge.textContent = 'HIGH-SPEED (80ms)';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#FDF2F8] border border-[#FBCFE8] text-[#BE185D] font-mono-num font-bold';
+        } else {
+          badge.textContent = 'COEXISTENCE ACTIVE';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold';
+        }
+      }
+
+      if (yieldBtn) {
+        yieldBtn.textContent = remainingMs > 0
+          ? `Resume OBD Polling (${Math.ceil(remainingMs / 1000)}s)`
+          : 'Yield 15s to Pair Phone Device';
+      }
+
+      if (writeLbl) {
+        if (appState.bleWriteChar) {
+          if (pacing.useWithoutResp && appState.bleCanWriteWithoutResp) {
+            writeLbl.textContent = 'WriteWithoutResponse Active';
+          } else {
+            writeLbl.textContent = 'WriteWithResponse Active';
+          }
+        } else {
+          writeLbl.textContent = pacing.useWithoutResp ? 'WriteWithoutResponse Ready' : 'WriteWithResponse Mode';
+        }
+      }
+    }
+
+    function yieldObdForPairing(durationMs = 15000, quiet) {
+      const now = Date.now();
+      if (appState.bleYieldTimer) {
+        clearInterval(appState.bleYieldTimer);
+        appState.bleYieldTimer = null;
+      }
+      if (!quiet && appState.bleYieldUntil > now) {
+        appState.bleYieldUntil = 0;
+        updateBtCoexistUi();
+        logTerminal('[BT COEXIST] Resumed OBD-II polling immediately.', 'text-[#047857] font-semibold');
+        return;
+      }
+      appState.bleYieldUntil = now + durationMs;
+      updateBtCoexistUi();
+      if (!quiet) {
+        logTerminal(`[BT COEXIST] Yielding RF radio airtime for ${(durationMs / 1000).toFixed(0)}s while keeping OBD GATT paired — pair your car stereo, earbuds, or watch now.`, 'text-[#1473E6] font-semibold');
+      }
+      appState.bleYieldTimer = setInterval(() => {
+        if (Date.now() >= appState.bleYieldUntil) {
+          appState.bleYieldUntil = 0;
+          clearInterval(appState.bleYieldTimer);
+          appState.bleYieldTimer = null;
+          if (!quiet) {
+            logTerminal('[BT COEXIST] Pairing yield complete — resumed OBD-II telemetry seamlessly.', 'text-[#047857]');
+          }
+        }
+        updateBtCoexistUi();
+      }, 500);
+    }
+
+    function renderConnectedBtDevicesUi(savedDevicesList) {
+      const box = document.getElementById('bt-connected-devices-list');
+      if (!box) return;
+      const rows = [];
+
+      rows.push(`
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
+          <div class="min-w-0">
+            <span class="font-bold text-[#222222]">Phone Audio / Calls / Smartwatch (OS Multipoint)</span>
+            <span class="block text-[11px] text-[#5A5F6A]">A2DP Car Stereo, HFP Calls &amp; Wearables share BLE RF safely alongside OBD-II</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">COEXIST READY</span>
+        </div>
+      `);
+
+      if (appState.bleDevice && appState.bleDevice.gatt?.connected) {
+        rows.push(`
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#BFDBFE] rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <span class="font-bold text-[#1473E6]">Primary OBD-II GATT: ${appState.bleDevice.name || 'ELM327 BLE'}</span>
+              <span class="block text-[11px] text-[#5A5F6A] font-mono-num">ID: ${appState.bleDevice.id || 'paired'} · ${appState.bleCanWriteWithoutResp ? 'WriteWithoutResponse' : 'WriteWithResponse'}</span>
+            </div>
+            <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Disconnect OBD</button>
+          </div>
+        `);
+      } else if (appState.serialPort) {
+        rows.push(`
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#BFDBFE] rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <span class="font-bold text-[#1473E6]">Primary OBD-II Serial: COM3 SPP (38400 8N1)</span>
+              <span class="block text-[11px] text-[#5A5F6A] font-mono-num">Yield-safe classic RFCOMM link active</span>
+            </div>
+            <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Close COM3</button>
+          </div>
+        `);
+      }
+
+      (appState.companionBleDevices || []).forEach(c => {
+        const connected = Boolean(c.device?.gatt?.connected);
+        rows.push(`
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <span class="font-bold text-[#222222]">Companion BLE: ${c.name || 'BLE Sensor'}</span>
+              <span class="block text-[11px] text-[#5A5F6A] font-mono-num">${connected ? 'Connected' : 'Disconnected'}${c.batteryPct !== null && c.batteryPct !== undefined ? ' · Batt ' + c.batteryPct + '%' : ''} · ${c.servicesCount || 0} GATT svcs</span>
+            </div>
+            <button onclick="disconnectCompanionBle('${c.id}')" class="px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold hover:bg-[#FECACA]">Disconnect</button>
+          </div>
+        `);
+      });
+
+      if (Array.isArray(savedDevicesList) && savedDevicesList.length > 0) {
+        const names = savedDevicesList.map(d => `${d.name || 'Unnamed'} (${d.gatt?.connected ? 'Connected' : 'Saved'})`).join(', ');
+        rows.push(`<div class="text-[11px] text-[#5A5F6A] px-1 pt-1">Permitted Browser BLE Devices: <span class="font-mono-num text-[#222222]">${names}</span></div>`);
+      }
+
+      box.innerHTML = rows.join('');
+    }
+
+    async function connectCompanionBleDevice() {
+      if (!('bluetooth' in navigator)) {
+        logTerminal('[BLE COMPANION] Web Bluetooth is unavailable in this browser. Car stereo audio / calls still work normally via Phone Settings.', 'text-[#B45309]');
+        return;
+      }
+      const yieldCb = document.getElementById('ble-yield-on-scan');
+      const shouldYield = !yieldCb || yieldCb.checked;
+      if (shouldYield && isLocalObdActive()) {
+        yieldObdForPairing(20000, true);
+      }
+      try {
+        logTerminal('[BLE COMPANION] Scanning for extra BLE accessory (OBD-II remains paired in background)...', 'text-[#1473E6]');
+        const dev = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['battery_service', 'device_information', 'heart_rate', 'generic_access', 0xfff0, 0xffe0, '6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+        });
+        const server = await dev.gatt.connect();
+        let servicesCount = 0;
+        let batteryPct = null;
+        try {
+          const svcs = await server.getPrimaryServices();
+          servicesCount = svcs.length;
+        } catch (_) {}
+        try {
+          const battSvc = await server.getPrimaryService('battery_service');
+          const battChar = await battSvc.getCharacteristic('battery_level');
+          const val = await battChar.readValue();
+          batteryPct = val.getUint8(0);
+        } catch (_) {}
+
+        const entry = { id: dev.id || ('ble_' + Date.now()), name: dev.name || 'Extra BLE Device', device: dev, server, batteryPct, servicesCount };
+        appState.companionBleDevices = appState.companionBleDevices.filter(x => x.id !== entry.id);
+        appState.companionBleDevices.push(entry);
+
+        if (!passiveState.bleListenerAttached.has(dev)) {
+          passiveState.bleListenerAttached.add(dev);
+          dev.addEventListener('gattserverdisconnected', () => {
+            logTerminal(`[BLE COMPANION] ${entry.name} disconnected (OBD-II undisturbed).`, 'text-[#5A5F6A]');
+            renderConnectedBtDevicesUi();
+          });
+        }
+        logTerminal(`[BLE COMPANION] Connected ${entry.name}${batteryPct !== null ? ' (Battery ' + batteryPct + '%)' : ''} alongside OBD-II!`, 'text-[#047857] font-semibold');
+        renderConnectedBtDevicesUi();
+      } catch (err) {
+        logTerminal(`[BLE COMPANION] Scan canceled or unavailable: ${err.message}`, 'text-[#B45309]');
+      } finally {
+        if (shouldYield && appState.bleYieldUntil > 0) {
+          appState.bleYieldUntil = 0;
+          if (appState.bleYieldTimer) {
+            clearInterval(appState.bleYieldTimer);
+            appState.bleYieldTimer = null;
+          }
+          updateBtCoexistUi();
+        }
+      }
+    }
+
+    function disconnectCompanionBle(devId) {
+      const idx = (appState.companionBleDevices || []).findIndex(c => c.id === devId);
+      if (idx === -1) return;
+      const item = appState.companionBleDevices[idx];
+      try {
+        if (item.device?.gatt?.connected) item.device.gatt.disconnect();
+      } catch (_) {}
+      appState.companionBleDevices.splice(idx, 1);
+      logTerminal(`[BLE COMPANION] Disconnected ${item.name} safely.`, 'text-[#5A5F6A]');
+      renderConnectedBtDevicesUi();
+    }
+
+    async function refreshPermittedBleDevices() {
+      if (!('bluetooth' in navigator) || typeof navigator.bluetooth.getDevices !== 'function') {
+        logTerminal('[BT] Permitted device list requires Chrome/Edge with Web Bluetooth getDevices() support. Phone stereo/calls stay paired natively via OS.', 'text-[#5A5F6A]');
+        renderConnectedBtDevicesUi();
+        return;
+      }
+      try {
+        const list = await navigator.bluetooth.getDevices();
+        logTerminal(`[BT] Found ${list.length} permitted BLE device(s) saved in browser.`, 'text-[#1473E6]');
+        renderConnectedBtDevicesUi(list);
+      } catch (err) {
+        logTerminal(`[BT] Could not query saved BLE devices: ${err.message}`, 'text-[#B45309]');
+      }
+    }
+
+    async function disconnectAllBluetoothDevices() {
+      (appState.companionBleDevices || []).forEach(c => {
+        try { if (c.device?.gatt?.connected) c.device.gatt.disconnect(); } catch (_) {}
+      });
+      appState.companionBleDevices = [];
+      await disconnectActivePort();
+      renderConnectedBtDevicesUi();
+    }
+
     let bleRxBuffer = '';
     let bleWaiter = null;
     async function sendBleElm(cmd, timeoutMs = 1500) {
@@ -3534,7 +4406,20 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!appState.bleWriteChar) throw new Error('BLE GATT characteristic not ready');
       bleRxBuffer = '';
       const bytes = new TextEncoder().encode(check.clean + '\r');
-      await appState.bleWriteChar.writeValue(bytes);
+      const pacing = getBtPacingConfig();
+      const ch = appState.bleWriteChar;
+      if (pacing.useWithoutResp && ch.properties?.writeWithoutResponse && typeof ch.writeValueWithoutResponse === 'function') {
+        try {
+          await ch.writeValueWithoutResponse(bytes);
+        } catch (_) {
+          if (typeof ch.writeValueWithResponse === 'function') await ch.writeValueWithResponse(bytes);
+          else await ch.writeValue(bytes);
+        }
+      } else if (typeof ch.writeValueWithResponse === 'function' && ch.properties?.write) {
+        await ch.writeValueWithResponse(bytes);
+      } else {
+        await ch.writeValue(bytes);
+      }
       return await new Promise((resolve) => {
         const timer = setTimeout(() => {
           bleWaiter = null;
@@ -3603,19 +4488,25 @@ Check your Browserslist config to be sure that your targets are set up correctly
       await startPassiveDriveSession('Web Serial COM3');
       maybeAutoStartCloudTx('Web Serial COM3');
       while (appState.serialPollingActive && appState.serialPort) {
+        if (Date.now() < appState.bleYieldUntil) {
+          await new Promise(r => setTimeout(r, 250));
+          continue;
+        }
+        const pacing = getBtPacingConfig();
         for (const pid of FAST_POLL_PIDS) {
-          if (!appState.serialPollingActive) break;
+          if (!appState.serialPollingActive || Date.now() < appState.bleYieldUntil) break;
           const r = await sendSerialElm(pid, 1200);
           applyElmResponseToState(pid, r);
+          if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
         }
         const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
         extIdx++;
-        if (appState.serialPollingActive && extPid) {
+        if (appState.serialPollingActive && extPid && Date.now() >= appState.bleYieldUntil) {
           const rExt = await sendSerialElm(extPid, 1200);
           applyElmResponseToState(extPid, rExt);
         }
         commitLiveFrame();
-        await new Promise(r => setTimeout(r, 80));
+        await new Promise(r => setTimeout(r, pacing.framePauseMs));
       }
     }
 
@@ -3634,7 +4525,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         appState.serialPollingActive = true;
         changeDataSource('live_obd');
         document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (Passive Recording)';
-        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling & passively storing all Mode 01 PIDs...', 'text-[#047857] font-semibold');
+        renderConnectedBtDevicesUi();
+        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling & passively storing all Mode 01 PIDs (audio coexistence active)...', 'text-[#047857] font-semibold');
         runSerialPollingLoop().catch(err => {
           logTerminal(`[SERIAL LOOP] Stopped: ${err.message}`, 'text-[#B45309]');
         });
@@ -3647,6 +4539,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       passiveState.bleUserDisconnected = true;
       appState.serialPollingActive = false;
       appState.blePollingActive = false;
+      appState.bleYieldUntil = 0;
+      if (appState.bleYieldTimer) {
+        clearInterval(appState.bleYieldTimer);
+        appState.bleYieldTimer = null;
+      }
       if (appState.wifiPollTimer) {
         clearInterval(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
@@ -3670,6 +4567,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
       } else {
         logTerminal('[SERIAL] Active live polling stopped and ports unlocked.', 'text-[#047857] font-semibold');
       }
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
     }
 
     async function runBlePollingLoop() {
@@ -3687,19 +4586,25 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
       maybeAutoStartCloudTx('Bluetooth BLE GATT');
       while (appState.blePollingActive && appState.bleWriteChar) {
+        if (Date.now() < appState.bleYieldUntil) {
+          await new Promise(r => setTimeout(r, 250));
+          continue;
+        }
+        const pacing = getBtPacingConfig();
         for (const pid of FAST_POLL_PIDS) {
-          if (!appState.blePollingActive) break;
+          if (!appState.blePollingActive || Date.now() < appState.bleYieldUntil) break;
           const r = await sendBleElm(pid, 1000);
           applyElmResponseToState(pid, r);
+          if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
         }
         const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
         extIdx++;
-        if (appState.blePollingActive && extPid) {
+        if (appState.blePollingActive && extPid && Date.now() >= appState.bleYieldUntil) {
           const rExt = await sendBleElm(extPid, 1000);
           applyElmResponseToState(extPid, rExt);
         }
         commitLiveFrame();
-        await new Promise(r => setTimeout(r, 80));
+        await new Promise(r => setTimeout(r, pacing.framePauseMs));
       }
     }
 
@@ -3720,18 +4625,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
         throw new Error('Selected BLE device does not expose serial notify/write characteristics.');
       }
       await notifyChar.startNotifications();
-      notifyChar.addEventListener('characteristicvaluechanged', (ev) => {
-        const chunk = new TextDecoder().decode(ev.target.value);
-        bleRxBuffer += chunk;
-        if (bleRxBuffer.includes('>') && bleWaiter) bleWaiter();
-      });
+      if (!passiveState.bleListenerAttached.has(notifyChar)) {
+        passiveState.bleListenerAttached.add(notifyChar);
+        notifyChar.addEventListener('characteristicvaluechanged', (ev) => {
+          const chunk = new TextDecoder().decode(ev.target.value);
+          bleRxBuffer += chunk;
+          if (bleRxBuffer.includes('>') && bleWaiter) bleWaiter();
+        });
+      }
       appState.bleWriteChar = writeChar;
+      appState.bleCanWriteWithoutResp = Boolean(writeChar.properties?.writeWithoutResponse);
       appState.blePollingActive = true;
       changeDataSource('live_obd');
       document.getElementById('conn-badge').textContent = `LIVE BLE · ${dev.name || 'OBDII'} · REC`;
       const rcLbl = document.getElementById('passive-reconnect-state');
       if (rcLbl) rcLbl.textContent = 'Connected';
-      logTerminal(`[BLE] Connected to ${dev.name || dev.id}! Running passively & storing every frame.`, 'text-[#047857] font-semibold');
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+      logTerminal(`[BLE] Connected to ${dev.name || dev.id}! Running passively with ${appState.bleCanWriteWithoutResp ? 'writeWithoutResponse (audio safe)' : 'writeWithResponse'}.`, 'text-[#047857] font-semibold');
       runBlePollingLoop().catch(err => logTerminal(`[BLE LOOP] ${err.message}`, 'text-[#B45309]'));
     }
 
@@ -3776,6 +4687,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (!passiveState.bleListenerAttached.has(dev)) {
           passiveState.bleListenerAttached.add(dev);
           dev.addEventListener('gattserverdisconnected', () => {
+            renderConnectedBtDevicesUi();
             if (!passiveState.bleUserDisconnected) {
               logTerminal('[BLE] Link dropped unexpectedly — initiating passive auto-reconnect...', 'text-[#B45309] font-semibold');
               attemptBleAutoReconnect();
@@ -4008,9 +4920,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (appState.activeTab === 'passport') renderAllVariablesTable();
     }, 200);
 
-    // Load saved Cloud config + apply ?cloud=watch&provider=...&channel=... URL parameters
+    // Load saved Cloud + BT Coexistence configs & auto-connect whenever internet is available
     (function initCloudAndUrlParams() {
       loadCloudConfig();
+      loadBtPrefs();
+      loadPassivePrefs();
       try {
         const params = new URLSearchParams(window.location.search);
         const prov = params.get('provider');
@@ -4019,11 +4933,29 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const tbl = params.get('table');
         const srcParam = params.get('source');
         const tabParam = params.get('tab');
-        if (prov && document.getElementById('cloud-provider')) document.getElementById('cloud-provider').value = prov;
-        if (ch && document.getElementById('cloud-channel-id')) document.getElementById('cloud-channel-id').value = ch;
-        if (ep && document.getElementById('cloud-custom-url')) document.getElementById('cloud-custom-url').value = ep;
-        if (tbl && document.getElementById('cloud-supabase-table')) document.getElementById('cloud-supabase-table').value = tbl;
+        let hadCloudParam = false;
+        if (prov && document.getElementById('cloud-provider')) {
+          document.getElementById('cloud-provider').value = prov;
+          hadCloudParam = true;
+        }
+        if (ch && document.getElementById('cloud-channel-id')) {
+          document.getElementById('cloud-channel-id').value = ch;
+          hadCloudParam = true;
+        }
+        if (ep && document.getElementById('cloud-custom-url')) {
+          document.getElementById('cloud-custom-url').value = ep;
+          hadCloudParam = true;
+        }
+        if (tbl && document.getElementById('cloud-supabase-table')) {
+          document.getElementById('cloud-supabase-table').value = tbl;
+          hadCloudParam = true;
+        }
+        if (hadCloudParam) saveCloudConfig();
         updateCloudProviderUi();
+        updateNetworkBadgeUi();
+        updateCloudBadges();
+        renderConnectedBtDevicesUi();
+
         if (srcParam && ['snap1', 'snap2', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
           changeDataSource(srcParam);
         }
@@ -4031,13 +4963,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
           switchTab(tabParam);
         }
         if (params.get('cloud') === 'watch') {
+          setRememberedDeviceRole('viewer');
           setTimeout(() => {
             switchTab('cockpit');
-            toggleCloudViewer();
+            toggleCloudViewer(true);
           }, 250);
         }
       } catch (_) {
         updateCloudProviderUi();
+        updateNetworkBadgeUi();
+        updateCloudBadges();
+        renderConnectedBtDevicesUi();
       }
     })();
 
@@ -4049,12 +4985,28 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     });
     window.addEventListener('themechange', renderAllCharts);
-    loadPassivePrefs();
     refreshPassiveSessionsUi();
     renderStaticInfographics();
     renderAllVariablesTable();
     updateDomMetrics(appState.current);
     renderAllChartsNow();
+
+    openDriveDb().then(() => loadOfflineQueueFromDb()).then(() => {
+      evaluateAutoCloudConnection('startup');
+    }).catch(() => {});
+
+    setInterval(() => {
+      const online = updateNetworkBadgeUi();
+      if (!online) return;
+      const cfg = getCloudEndpointConfig();
+      if (!cfg.autoOnBt || !isCloudEndpointConfigured(cfg)) return;
+      if (appState.cloud.offlineQueue.length > 0 && !appState.cloud.flushingQueue) {
+        flushCloudOfflineQueue();
+      }
+      if (cfg.prov === 'firebase' && cfg.saveHistory && !appState.cloud.syncingDrives) {
+        syncPendingDrivesToFirebase(false);
+      }
+    }, 15000);
   </script>
 </body>
 </html>

@@ -5,3 +5,6 @@ scratch/
 Thumbs.db
 bridge/diagnostics/
 bridge/live_telemetry_latest.json
+firebase.local.json
+bridge/firebase.local.json
+*.local.json

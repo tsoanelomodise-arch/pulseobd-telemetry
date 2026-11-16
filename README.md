@@ -1,25 +1,23 @@
 # PulseOBD — Cloud-Connected OBD-II Mobile & Web Telemetry Studio
 
-**Strictly Read-Only** Apple/Adobe-inspired OBD-II diagnostic & live drive telemetry studio supporting all **124 available vehicle variables** (Mode 01/02/03/06/07/09/0A + UDS `0x22`), **6 synchronized real-time charts**, and **Real-Time Cloud Telemetry Streaming**.
+**Strictly Read-Only** Apple/Adobe-inspired OBD-II diagnostic & live drive telemetry studio supporting all **124 available vehicle variables** (Mode 01/02/03/06/07/09/0A + UDS `0x22`), **6 synchronized zero-jitter real-time charts**, **Drive History & IndexedDB offline persistence**, **Bluetooth Multi-Device & Car Audio Coexistence**, and **Smart Auto-Connect Real-Time Firebase Telemetry Streaming**.
 
 ## Features
-- **Strictly Read-Only Safety Firewall:** Permanently blocks `Mode 04` / `14`, ECU resets, coding, adaptations, and write commands across both Web Bluetooth/Serial JS and [`start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1).
-- **Real-Time Cloud Telemetry Relay:** Stream live vehicle gauges, RPM, speed, fuel trims, coolant/CAT temps, boost/rail pressure, and all 124 variables over mobile data via:
-  1. **Zero-Setup Cloud Pub/Sub (`ntfy.sh` HTTPS/SSE)** — works immediately out-of-the-box.
-  2. **Firebase Realtime Database (`PUT` + SSE live stream)** — point to your `https://<project>-default-rtdb.firebaseio.com` URL.
-  3. **Supabase Table (`REST POST/GET`)** — copy the 1-click SQL schema inside the Cloud Stream tab and provide your project URL + anon key.
-  4. **Custom HTTPS Webhook / Worker (`POST/GET`)**.
-- **In-Vehicle Connections:**
-  - **Mobile / Browser Direct:** Web Bluetooth (`BLE GATT 0xFFF0 / 0xFFE0 / Nordic UART`) or Web Serial (`COM3 38400 8N1`). Automatically starts broadcasting online when connected!
-  - **Windows Laptop in Car:** Run [`Launch_PulseOBD.bat`](Launch_PulseOBD.bat) or [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1) with `-CloudProvider`, `-CloudUrl`, `-CloudApiKey`, and `-CloudChannel`.
+- **Strictly Read-Only Safety Firewall:** Permanently blocks `Mode 04` / `14`, ECU resets, coding, adaptations, and write commands across both Web Bluetooth/Serial JS and [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1).
+- **Smart Auto-Connect Firebase Telemetry & History:**
+  - **Firebase Realtime Database (Default):** Automatically connects whenever internet is available, saves live telemetry (`latest.json`) and timestamped trip logs (`history/<sessionId>/frames.json`), buffers frames offline in IndexedDB `cloudQueue`, and auto-flushes as soon as mobile signal returns.
+  - **Private Endpoint Handling:** Paste your Firebase RTDB URL once in the **Cloud** tab — it saves privately in `localStorage` on your device and is never stored in public GitHub or Google Drive files. On Windows, you can alternatively place a gitignored `bridge/firebase.local.json` file or set `PULSEOBD_FIREBASE_URL`.
+  - **Fallbacks:** Instant `ntfy.sh` HTTPS/SSE, Supabase REST table, or Custom HTTPS Webhook.
+- **Bluetooth RF Coexistence & Multi-Device Support:** Uses `writeValueWithoutResponse`, cooperative inter-PID gaps (`Coexist` / `Audio Priority`), and a 15-second **Pairing Yield** button so your phone stays connected to car stereo audio (A2DP), hands-free calls (HFP), earbuds, smartwatch, or extra BLE sensors alongside OBD-II.
+- **Synchronized Multi-View Deployment:** Run `./sync_all_views.sh` to validate JS, rebuild offline standalone `PulseOBD_Studio.html` & `index.html`, update Google Drive HTML + PowerShell bridge scripts, and deploy to GitHub Pages.
 
 ## Usage Examples for `start_obd_web_bridge.ps1`
 ```powershell
-# 1. Default Zero-Setup Cloud Stream (ntfy.sh)
-.\bridge\start_obd_web_bridge.ps1 -CloudProvider ntfy -CloudChannel "pulseobd-polo-aavzzz6rzhu112564-7d4e9b"
+# 1. Auto Mode (uses private bridge/firebase.local.json or PULSEOBD_FIREBASE_URL if present, else ntfy.sh)
+.\bridge\start_obd_web_bridge.ps1
 
-# 2. Firebase Realtime Database Stream
-.\bridge\start_obd_web_bridge.ps1 -CloudProvider firebase -CloudUrl "https://your-project-default-rtdb.firebaseio.com" -CloudChannel "my-polo-stream"
+# 2. Explicit Firebase Realtime Database Stream (Live + /history/frames)
+.\bridge\start_obd_web_bridge.ps1 -CloudProvider firebase -CloudUrl "https://your-project-default-rtdb.firebaseio.com" -CloudChannel "pulseobd-polo-aavzzz6rzhu112564-7d4e9b"
 
 # 3. Supabase Table Stream
 .\bridge\start_obd_web_bridge.ps1 -CloudProvider supabase -CloudUrl "https://your-ref.supabase.co" -SupabaseTable "pulseobd_telemetry" -CloudApiKey "<SUPABASE_ANON_KEY>" -CloudChannel "my-polo-stream"

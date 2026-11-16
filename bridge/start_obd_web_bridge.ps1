@@ -1,10 +1,11 @@
 <#
 .SYNOPSIS
-    PulseOBD — Strictly Read-Only All-Variable Windows Bluetooth (COM3) Bridge + Option 2 Cloud Streamer
+    PulseOBD — Strictly Read-Only All-Variable Windows Bluetooth (COM3) Bridge + Firebase Auto-Sync Relay
 .DESCRIPTION
     Connects to the paired OBDII adapter (00:10:CC:4F:36:03, ELM327 v2.1) on COM3 at 38400 baud (8N1),
     includes WinRT uncached RFCOMM service wake-up to prevent Windows semaphore timeouts,
     enforces the Mandatory Read-Only Operational Rule (blocks Mode 04 / clear / write / reset commands),
+    uses cooperative Bluetooth RF pacing (-CoexistGapMs) so car audio / headphones / other BT links stay stable,
     discovers and collects ALL available variables across:
       - Adapter AT queries (ATZ, ATI, AT@1, ATRV, ATDP, ATDPN)
       - All 40 Mode 01 PIDs (0100, 0120, 0140 bitmasks + all 37 live/status PIDs 0101..0156)
@@ -14,24 +15,26 @@
       - All 6 Mode 09 PIDs (0900..090A including all 20 IUMPR counters in 0908)
       - All UDS 0x22 ReadDataByIdentifier DIDs on 7E0 -> 7E8 (F187..2001)
     Serves the PulseOBD Web & Mobile app and /api/live JSON stream on port 8765, saves local
-    live_telemetry_latest.json, AND automatically streams live telemetry packets online to the
-    Cloud Telemetry Relay (ntfy.sh HTTPS/SSE, Firebase Realtime Database, Supabase Table, or Custom HTTPS Webhook)
-    with dead-zone offline buffering. Always closes COM3 cleanly on exit so the port is never left locked.
+    live_telemetry_latest.json, AND automatically connects to Firebase RTDB (when configured via
+    -CloudUrl, $env:PULSEOBD_FIREBASE_URL, or untracked local firebase.local.json) or ntfy/Supabase/Webhook
+    to save live frames (latest.json) + trip history (history/<sessionId>/frames.json) with dead-zone buffering.
 #>
 param(
     [string]$ComPort = 'COM3',
     [int]$BaudRate = 38400,
     [int]$HttpPort = 8765,
     [bool]$EnableCloudStream = $true,
-    [ValidateSet('ntfy','firebase','supabase','webhook')]
-    [string]$CloudProvider = 'ntfy',
+    [ValidateSet('auto','ntfy','firebase','supabase','webhook')]
+    [string]$CloudProvider = 'auto',
     [string]$CloudChannel = 'pulseobd-polo-aavzzz6rzhu112564-7d4e9b',
     [string]$CloudUrl = '',
     [string]$SupabaseTable = 'pulseobd_telemetry',
     [string]$CloudApiKey = '',
     [int]$PollIntervalMs = 900,
-    [int]$CloudIntervalMs = 2500,
-    [bool]$SaveLocalJson = $true
+    [int]$CloudIntervalMs = 3000,
+    [int]$CoexistGapMs = 15,
+    [bool]$SaveLocalJson = $true,
+    [bool]$SaveCloudHistory = $true
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,22 +43,66 @@ try {
     Add-Type -AssemblyName System.Net.Http
 } catch {}
 
+# Auto-load private local Firebase configuration (gitignored firebase.local.json or env vars)
+$LocalConfigCandidates = @(
+    (Join-Path $PSScriptRoot 'firebase.local.json'),
+    (Join-Path (Split-Path $PSScriptRoot -Parent) 'firebase.local.json')
+)
+foreach ($cfgFile in $LocalConfigCandidates) {
+    if (Test-Path $cfgFile) {
+        try {
+            $localCfg = Get-Content $cfgFile -Raw | ConvertFrom-Json
+            if (-not $CloudUrl -and $localCfg.url) { $CloudUrl = [string]$localCfg.url }
+            if ($localCfg.channel) { $CloudChannel = [string]$localCfg.channel }
+            if (-not $CloudApiKey -and $localCfg.auth) { $CloudApiKey = [string]$localCfg.auth }
+            if ($CloudProvider -eq 'auto' -and $localCfg.provider) { $CloudProvider = [string]$localCfg.provider }
+            Write-Host "Loaded private cloud config from $cfgFile" -ForegroundColor DarkGreen
+            break
+        } catch {
+            Write-Warning "Could not parse ${cfgFile}: $($_.Exception.Message)"
+        }
+    }
+}
+if (-not $CloudUrl -and $env:PULSEOBD_FIREBASE_URL) { $CloudUrl = $env:PULSEOBD_FIREBASE_URL }
+if (-not $CloudApiKey -and $env:PULSEOBD_FIREBASE_AUTH) { $CloudApiKey = $env:PULSEOBD_FIREBASE_AUTH }
+if ($env:PULSEOBD_CLOUD_CHANNEL) { $CloudChannel = $env:PULSEOBD_CLOUD_CHANNEL }
+
+if ($CloudProvider -eq 'auto') {
+    if ($CloudUrl -and ($CloudUrl -match 'firebaseio\.com|firebasedatabase\.app')) {
+        $CloudProvider = 'firebase'
+    } else {
+        $CloudProvider = 'ntfy'
+    }
+}
+
+$TripSessionId = 'drive-' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')
 $ResolvedCloudMethod = 'POST'
 $ResolvedCloudUrl = ''
+$FirebaseLatestUrl = ''
+$FirebaseHistoryFramesUrl = ''
+$FirebaseHistoryMetaUrl = ''
+
+function Add-FirebaseAuthQuery {
+    param([string]$Url, [string]$Auth)
+    if (-not $Url -or -not $Auth) { return $Url }
+    $sep = if ($Url.Contains('?')) { '&' } else { '?' }
+    return "${Url}${sep}auth=$([Uri]::EscapeDataString($Auth))"
+}
+
 if ($CloudProvider -eq 'ntfy') {
     $ResolvedCloudUrl = "https://ntfy.sh/$([Uri]::EscapeDataString($CloudChannel))"
     $ResolvedCloudMethod = 'POST'
 } elseif ($CloudProvider -eq 'firebase') {
     $fbBase = $CloudUrl.TrimEnd('/')
-    if ($fbBase -and -not $fbBase.EndsWith('.json')) {
-        $fbBase = "$fbBase/pulseobd/$([Uri]::EscapeDataString($CloudChannel)).json"
+    if ($fbBase) {
+        $safeCh = [Uri]::EscapeDataString($CloudChannel)
+        $prefix = if ($fbBase.EndsWith('.json')) { $fbBase.Substring(0, $fbBase.Length - 5) } else { "$fbBase/pulseobd/$safeCh" }
+        $FirebaseLatestUrl = Add-FirebaseAuthQuery -Url "$prefix/latest.json" -Auth $CloudApiKey
+        $FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/frames.json" -Auth $CloudApiKey
+        $FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$TripSessionId/meta.json" -Auth $CloudApiKey
+        $ResolvedCloudUrl = $FirebaseLatestUrl
+        $ResolvedCloudMethod = 'PUT'
     }
-    if ($fbBase -and $CloudApiKey) {
-        $sep = if ($fbBase.Contains('?')) { '&' } else { '?' }
-        $fbBase = "${fbBase}${sep}auth=$([Uri]::EscapeDataString($CloudApiKey))"
-    }
-    $ResolvedCloudUrl = $fbBase
-    $ResolvedCloudMethod = 'PUT'
 } elseif ($CloudProvider -eq 'supabase') {
     $sbBase = $CloudUrl.TrimEnd('/')
     if ($sbBase) {
@@ -148,7 +195,8 @@ function Read-AllLiveTelemetry {
     param(
         [System.IO.Ports.SerialPort]$Port,
         [string[]]$PidList,
-        [hashtable]$StaticSession
+        [hashtable]$StaticSession,
+        [int]$GapMs = 15
     )
     $rawMap = [ordered]@{}
     $bytesMap = @{}
@@ -156,6 +204,7 @@ function Read-AllLiveTelemetry {
         $r = Send-ElmReadOnly $Port $p 1500
         $rawMap[$p] = $r
         $bytesMap[$p] = Parse-CanDataBytes $r
+        if ($GapMs -gt 0) { Start-Sleep -Milliseconds $GapMs }
     }
     $atrv = Send-ElmReadOnly $Port 'ATRV' 1500
     $m03  = Send-ElmReadOnly $Port '03' 1500
@@ -174,7 +223,7 @@ function Read-AllLiveTelemetry {
     $b4A = $bytesMap['014A']; $b4C = $bytesMap['014C']; $b56 = $bytesMap['0156']
 
     $payload = [ordered]@{
-        timestamp  = (Get-Date).ToString('o')
+        timestamp  = (Get-Date).ToUniversalTime().ToString('o')
         readOnly   = $true
         atrv       = $atrv
         milOn      = if ($b01.Count -ge 1) { ($b01[0] -band 0x80) -ne 0 } else { $false }
@@ -219,6 +268,36 @@ function Read-AllLiveTelemetry {
     return $payload
 }
 
+function Invoke-CloudRequest {
+    param(
+        [System.Net.Http.HttpClient]$Client,
+        [string]$Method,
+        [string]$Url,
+        [string]$JsonBody,
+        [string]$Provider,
+        [string]$ApiKey
+    )
+    if ($null -eq $Client -or -not $Url) { return $false }
+    $httpMethod = switch ($Method.ToUpperInvariant()) {
+        'PUT'   { [System.Net.Http.HttpMethod]::Put }
+        'PATCH' { New-Object System.Net.Http.HttpMethod('PATCH') }
+        default { [System.Net.Http.HttpMethod]::Post }
+    }
+    $reqMsg = New-Object System.Net.Http.HttpRequestMessage($httpMethod, $Url)
+    $reqMsg.Content = New-Object System.Net.Http.StringContent($JsonBody, [System.Text.Encoding]::UTF8, 'application/json')
+    if ($Provider -eq 'supabase') {
+        $reqMsg.Headers.Add('Prefer', 'return=minimal')
+        if ($ApiKey) {
+            $reqMsg.Headers.Add('apikey', $ApiKey)
+            $reqMsg.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $ApiKey)
+        }
+    } elseif ($Provider -eq 'webhook' -and $ApiKey) {
+        $reqMsg.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $ApiKey)
+    }
+    $resp = $Client.SendAsync($reqMsg).GetAwaiter().GetResult()
+    return $resp.IsSuccessStatusCode
+}
+
 $allMode01Pids = @(
     '0101','0103','0104','0105','0106','0107','010B','010C','010D','010E',
     '010F','0111','0113','0114','0115','011C','011F','0121','0123','012E',
@@ -240,14 +319,17 @@ try {
     $httpClient = New-Object System.Net.Http.HttpClient
     $httpClient.Timeout = [TimeSpan]::FromSeconds(4)
 } catch {}
-$cloudOfflineQueue = New-Object System.Collections.Generic.Queue[string]
+$cloudOfflineQueue = New-Object System.Collections.Generic.Queue[hashtable]
 $lastPollSw = [System.Diagnostics.Stopwatch]::StartNew()
 $lastCloudSw = [System.Diagnostics.Stopwatch]::StartNew()
+$lastMetaSw = [System.Diagnostics.Stopwatch]::StartNew()
 $latestPayload = $null
 $cloudTxCount = 0
+$sessionStartedAt = (Get-Date).ToUniversalTime().ToString('o')
+$sessionFrameCount = 0
 
 try {
-    Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only All-Variable Mode)..." -ForegroundColor Cyan
+    Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only + BT Coexistence Gap ${CoexistGapMs}ms)..." -ForegroundColor Cyan
     $opened = $false
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         try {
@@ -314,13 +396,16 @@ try {
     $null = Send-ElmReadOnly $port 'ATST32'
 
     # Initial live sample
-    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession
+    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
 
     $listener.Start()
     Write-Host "PulseOBD Bridge listening on http://localhost:$HttpPort/api/live" -ForegroundColor Green
-    if ($EnableCloudStream) {
-        Write-Host "Option 2 Cloud Stream ACTIVE -> $ResolvedCloudUrl" -ForegroundColor Cyan
-        Write-Host "Remote Watch URL -> PulseOBD_Studio.html?cloud=watch&channel=$CloudChannel" -ForegroundColor Cyan
+    if ($EnableCloudStream -and $ResolvedCloudUrl) {
+        Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
+        if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
+            Write-Host "Firebase Trip History Archive -> $FirebaseHistoryFramesUrl" -ForegroundColor Cyan
+        }
+        Write-Host "Remote Watch URL -> PulseOBD_Studio.html?cloud=watch&provider=$CloudProvider&channel=$CloudChannel" -ForegroundColor Cyan
     }
     Write-Host "Press Ctrl+C to stop and cleanly unlock $ComPort." -ForegroundColor Yellow
 
@@ -337,11 +422,24 @@ try {
 
             if ($req.Url.AbsolutePath -eq '/api/live' -or $req.Url.AbsolutePath -eq '/api/snapshot') {
                 if (-not $latestPayload) {
-                    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession
+                    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
                 }
                 $jsonBytes = [System.Text.Encoding]::UTF8.GetBytes(($latestPayload | ConvertTo-Json -Depth 6))
                 $res.ContentType = 'application/json'
                 $res.OutputStream.Write($jsonBytes, 0, $jsonBytes.Length)
+            } elseif ($req.Url.AbsolutePath -eq '/api/cloud-status') {
+                $statusJson = [ordered]@{
+                    provider     = $CloudProvider
+                    channel      = $CloudChannel
+                    sessionId    = $TripSessionId
+                    txCount      = $cloudTxCount
+                    queuedCount  = $cloudOfflineQueue.Count
+                    saveHistory  = $SaveCloudHistory
+                    configured   = [bool]$ResolvedCloudUrl
+                } | ConvertTo-Json
+                $sBytes = [System.Text.Encoding]::UTF8.GetBytes($statusJson)
+                $res.ContentType = 'application/json'
+                $res.OutputStream.Write($sBytes, 0, $sBytes.Length)
             } else {
                 $candidates = @(
                     (Join-Path $PSScriptRoot 'PulseOBD_Studio.html'),
@@ -355,17 +453,17 @@ try {
                     $res.ContentType = 'text/html; charset=utf-8'
                     $res.OutputStream.Write($bytes, 0, $bytes.Length)
                 } else {
-                    $msg = [System.Text.Encoding]::UTF8.GetBytes('PulseOBD Read-Only All-Variable COM3 + Cloud Bridge Running.')
+                    $msg = [System.Text.Encoding]::UTF8.GetBytes('PulseOBD Read-Only All-Variable COM3 + Firebase Auto-Sync Bridge Running.')
                     $res.OutputStream.Write($msg, 0, $msg.Length)
                 }
             }
             $res.Close()
         }
 
-        # 2. Periodic autonomous COM3 poll + local JSON snapshot + Option 2 Cloud Stream push
+        # 2. Periodic autonomous COM3 poll + local JSON snapshot + Auto Cloud TX (Live + History)
         if ($lastPollSw.ElapsedMilliseconds -ge $PollIntervalMs) {
             $lastPollSw.Restart()
-            $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession
+            $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -GapMs $CoexistGapMs
 
             if ($SaveLocalJson) {
                 try {
@@ -378,6 +476,7 @@ try {
 
             if ($EnableCloudStream -and $ResolvedCloudUrl -and $lastCloudSw.ElapsedMilliseconds -ge $CloudIntervalMs) {
                 $lastCloudSw.Restart()
+                $sessionFrameCount++
                 $metricsObj = [ordered]@{
                     rpm        = $latestPayload.rpm
                     spd        = $latestPayload.spd
@@ -417,8 +516,9 @@ try {
                 }
 
                 $packetObj = [ordered]@{
-                    v             = 2
+                    v             = 3
                     ts            = $latestPayload.timestamp
+                    sessionId     = $TripSessionId
                     vin           = 'AAVZZZ6RZHU112564'
                     src           = 'com3_bridge'
                     variableCount = 124
@@ -440,49 +540,80 @@ try {
                 }
 
                 $cloudPacket = ($wireObj | ConvertTo-Json -Depth 7 -Compress)
+                $historyJson = ''
+                if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
+                    $historyJson = ([ordered]@{
+                        ts        = $latestPayload.timestamp
+                        src       = 'com3_bridge'
+                        rpm       = $latestPayload.rpm
+                        spd       = $latestPayload.spd
+                        load      = $latestPayload.load
+                        coolant   = $latestPayload.coolant
+                        iat       = $latestPayload.iat
+                        cat       = $latestPayload.cat
+                        map       = $latestPayload.map
+                        rail      = $latestPayload.rail
+                        stft      = $latestPayload.stft
+                        ltft      = $latestPayload.ltft
+                        lambda    = $latestPayload.lambda
+                        thr       = $latestPayload.thr
+                        pedalD    = $latestPayload.pedalD
+                        fuel      = $latestPayload.fuel
+                        volt      = $latestPayload.volt
+                    } | ConvertTo-Json -Compress)
+                }
 
                 try {
-                    if ($null -ne $httpClient) {
-                        $httpMethod = if ($ResolvedCloudMethod -eq 'PUT') { [System.Net.Http.HttpMethod]::Put } else { [System.Net.Http.HttpMethod]::Post }
-                        $reqMsg = New-Object System.Net.Http.HttpRequestMessage($httpMethod, $ResolvedCloudUrl)
-                        $reqMsg.Content = New-Object System.Net.Http.StringContent($cloudPacket, [System.Text.Encoding]::UTF8, 'application/json')
-                        if ($CloudProvider -eq 'supabase') {
-                            $reqMsg.Headers.Add('Prefer', 'return=minimal')
-                            if ($CloudApiKey) {
-                                $reqMsg.Headers.Add('apikey', $CloudApiKey)
-                                $reqMsg.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $CloudApiKey)
-                            }
-                        } elseif ($CloudProvider -eq 'webhook' -and $CloudApiKey) {
-                            $reqMsg.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $CloudApiKey)
-                        }
-
-                        $resp = $httpClient.SendAsync($reqMsg).GetAwaiter().GetResult()
-                        if ($resp.IsSuccessStatusCode) {
-                            $cloudTxCount++
-                            Write-Host "[CLOUD TX #$cloudTxCount -> $CloudProvider] RPM=$($latestPayload.rpm) SPD=$($latestPayload.spd) km/h COOL=$($latestPayload.coolant)C RAIL=$($latestPayload.rail) MPa" -ForegroundColor DarkCyan
-                            while ($cloudOfflineQueue.Count -gt 0) {
-                                $queuedJson = $cloudOfflineQueue.Peek()
-                                $qReq = New-Object System.Net.Http.HttpRequestMessage($httpMethod, $ResolvedCloudUrl)
-                                $qReq.Content = New-Object System.Net.Http.StringContent($queuedJson, [System.Text.Encoding]::UTF8, 'application/json')
-                                if ($CloudProvider -eq 'supabase') {
-                                    $qReq.Headers.Add('Prefer', 'return=minimal')
-                                    if ($CloudApiKey) {
-                                        $qReq.Headers.Add('apikey', $CloudApiKey)
-                                        $qReq.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $CloudApiKey)
-                                    }
-                                } elseif ($CloudProvider -eq 'webhook' -and $CloudApiKey) {
-                                    $qReq.Headers.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue('Bearer', $CloudApiKey)
-                                }
-                                $qResp = $httpClient.SendAsync($qReq).GetAwaiter().GetResult()
-                                if ($qResp.IsSuccessStatusCode) { $null = $cloudOfflineQueue.Dequeue() } else { break }
-                            }
+                    while ($cloudOfflineQueue.Count -gt 0) {
+                        $qItem = $cloudOfflineQueue.Peek()
+                        if (Invoke-CloudRequest -Client $httpClient -Method $qItem.Method -Url $qItem.Url -JsonBody $qItem.Body -Provider $CloudProvider -ApiKey $CloudApiKey) {
+                            $null = $cloudOfflineQueue.Dequeue()
                         } else {
-                            if ($cloudOfflineQueue.Count -lt 100) { $cloudOfflineQueue.Enqueue($cloudPacket) }
-                            Write-Warning "Cloud TX HTTP $([int]$resp.StatusCode): queued ($($cloudOfflineQueue.Count) buffered)"
+                            break
                         }
                     }
+
+                    $okLive = Invoke-CloudRequest -Client $httpClient -Method $ResolvedCloudMethod -Url $ResolvedCloudUrl -JsonBody $cloudPacket -Provider $CloudProvider -ApiKey $CloudApiKey
+                    if ($okLive) {
+                        if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
+                            $okHist = Invoke-CloudRequest -Client $httpClient -Method 'POST' -Url $FirebaseHistoryFramesUrl -JsonBody $historyJson -Provider $CloudProvider -ApiKey $CloudApiKey
+                            if (-not $okHist -and $cloudOfflineQueue.Count -lt 250) {
+                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                            }
+                            if ($lastMetaSw.ElapsedMilliseconds -ge 12000 -and $FirebaseHistoryMetaUrl) {
+                                $lastMetaSw.Restart()
+                                $metaBody = ([ordered]@{
+                                    id          = $TripSessionId
+                                    vin         = 'AAVZZZ6RZHU112564'
+                                    transport   = 'com3_bridge'
+                                    startedAt   = $sessionStartedAt
+                                    updatedAt   = $latestPayload.timestamp
+                                    sampleCount = $sessionFrameCount
+                                    lastRpm     = $latestPayload.rpm
+                                    lastSpd     = $latestPayload.spd
+                                    lastCoolant = $latestPayload.coolant
+                                } | ConvertTo-Json -Compress)
+                                $null = Invoke-CloudRequest -Client $httpClient -Method 'PATCH' -Url $FirebaseHistoryMetaUrl -JsonBody $metaBody -Provider $CloudProvider -ApiKey $CloudApiKey
+                            }
+                        }
+                        $cloudTxCount++
+                        Write-Host "[CLOUD TX #$cloudTxCount -> $CloudProvider] RPM=$($latestPayload.rpm) SPD=$($latestPayload.spd) km/h COOL=$($latestPayload.coolant)C RAIL=$($latestPayload.rail) MPa" -ForegroundColor DarkCyan
+                    } else {
+                        if ($cloudOfflineQueue.Count -lt 250) {
+                            $cloudOfflineQueue.Enqueue(@{ Method = $ResolvedCloudMethod; Url = $ResolvedCloudUrl; Body = $cloudPacket })
+                            if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
+                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                            }
+                        }
+                        Write-Warning "Cloud TX queued offline ($($cloudOfflineQueue.Count) buffered)"
+                    }
                 } catch {
-                    if ($cloudOfflineQueue.Count -lt 100) { $cloudOfflineQueue.Enqueue($cloudPacket) }
+                    if ($cloudOfflineQueue.Count -lt 250) {
+                        $cloudOfflineQueue.Enqueue(@{ Method = $ResolvedCloudMethod; Url = $ResolvedCloudUrl; Body = $cloudPacket })
+                        if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
+                            $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                        }
+                    }
                     Write-Host "[CLOUD QUEUE] Offline dead-zone ($($cloudOfflineQueue.Count) buffered)" -ForegroundColor DarkYellow
                 }
             }
