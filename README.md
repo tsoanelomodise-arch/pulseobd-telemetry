@@ -8,16 +8,19 @@
   - `vehicle_history/<VIN>/vehicle_profile.json` — ECU metadata & trip index for that vehicle
   - `vehicle_history/<VIN>/latest.json` — Most recent telemetry frame for that VIN
   - `vehicle_history/<VIN>/sessions/<sessionId>.json` — Full timestamped drive/diagnostic logs (plus `rawDump` frames when captured)
-- **Browser Direct Project Folder Link:** On desktop/Android Chrome or Edge, click **Link Project Folder** in the **History** tab and select your project folder (or `vehicle_history/`) so browser BLE/Serial sessions write individual JSON files directly to disk alongside `PulseOBD_DriveDB` IndexedDB.
+  - `vehicle_history/<VIN>/service_log.json` — Per-VIN Service & Maintenance Log, odometer checkpoints, and read-only pre-service OBD-II inspection snapshots
+- **Browser Direct Project Folder Link:** On desktop/Android Chrome or Edge, click **Link Project Folder** in the **History** tab and select your project folder (or `vehicle_history/`) so browser BLE/Serial sessions and Service records write individual JSON files directly to disk alongside `PulseOBD_DriveDB` IndexedDB.
 - **Automatic Windows Bridge Persistence & HTTP API:** [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1) automatically queries `0902`/`0904`/`0906`/`090A`/`22F187..F1A3` at startup, writes into `vehicle_history/<VIN>/`, and exposes CORS-enabled endpoints:
   - `GET /api/live` & `GET /api/snapshot` — Live telemetry stream with active vehicle & Bluetooth coexistence metadata (`btCoexist`)
   - `POST /api/bt-yield` & `POST /api/bt-unlock` & `POST /api/bt-resume` & `POST /api/bt-config` — Cooperative BT RF yield (default 20s), manual COM3 release (`Unlock`), instant resume, and live profile switching (`coexist`, `audio_priority`, `shared_release`, `performance`)
   - `GET /api/vehicles` — Master `vehicles_index.json`
   - `GET /api/vehicle-history?vin=<VIN>[&session=<ID>]` — Per-VIN profile, latest snapshot, or full session frames
   - `POST /api/save-history` — Persist browser-recorded sessions straight into `vehicle_history/<VIN>/`
+  - `GET /api/service-log?vin=<VIN>` & `POST /api/save-service` — Read and persist per-VIN maintenance history (`vehicle_history/<VIN>/service_log.json`)
   - `GET /vehicle_history/...` — Static access to archived JSON files
 
 ## Additional Features
+- **Vehicle Service & Automated Pre-Service Health Engine (`Service` Tab):** Evaluates live/captured OBD-II telemetry (`0101` DTCs & readiness, `0130`/`0131` clear-code audit, `0142`/`ATRV` 12V battery & alternator health, coolant thermal balance, fuel trims + HPFP rail pressure, Mode 06 `06A2–06A5` cylinder EWMA misfires & `0641/0642` O2 heater resistance, fuel reserve), displays copy-ready ECU/engine parts reference (`04E906027LH` / `R4 1.2l TFS`), tracks maintenance intervals with manual odometer entry (transparently flagging OEM cluster/CAN-gateway boundaries such as `22 F4A6`), and archives per-VIN maintenance records to IndexedDB, `vehicle_history/<VIN>/service_log.json`, and optional Firebase (`/vehicles/<VIN>/service_log.json`) with JSON/CSV export.
 - **Strictly Read-Only Safety Firewall:** Permanently blocks `Mode 04` / `14`, ECU resets, coding, adaptations, and write commands across both Web Bluetooth/Serial JS and [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1).
 - **Authentic Stopped & Engine-Off Telemetry:** Static captures and stopped/engine-off states stay frozen without fake sine motion and clearly separate active sensors (`ATRV` Pin 16 battery voltage, barometric/resting MAP, fuel tank level, thermal sensors, KOEO pedal, BT/Cloud) from stopped engine subsystems (`0 RPM`, `0 km/h`, `0.00 L/h` fuel flow, alternator off, closed-loop O2 off).
 - **Optional VIN-Based Cloud Sync (Firebase / ntfy / Supabase / Webhook):** Project folder storage works 100% locally without any cloud configuration. Whenever desired, apply or paste a Firebase RTDB URL once (stored privately in browser `localStorage` or untracked `bridge/firebase.local.json`) to auto-sync `/vehicles/<VIN>/latest.json` and `/history/`.

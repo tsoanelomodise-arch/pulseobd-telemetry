@@ -629,6 +629,7 @@ function Upsert-ProjectVehicleFiles {
         profilePath     = "vehicle_history/$safeVin/vehicle_profile.json"
         latestPath      = "vehicle_history/$safeVin/latest.json"
         sessionsDir     = "vehicle_history/$safeVin/sessions"
+        serviceLogPath  = "vehicle_history/$safeVin/service_log.json"
     })
     $indexDoc = [ordered]@{
         version   = 1
@@ -1024,6 +1025,7 @@ try {
     Write-Host "PulseOBD Bridge listening on http://localhost:$HttpPort/api/live" -ForegroundColor Green
     Write-Host "BT Coexistence API -> /api/bt-yield | /api/bt-unlock | /api/bt-resume | /api/bt-config" -ForegroundColor Green
     Write-Host "Project Folder Archive API -> http://localhost:$HttpPort/api/vehicles" -ForegroundColor Green
+    Write-Host "Service Log API -> http://localhost:$HttpPort/api/service-log & /api/save-service" -ForegroundColor Green
     if ($EnableCloudStream -and $ResolvedCloudUrl) {
         Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
         if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
@@ -1220,6 +1222,63 @@ try {
                     $lastSample = if ($sSamples.Count -gt 0) { $sSamples[$sSamples.Count - 1] } else { $null }
                     $savedInfo = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $vInfo -SessionId $sId -SessionStartedAt $sStart -TransportLabel $sTrans -FramesArray $sSamples -LatestMetrics $lastSample -StaticDump $bodyObj['staticDump'] -SourceTag 'studio_web'
                     $respJson = ($savedInfo | ConvertTo-Json -Depth 4)
+                    $rBytes = $Utf8NoBom.GetBytes($respJson)
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($rBytes, 0, $rBytes.Length)
+                } catch {
+                    $res.StatusCode = 400
+                    $errJson = ([ordered]@{ error = $_.Exception.Message } | ConvertTo-Json)
+                    $eBytes = $Utf8NoBom.GetBytes($errJson)
+                    $res.ContentType = 'application/json; charset=utf-8'
+                    $res.OutputStream.Write($eBytes, 0, $eBytes.Length)
+                }
+            } elseif ($reqPath -eq '/api/service-log') {
+                $reqVin = if ($queryMap['vin']) { Get-SafeVinName -RawVin $queryMap['vin'] } elseif ($ActiveVehicle) { $ActiveVehicle.vin } else { 'AAVZZZ6RZHU112564' }
+                $svcFile = Join-Path (Join-Path $VehicleHistoryRoot $reqVin) 'service_log.json'
+                if (Test-Path $svcFile) {
+                    $outTxt = [System.IO.File]::ReadAllText($svcFile, $Utf8NoBom)
+                    $svBytes = $Utf8NoBom.GetBytes($outTxt)
+                } else {
+                    $emptyDoc = ([ordered]@{
+                        version          = 1
+                        vin              = $reqVin
+                        vehicleLabel     = if ($ActiveVehicle -and $ActiveVehicle.vin -eq $reqVin) { $ActiveVehicle.label } else { "Vehicle $reqVin" }
+                        updatedAt        = (Get-Date).ToUniversalTime().ToString('o')
+                        latestOdometerKm = $null
+                        records          = @()
+                    } | ConvertTo-Json -Depth 4)
+                    $svBytes = $Utf8NoBom.GetBytes($emptyDoc)
+                }
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($svBytes, 0, $svBytes.Length)
+            } elseif ($reqPath -eq '/api/save-service' -and $req.HttpMethod -eq 'POST') {
+                try {
+                    $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                    $rawBody = $sr.ReadToEnd()
+                    $sr.Close()
+                    $bodyObj = ConvertTo-PlainOrdered ($rawBody | ConvertFrom-Json)
+                    $reqVin = Get-SafeVinName -RawVin ([string]$bodyObj['vin']) -FallbackPart ([string]$bodyObj['partNumber'])
+                    $vinDir = Join-Path $VehicleHistoryRoot $reqVin
+                    if (-not (Test-Path $vinDir)) {
+                        $null = New-Item -ItemType Directory -Path $vinDir -Force
+                    }
+                    $svcFile = Join-Path $vinDir 'service_log.json'
+                    $recordsArr = if ($bodyObj['records']) { @($bodyObj['records']) } else { @() }
+                    $svcDoc = [ordered]@{
+                        version          = 1
+                        vin              = $reqVin
+                        vehicleLabel     = if ($bodyObj['vehicleLabel']) { [string]$bodyObj['vehicleLabel'] } else { "Vehicle $reqVin" }
+                        updatedAt        = (Get-Date).ToUniversalTime().ToString('o')
+                        latestOdometerKm = $bodyObj['latestOdometerKm']
+                        records          = $recordsArr
+                    }
+                    Write-JsonFileNoBom -FilePath $svcFile -DataObj $svcDoc -Depth 8
+                    $respJson = ([ordered]@{
+                        saved       = $true
+                        vin         = $reqVin
+                        path        = "vehicle_history/$reqVin/service_log.json"
+                        recordCount = $recordsArr.Count
+                    } | ConvertTo-Json -Depth 4)
                     $rBytes = $Utf8NoBom.GetBytes($respJson)
                     $res.ContentType = 'application/json; charset=utf-8'
                     $res.OutputStream.Write($rBytes, 0, $rBytes.Length)

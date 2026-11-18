@@ -28,7 +28,8 @@
       },
       "profilePath": "vehicle_history/AAVZZZ6RZHU112564/vehicle_profile.json",
       "latestPath": "vehicle_history/AAVZZZ6RZHU112564/latest.json",
-      "sessionsDir": "vehicle_history/AAVZZZ6RZHU112564/sessions"
+      "sessionsDir": "vehicle_history/AAVZZZ6RZHU112564/sessions",
+      "serviceLogPath": "vehicle_history/AAVZZZ6RZHU112564/service_log.json"
     }
   ]
 }

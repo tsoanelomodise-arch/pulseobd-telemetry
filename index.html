@@ -109,7 +109,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       touch-action: manipulation;
     }
     @media (max-width: 640px) {
-      input[type="text"], input[type="password"], select {
+      input[type="text"], input[type="password"], input[type="date"], input[type="number"], textarea, select {
         font-size: 16px !important;
       }
     }
@@ -210,16 +210,30 @@ Check your Browserslist config to be sure that your targets are set up correctly
       flex: 1 1 100% !important;
       max-width: 100% !important;
     }
+    #app-shell.phone-frame-wrapper .sm\:grid-cols-2,
+    #app-shell.phone-frame-wrapper .sm\:grid-cols-3,
     #app-shell.phone-frame-wrapper .md\:grid-cols-2,
     #app-shell.phone-frame-wrapper .md\:grid-cols-3,
+    #app-shell.phone-frame-wrapper .md\:grid-cols-4,
     #app-shell.phone-frame-wrapper .lg\:grid-cols-12,
     #app-shell.phone-frame-wrapper .lg\:grid-cols-2,
-    #app-shell.phone-frame-wrapper .lg\:grid-cols-3 {
+    #app-shell.phone-frame-wrapper .lg\:grid-cols-3,
+    #app-shell.phone-frame-wrapper .lg\:grid-cols-4 {
       grid-template-columns: minmax(0, 1fr) !important;
     }
     #app-shell.phone-frame-wrapper .lg\:col-span-7,
-    #app-shell.phone-frame-wrapper .lg\:col-span-5 {
+    #app-shell.phone-frame-wrapper .lg\:col-span-5,
+    #app-shell.phone-frame-wrapper .lg\:col-span-8,
+    #app-shell.phone-frame-wrapper .lg\:col-span-4 {
       grid-column: span 1 / span 1 !important;
+    }
+    #app-shell.phone-frame-wrapper .sm\:flex-nowrap {
+      flex-wrap: wrap !important;
+    }
+    #app-shell.phone-frame-wrapper select,
+    #app-shell.phone-frame-wrapper input {
+      min-width: 0 !important;
+      max-width: 100% !important;
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -271,13 +285,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- Crisp Pill Segmented Navigation (Desktop, Mobile uses bottom bar) -->
         <nav id="desktop-nav" class="hidden lg:flex flex-wrap items-center bg-[#F4F5F7] border border-[#E6E8EE] rounded-full p-1 gap-0.5 text-xs font-semibold">
-          <button onclick="switchTab('cockpit')" id="dtab-cockpit" class="px-3.5 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition">Cockpit</button>
-          <button onclick="switchTab('graphs')" id="dtab-graphs" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">6 Graphs</button>
-          <button onclick="switchTab('history')" id="dtab-history" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">History</button>
-          <button onclick="switchTab('infographics')" id="dtab-infographics" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">Health &amp; Mode 06</button>
-          <button onclick="switchTab('passport')" id="dtab-passport" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">124 Vars</button>
-          <button onclick="switchTab('cloud')" id="dtab-cloud" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">Cloud Stream</button>
-          <button onclick="switchTab('bluetooth')" id="dtab-bluetooth" class="px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition">Bluetooth</button>
+          <button onclick="switchTab('cockpit')" id="dtab-cockpit" class="px-3 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition whitespace-nowrap">Cockpit</button>
+          <button onclick="switchTab('graphs')" id="dtab-graphs" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">6 Graphs</button>
+          <button onclick="switchTab('history')" id="dtab-history" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">History</button>
+          <button onclick="switchTab('infographics')" id="dtab-infographics" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Health</button>
+          <button onclick="switchTab('service')" id="dtab-service" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Service</button>
+          <button onclick="switchTab('passport')" id="dtab-passport" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">124 Vars</button>
+          <button onclick="switchTab('cloud')" id="dtab-cloud" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Cloud Stream</button>
+          <button onclick="switchTab('bluetooth')" id="dtab-bluetooth" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Bluetooth</button>
         </nav>
 
         <!-- Quick Action Pills -->
@@ -380,9 +395,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- Authentic Stopped / Engine-Off Telemetry Truthfulness Banner -->
         <div id="cockpit-stopped-banner" class="rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
             <span id="stopped-banner-pill" class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto">STATIC CAPTURE · 0 km/h</span>
-            <p id="stopped-banner-active" class="text-[#222222] font-medium leading-snug">
+            <p id="stopped-banner-active" class="text-[#222222] font-medium leading-snug min-w-0 lg:truncate">
               <strong class="text-[#047857]">Authentically Active:</strong> Idle RPM (774) · Closed-Loop O2/STFT · 13.74V Charging · Thermal &amp; Rail Sensors
             </p>
           </div>
@@ -408,18 +423,18 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
+          <div id="adv-health-card" onclick="switchTab('service')" title="Open Service Log & Pre-Service Health Checks" class="cursor-pointer acro-card hover:border-[#047857]/40 rounded-2xl p-3 flex items-center gap-3 transition">
+            <div id="adv-health-icon-box" class="w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-[#047857] truncate">Engine &amp; ECU Healthy</span>
-                <span class="text-xs font-bold font-mono-num text-[#047857] whitespace-nowrap shrink-0">0 DTCs · MIL OFF</span>
+                <span id="adv-health-title" class="text-xs font-bold text-[#047857] truncate">Service Health · 91/100</span>
+                <span id="adv-health-badge" class="text-xs font-bold font-mono-num text-[#047857] whitespace-nowrap shrink-0">0 DTCs · MIL OFF</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] truncate mt-0.5">Modes 03/07/0A clean · 18/18 Mode 06 pass</p>
+              <p id="adv-health-sub" class="text-xs text-[#5A5F6A] truncate mt-0.5">18/18 Mode 06 pass · Tap for Service Log &amp; Checks →</p>
             </div>
           </div>
 
@@ -897,9 +912,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div class="lg:col-span-5 acro-card rounded-3xl p-5 flex flex-col justify-between">
-            <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Diagnostic Integrity Summary</span>
-              <h2 class="text-lg font-bold text-[#222222] mt-0.5">Overall Vehicle Health: 96 / 100</h2>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Diagnostic Integrity Summary</span>
+                <h2 class="text-lg font-bold text-[#222222] mt-0.5">Overall Vehicle Health: 96 / 100</h2>
+              </div>
+              <button type="button" onclick="switchTab('service')" class="text-xs px-3 py-1.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold hover:bg-[#DBEAFE] transition shrink-0 whitespace-nowrap">
+                Service Log &amp; Checks →
+              </button>
             </div>
 
             <div class="flex items-center gap-6 my-4">
@@ -1060,18 +1080,230 @@ Check your Browserslist config to be sure that your targets are set up correctly
       </section>
 
       <!-- =================================================================== -->
+      <!-- TAB 3B: VEHICLE SERVICE, MAINTENANCE LOG & PRE-SERVICE HEALTH CHECK -->
+      <!-- =================================================================== -->
+      <section id="tab-service" class="hidden space-y-4">
+
+        <!-- Top Vehicle & Parts / ECU Passport Header -->
+        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3.5 min-w-0">
+          <div class="flex flex-wrap items-start justify-between gap-3 min-w-0">
+            <div class="min-w-0 w-full lg:w-auto flex-1">
+              <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+                <h2 class="text-base font-bold text-[#222222]">Vehicle Service &amp; Maintenance Log</h2>
+                <span id="svc-sync-badge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold max-w-full truncate">vehicle_history/AAVZZZ6RZHU112564/service_log.json</span>
+              </div>
+              <p class="text-xs text-[#5A5F6A] mt-0.5">
+                Per-VIN service archive, OEM ECU parts passport &amp; automated pre-service OBD-II checks. Strictly Read-Only OBD-II (cluster oil/inspection resets stay in the instrument cluster).
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 min-w-0 w-full sm:w-auto">
+              <label for="svc-vin-select" class="text-xs font-semibold text-[#5A5F6A] shrink-0">Vehicle:</label>
+              <select id="svc-vin-select" onchange="onServiceVinSelect(this.value)" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3 py-1.5 font-mono-num font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 max-w-full flex-1 sm:flex-initial truncate"></select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 min-w-0">
+            <button type="button" onclick="capturePreServiceSnapshotRecord()" class="text-xs px-3.5 py-1.5 acro-pill-primary shadow-sm">Capture Pre-Service OBD Snapshot</button>
+            <button type="button" onclick="copyPartsAndEcuSpec()" id="btn-copy-parts-spec" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Copy Parts &amp; ECU Spec</button>
+            <button type="button" onclick="saveServiceLogNow(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Save to Project Folder</button>
+            <button type="button" onclick="exportServiceReportJson()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Export Service JSON</button>
+            <button type="button" onclick="exportServiceHistoryCsv()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Export Service CSV</button>
+          </div>
+
+          <!-- OEM Parts Ordering & ECU Identity Spec -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">Active VIN (<span class="font-mono-num">0902 / 22F190</span>)</span>
+              <strong id="svc-spec-vin" class="font-mono-num text-[#1473E6] block truncate">AAVZZZ6RZHU112564</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">Engine Code (<span class="font-mono-num">22F197</span>)</span>
+              <strong id="svc-spec-engine" class="font-mono-num text-[#222222] block truncate">VW Polo 1.2L TSI · R4 1.2l TFS</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">ECU Spare Part &amp; SW (<span class="font-mono-num">22F187/89</span>)</span>
+              <strong id="svc-spec-part" class="font-mono-num text-[#222222] block truncate">04E906027LH · SW 3997</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">ECU Hardware (<span class="font-mono-num">22F191/A3</span>)</span>
+              <strong id="svc-spec-hw" class="font-mono-num text-[#222222] block truncate">04E907309AF · H24</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">Calibration ID &amp; CVN (<span class="font-mono-num">0904/06</span>)</span>
+              <strong id="svc-spec-calid" class="font-mono-num text-[#222222] block truncate">04E027LH3997AAAD · 40819633</strong>
+            </div>
+            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+              <span class="text-[#5A5F6A] block">Lifetime ECU Cycles (<span class="font-mono-num">0908</span>)</span>
+              <strong id="svc-spec-ign" class="font-mono-num text-[#047857] block truncate">15,312 Ign · 5,134 OBD Cond</strong>
+            </div>
+          </div>
+
+          <!-- Cluster Odometer Quick Entry Bar (since 22F4A6 is gateway-gated on 0x17) -->
+          <div class="acro-well rounded-2xl p-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs min-w-0">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-[#222222]">Cluster Odometer (km)</span>
+                <span id="svc-odo-badge" class="px-2.5 py-0.5 rounded-full bg-white border border-[#D4D6DC] font-mono-num font-bold text-[#222222] max-w-full truncate">Odometer: Not Set</span>
+              </div>
+              <p class="text-[#5A5F6A] mt-0.5">UDS <span class="font-mono-num">22 F4A6</span> returns NRC <span class="font-mono-num">0x31</span> (gated behind Instrument Cluster <span class="font-mono-num">0x17</span>). Enter dash km for exact service interval countdowns.</p>
+            </div>
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 w-full lg:w-auto">
+              <input id="svc-current-odo" type="number" min="0" step="1" placeholder="e.g. 124500 km" class="min-w-0 flex-1 sm:flex-initial sm:w-40 bg-white border border-[#D4D6DC] rounded-full px-3.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <button type="button" onclick="updateVehicleOdometerFromInput()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Save Odometer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Automated Pre-Service Health Evaluator (8 Checks) -->
+        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-[#222222]">Automated Pre-Service Health Checks</h3>
+                <span id="svc-health-source-pill" class="text-[11px] font-mono-num px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">SOURCE: snap1</span>
+              </div>
+              <p id="svc-health-summary-line" class="text-xs text-[#5A5F6A] mt-0.5">Evaluating DTCs, battery charging, thermal stability, fuel trims, Mode 06 misfires, catalyst readiness, and fuel reserve...</p>
+            </div>
+            <span id="svc-health-score-badge" class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">91 / 100 · READY</span>
+          </div>
+
+          <div id="svc-health-checks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs"></div>
+        </div>
+
+        <!-- Maintenance Schedule & Next-Due Tracker -->
+        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-[#222222]">Maintenance Schedule &amp; Next-Due Tracker</h3>
+              <p class="text-xs text-[#5A5F6A]">Tap <strong>Log</strong> on any maintenance category to pre-fill dates, km intervals &amp; parts spec.</p>
+            </div>
+            <span id="svc-intervals-summary" class="text-xs px-2.5 py-1 rounded-full acro-well font-mono-num font-semibold text-[#222222]">8 Service Items Tracked</span>
+          </div>
+
+          <div id="svc-intervals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs"></div>
+        </div>
+
+        <!-- 2-Column Workspace: Add/Edit Service Form + Chronological Service History -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+          <!-- Left Column: Log / Edit Service Entry (5 cols) -->
+          <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 space-y-3 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h3 id="svc-form-heading" class="text-sm sm:text-base font-bold text-[#222222]">Log Service / Maintenance Entry</h3>
+                <p class="text-xs text-[#5A5F6A]">Automatically attaches a read-only OBD-II health snapshot on save.</p>
+              </div>
+              <button type="button" id="svc-cancel-edit-btn" onclick="cancelServiceEdit()" class="hidden text-xs px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold">Cancel Edit</button>
+            </div>
+
+            <input type="hidden" id="svc-edit-id" value="" />
+
+            <div class="space-y-2.5 text-xs">
+              <div>
+                <label for="svc-category" class="block font-semibold text-[#4A4E57] mb-1">Service Category</label>
+                <select id="svc-category" onchange="onServiceCategoryChange(this.value)" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-semibold text-[#222222] focus:outline-none focus:border-[#222222]">
+                  <option value="oil_filter">Oil &amp; Filter Change (VW 502.00 / 15,000 km / 12 mo)</option>
+                  <option value="inspection_service">Annual / Major Inspection (30,000 km / 12 mo)</option>
+                  <option value="spark_plugs">Spark Plugs — EA211 1.2L TSI (60,000 km / 48 mo)</option>
+                  <option value="air_filter">Engine Air Filter (30,000 km / 24 mo)</option>
+                  <option value="cabin_filter">Cabin / Pollen Filter (30,000 km / 24 mo)</option>
+                  <option value="brakes_fluid">Brake Pads &amp; DOT4 Fluid (30,000 km / 24 mo)</option>
+                  <option value="battery_12v">12V Battery Test / Replacement (48 mo)</option>
+                  <option value="tires_alignment">Tires, Rotation &amp; Alignment (10,000 km / 12 mo)</option>
+                  <option value="inspection_baseline">Pre-Service OBD-II Baseline Inspection</option>
+                  <option value="custom_repair">Repair / Diagnostic Follow-Up</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="svc-title" class="block font-semibold text-[#4A4E57] mb-1">Service Title</label>
+                <input id="svc-title" type="text" placeholder="e.g. Engine Oil & OEM Filter Change (5W-40)" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="svc-date" class="block font-semibold text-[#4A4E57] mb-1">Service Date</label>
+                  <input id="svc-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+                <div>
+                  <label for="svc-odometer" class="block font-semibold text-[#4A4E57] mb-1">Odometer (km)</label>
+                  <input id="svc-odometer" type="number" min="0" step="1" placeholder="e.g. 124500" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="svc-next-km" class="block font-semibold text-[#4A4E57] mb-1">Next Due (km)</label>
+                  <input id="svc-next-km" type="number" min="0" step="1" placeholder="Auto or custom" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+                <div>
+                  <label for="svc-next-date" class="block font-semibold text-[#4A4E57] mb-1">Next Due Date</label>
+                  <input id="svc-next-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+              </div>
+
+              <div>
+                <label for="svc-parts" class="block font-semibold text-[#4A4E57] mb-1">Parts / Oil / Filter Specification</label>
+                <input id="svc-parts" type="text" placeholder="e.g. VW 502.00 5W-40 4L · Mann W712/95 oil filter" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="svc-workshop" class="block font-semibold text-[#4A4E57] mb-1">Workshop / Tech</label>
+                  <input id="svc-workshop" type="text" placeholder="e.g. DIY / Service Center" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+                <div>
+                  <label for="svc-cost" class="block font-semibold text-[#4A4E57] mb-1">Cost (Optional)</label>
+                  <input id="svc-cost" type="text" placeholder="e.g. R 1,450" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+              </div>
+
+              <div>
+                <label for="svc-notes" class="block font-semibold text-[#4A4E57] mb-1">Service Notes &amp; Findings</label>
+                <textarea id="svc-notes" rows="2" placeholder="Observations, filter condition, battery load test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
+              </div>
+
+              <div id="svc-snapshot-preview" class="acro-well rounded-2xl p-2.5 text-[11px] font-mono-num text-[#4A4E57] leading-relaxed">
+                OBD Snapshot to attach: 0 DTCs · MIL OFF · Coolant 98°C · 13.74V · Fuel 8.2% · Health 91/100
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <button id="svc-save-btn" type="button" onclick="saveServiceRecordFromForm()" class="flex-1 py-2 px-4 acro-pill-primary shadow-sm text-center">Save Service Entry</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Per-VIN Chronological Service History (7 cols) -->
+          <div class="lg:col-span-7 acro-card rounded-3xl p-4 sm:p-5 flex flex-col min-w-0 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="min-w-0">
+                <h3 class="text-sm sm:text-base font-bold text-[#222222]">Recorded Service &amp; Inspection History</h3>
+                <p id="svc-history-subtitle" class="text-xs text-[#5A5F6A] truncate">Stored per VIN in IndexedDB + vehicle_history/&lt;VIN&gt;/service_log.json</p>
+              </div>
+              <span id="svc-record-count" class="text-xs px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0">0 records</span>
+            </div>
+
+            <div id="svc-records-list" class="space-y-2.5 max-h-[540px] overflow-y-auto pr-1 text-xs">
+              <div class="text-[#5A5F6A] py-4">Loading service history for this vehicle...</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- =================================================================== -->
       <!-- TAB 4: ALL 124 VARIABLES LIVE MATRIX & ECU PASSPORT                 -->
       <!-- =================================================================== -->
       <section id="tab-passport" class="hidden space-y-4">
 
-        <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 min-w-0">
+          <div class="min-w-0 flex-1">
             <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Complete Vehicle Variable Collector</span>
             <h2 class="text-lg font-bold text-[#222222] mt-0.5">All 124 Collected Variables (Live Matrix &amp; Raw Hex Register)</h2>
             <p class="text-xs text-[#5A5F6A]">Includes all 40 Mode 01 PIDs, 6 Derived Physics Metrics, 11 Readiness Monitors, 3 DTC Modes, 18 Mode 06 Tests, 24 Mode 09/IUMPR Counters, and 22 UDS 0x22 DIDs</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="var-cat-filter" onchange="renderAllVariablesTable()" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 font-semibold text-[#222222] focus:outline-none">
+          <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full w-full lg:w-auto">
+            <select id="var-cat-filter" onchange="renderAllVariablesTable()" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 font-semibold text-[#222222] focus:outline-none min-w-0 max-w-full w-full sm:w-auto truncate">
               <option value="ALL">All Categories (124 Variables)</option>
               <option value="MODE01">Mode 01 Live &amp; Bitmasks (40)</option>
               <option value="DERIVED">Derived Physics &amp; Economy (6)</option>
@@ -1080,8 +1312,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <option value="MODE09">Mode 09 Vehicle &amp; IUMPR (24)</option>
               <option value="UDS22">UDS 0x22 &amp; Adapter AT (20)</option>
             </select>
-            <input id="pid-search" type="text" oninput="renderAllVariablesTable()" placeholder="Search PID, DID, name, or value..." class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 w-56 text-[#222222] placeholder-[#9CA3AF] focus:outline-none focus:border-[#222222]" />
-            <button onclick="exportFullJsonSnapshot()" class="text-xs px-4 py-2 acro-pill-primary shadow-sm">Export Full 124-Var JSON</button>
+            <input id="pid-search" type="text" oninput="renderAllVariablesTable()" placeholder="Search PID, DID, name, or value..." class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 min-w-0 max-w-full flex-1 sm:flex-initial sm:w-56 text-[#222222] placeholder-[#9CA3AF] focus:outline-none focus:border-[#222222]" />
+            <button onclick="exportFullJsonSnapshot()" class="text-xs px-4 py-2 acro-pill-primary shadow-sm whitespace-nowrap shrink-0">Export Full 124-Var JSON</button>
           </div>
         </div>
 
@@ -1600,34 +1832,38 @@ Check your Browserslist config to be sure that your targets are set up correctly
     </main>
 
     <!-- Bottom Mobile Navigation Bar -->
-    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 acro-glass border-t border-[#E6E8EE] px-1.5 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
-      <div class="max-w-lg mx-auto grid grid-cols-7 gap-0.5 text-center">
-        <button onclick="switchTab('cockpit')" id="mtab-cockpit" class="flex flex-col items-center py-1 rounded-xl text-[#222222] font-bold text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 acro-glass border-t border-[#E6E8EE] px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+      <div class="max-w-lg mx-auto grid grid-cols-8 gap-0.5 text-center">
+        <button onclick="switchTab('cockpit')" id="mtab-cockpit" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span>Cockpit</span>
         </button>
-        <button onclick="switchTab('graphs')" id="mtab-graphs" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        <button onclick="switchTab('graphs')" id="mtab-graphs" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
           <span>Graphs</span>
         </button>
-        <button onclick="switchTab('history')" id="mtab-history" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <button onclick="switchTab('history')" id="mtab-history" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span>History</span>
         </button>
-        <button onclick="switchTab('infographics')" id="mtab-infographics" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <button onclick="switchTab('infographics')" id="mtab-infographics" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           <span>Health</span>
         </button>
-        <button onclick="switchTab('passport')" id="mtab-passport" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span>124 Vars</span>
+        <button onclick="switchTab('service')" id="mtab-service" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          <span>Service</span>
         </button>
-        <button onclick="switchTab('cloud')" id="mtab-cloud" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+        <button onclick="switchTab('passport')" id="mtab-passport" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Vars</span>
+        </button>
+        <button onclick="switchTab('cloud')" id="mtab-cloud" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
           <span>Cloud</span>
         </button>
-        <button onclick="switchTab('bluetooth')" id="mtab-bluetooth" class="flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]">
-          <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
+        <button onclick="switchTab('bluetooth')" id="mtab-bluetooth" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+          <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
           <span>OBD</span>
         </button>
       </div>
@@ -2017,6 +2253,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (opts.refreshUi !== false && appState.activeTab === 'history' && typeof refreshHistoryTab === 'function') {
         refreshHistoryTab();
       }
+      if (opts.refreshUi !== false && appState.activeTab === 'service' && typeof refreshServiceTab === 'function') {
+        refreshServiceTab();
+      }
       if (opts.persistProfile && typeof persistSessionToProjectFolder === 'function') {
         persistSessionToProjectFolder(merged, null, [], null, { quiet: opts.quiet }).catch(() => {});
       }
@@ -2287,7 +2526,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     function buildFirebasePaths(cfg, sessionId) {
       let base = (cfg.customUrl || '').replace(/\/+$/, '');
       if (!base) {
-        return { latestUrl: '', rootLegacyUrl: '', historyFramesUrl: '', historyMetaUrl: '', historyRootUrl: '' };
+        return { latestUrl: '', rootLegacyUrl: '', historyFramesUrl: '', historyMetaUrl: '', historyRootUrl: '', serviceLogUrl: '' };
       }
       const authQ = cfg.apiKey ? `auth=${encodeURIComponent(cfg.apiKey)}` : '';
       const appendAuth = (u) => {
@@ -2302,7 +2541,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
           rootLegacyUrl: appendAuth(`${prefix}.json`),
           historyFramesUrl: appendAuth(`${prefix}/history/${safeSess}/frames.json`),
           historyMetaUrl: appendAuth(`${prefix}/history/${safeSess}/meta.json`),
-          historyRootUrl: appendAuth(`${prefix}/history.json`)
+          historyRootUrl: appendAuth(`${prefix}/history.json`),
+          serviceLogUrl: appendAuth(`${prefix}/service_log.json`)
         };
       }
       if (base.endsWith('.json')) {
@@ -2312,7 +2552,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
           rootLegacyUrl: appendAuth(base),
           historyFramesUrl: appendAuth(`${prefix}/history/${safeSess}/frames.json`),
           historyMetaUrl: appendAuth(`${prefix}/history/${safeSess}/meta.json`),
-          historyRootUrl: appendAuth(`${prefix}/history.json`)
+          historyRootUrl: appendAuth(`${prefix}/history.json`),
+          serviceLogUrl: appendAuth(`${prefix}/service_log.json`)
         };
       }
       const activeVin = getActiveVin();
@@ -2330,7 +2571,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         rootLegacyUrl: appendAuth(`${rootPath}.json`),
         historyFramesUrl: appendAuth(`${rootPath}/history/${safeSess}/frames.json`),
         historyMetaUrl: appendAuth(`${rootPath}/history/${safeSess}/meta.json`),
-        historyRootUrl: appendAuth(`${rootPath}/history.json`)
+        historyRootUrl: appendAuth(`${rootPath}/history.json`),
+        serviceLogUrl: appendAuth(`${rootPath}/service_log.json`)
       };
     }
 
@@ -2748,11 +2990,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (elRx) elRx.textContent = new Date().toLocaleTimeString();
 
       if (pkt.vin || (pkt.vehicle && pkt.vehicle.vin)) {
-        registerOrSwitchVehicle({
+        const prevVin = getActiveVin();
+        const resolvedVeh = registerOrSwitchVehicle({
           ...(pkt.vehicle || {}),
           vin: pkt.vin || pkt.vehicle?.vin,
           lastSeenAt: pkt.ts || new Date().toISOString()
         }, { activate: true, refreshUi: false });
+        if (resolvedVeh.vin !== prevVin && appState.activeTab === 'service' && typeof refreshServiceTab === 'function') {
+          refreshServiceTab();
+        }
       }
       updateCloudBadges();
 
@@ -3196,25 +3442,26 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // =========================================================================
     function switchTab(tabId) {
       appState.activeTab = tabId;
-      ['cockpit', 'graphs', 'history', 'infographics', 'passport', 'cloud', 'bluetooth'].forEach(id => {
+      ['cockpit', 'graphs', 'history', 'infographics', 'service', 'passport', 'cloud', 'bluetooth'].forEach(id => {
         const sec = document.getElementById('tab-' + id);
         if (sec) sec.classList.toggle('hidden', id !== tabId);
 
         const dbtn = document.getElementById('dtab-' + id);
         if (dbtn) {
           dbtn.className = (id === tabId)
-            ? 'px-3.5 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition'
-            : 'px-3.5 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition';
+            ? 'px-3 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition whitespace-nowrap'
+            : 'px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap';
         }
         const mbtn = document.getElementById('mtab-' + id);
         if (mbtn) {
           mbtn.className = (id === tabId)
-            ? 'flex flex-col items-center py-1 rounded-xl text-[#222222] font-bold text-[10px]'
-            : 'flex flex-col items-center py-1 rounded-xl text-[#6B7280] font-medium text-[10px]';
+            ? 'flex flex-col items-center py-1 px-0.5 rounded-xl text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap'
+            : 'flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap';
         }
       });
       if (tabId === 'passport') renderAllVariablesTable();
       if (tabId === 'history') refreshHistoryTab();
+      if (tabId === 'service' && typeof refreshServiceTab === 'function') refreshServiceTab();
       renderAllChartsNow();
     }
 
@@ -3283,6 +3530,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
       renderAllCharts();
       if (appState.activeTab === 'passport') renderAllVariablesTable();
+      if (appState.activeTab === 'service' && typeof updateServiceHealthAndSnapshotUi === 'function') {
+        updateServiceHealthAndSnapshotUi(appState.current, true);
+      }
     }
 
     function togglePauseStream() {
@@ -3447,8 +3697,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'ENGINE OFF · 0 RPM', 'px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
-        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active:</strong> Pin 16 Battery (${d.volt.toFixed(2)}V) · Baro/MAP (${baroKpa} kPa) · Fuel Tank (${d.fuel.toFixed(1)}%) · Thermal · KOEO / BT / Firebase`;
-        setBadgeState('stopped-banner-off', 'Stopped: 0 RPM · 0 km/h · Alternator Off · Closed-Loop O2 Off · Burn 0.00 L/h', 'text-[#92400E] font-mono-num leading-snug shrink-0');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Active:</strong> Pin 16 (${d.volt.toFixed(2)}V) · Baro/MAP (${baroKpa} kPa) · Fuel (${d.fuel.toFixed(1)}%) · Thermal · BT/Cloud`;
+        setBadgeState('stopped-banner-off', 'Stopped: 0 RPM · 0 km/h · Alt & O2 Off · 0.00 L/h', 'text-[#92400E] font-mono-num leading-snug shrink-0');
         setBadgeState('cockpit-stream-status', act.isStatic ? 'ENGINE OFF · FROZEN' : 'ENGINE OFF · 12V & BUS LIVE', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-bold whitespace-nowrap shrink-0');
         if (heroLine) heroLine.textContent = `Engine Off · Only Pin 16 Battery (${d.volt.toFixed(2)}V), Baro, Fuel Level & Thermal Sensors Active`;
         setBadgeState('g1-state', 'STOPPED · 0 RPM · 0 km/h', pillOffCls);
@@ -3461,8 +3711,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'STATIC CAPTURE · 0 km/h', 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
-        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active in Capture:</strong> Idle (${Math.round(d.rpm)} RPM) · Closed-Loop O2/STFT · ${d.volt.toFixed(2)}V Charging · Thermal &amp; HPFP`;
-        setBadgeState('stopped-banner-off', 'Stopped: Wheel Speed 0 km/h · Trace Frozen (No Fake Sine Movement)', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Capture Active:</strong> Idle (${Math.round(d.rpm)} RPM) · O2/STFT · ${d.volt.toFixed(2)}V · Thermal &amp; HPFP`;
+        setBadgeState('stopped-banner-off', 'Stopped: 0 km/h · Static Trace (No Fake Motion)', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
         setBadgeState('cockpit-stream-status', 'STATIC CAPTURE · FROZEN', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-bold whitespace-nowrap shrink-0');
         if (heroLine) heroLine.textContent = 'Viewing recorded stationary capture — traces frozen without simulated motion';
         setBadgeState('g1-state', 'STATIC IDLE · 0 km/h', pillOffCls);
@@ -3475,8 +3725,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'VEHICLE STOPPED · IDLING', 'px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
-        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Authentically Active:</strong> Engine Idle (${Math.round(d.rpm)} RPM) · Alternator ${d.volt.toFixed(2)}V · Closed-Loop O2/STFT · Thermal &amp; HPFP`;
-        setBadgeState('stopped-banner-off', 'Stopped: Wheel Speed 0 km/h · Drivetrain Stationary', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
+        if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Active:</strong> Idle (${Math.round(d.rpm)} RPM) · ${d.volt.toFixed(2)}V · Closed-Loop O2 · Thermal &amp; HPFP`;
+        setBadgeState('stopped-banner-off', 'Stopped: 0 km/h · Drivetrain Stationary', 'text-[#5A5F6A] font-mono-num leading-snug shrink-0');
         setBadgeState('cockpit-stream-status', 'LIVE IDLE · 0 km/h', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold whitespace-nowrap shrink-0');
         if (heroLine) heroLine.textContent = 'Vehicle stationary with engine idling — speed 0 km/h, engine & charging live';
         setBadgeState('g1-state', 'IDLING · 0 km/h', pillBlueCls);
@@ -3517,6 +3767,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (g5) g5.textContent = `Pedal D/E ${d.pedalD.toFixed(1)}% · Thr A/B ${d.thr.toFixed(1)}% · Rel ${d.relThr.toFixed(1)}% · Act ${d.actThr.toFixed(1)}%`;
       const g6 = document.getElementById('g6-readout');
       if (g6) g6.textContent = `${d.volt.toFixed(2)}V · Fuel ${d.fuel.toFixed(1)}% · EVAP ${d.evap.toFixed(1)}% · ${drv.fuelLh.toFixed(2)} L/h`;
+      if (typeof updateCockpitServiceHealthCard === 'function') updateCockpitServiceHealthCard(d);
+      if (appState.activeTab === 'service' && typeof updateServiceHealthAndSnapshotUi === 'function') {
+        updateServiceHealthAndSnapshotUi(d, false);
+      }
     }
 
     // =========================================================================
@@ -4169,7 +4423,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
     const PASSIVE_PREFS_KEY = 'pulseobd_passive_prefs_v1';
     const LAST_FRAME_KEY = 'pulseobd_last_live_frame_v1';
     const DRIVE_DB_NAME = 'PulseOBD_DriveDB';
-    const DRIVE_DB_VERSION = 3;
+    const DRIVE_DB_VERSION = 4;
 
     const passiveState = {
       db: null,
@@ -4236,6 +4490,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
             }
             if (!db.objectStoreNames.contains('handles')) {
               db.createObjectStore('handles', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('serviceRecords')) {
+              const svcStore = db.createObjectStore('serviceRecords', { keyPath: 'id' });
+              svcStore.createIndex('vin', 'vin', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('serviceMeta')) {
+              db.createObjectStore('serviceMeta', { keyPath: 'vin' });
             }
           };
           req.onsuccess = (ev) => {
@@ -4435,7 +4696,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
           latestSummary: v.latestSummary || {},
           profilePath: profRel,
           latestPath: `vehicle_history/${v.vin}/latest.json`,
-          sessionsDir: `vehicle_history/${v.vin}/sessions`
+          sessionsDir: `vehicle_history/${v.vin}/sessions`,
+          serviceLogPath: `vehicle_history/${v.vin}/service_log.json`
         };
       });
       return {
@@ -4606,6 +4868,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 savedCount++;
               }
             }
+            if (typeof persistServiceLogToProjectFolder === 'function') {
+              await persistServiceLogToProjectFolder(veh.vin, { quiet: true, interactive: Boolean(manualTrigger) });
+            }
           }
           updateProjectFolderBadge();
           refreshPassiveSessionsUi();
@@ -4621,6 +4886,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
           const veh = appState.vehicleRegistry[s.vin || getActiveVin()] || { vin: s.vin || getActiveVin() };
           await persistSessionToProjectFolder(veh, s, samples, null, { quiet: true });
           savedCount++;
+        }
+        if (typeof persistServiceLogToProjectFolder === 'function') {
+          for (const veh of vehicles) {
+            await persistServiceLogToProjectFolder(veh.vin, { quiet: true });
+          }
         }
         refreshPassiveSessionsUi();
         refreshHistoryTab();
@@ -4640,7 +4910,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
           for (const s of vSessions) {
             expanded.push({ ...s, frames: await getSessionSamples(s.id) });
           }
-          archiveBundle.vehiclesByVin[veh.vin] = { profile: veh, sessions: expanded };
+          const svcDoc = typeof buildServiceLogDocForVin === 'function'
+            ? await buildServiceLogDocForVin(veh.vin)
+            : null;
+          archiveBundle.vehiclesByVin[veh.vin] = { profile: veh, sessions: expanded, serviceLog: svcDoc };
         }
         const blob = new Blob([JSON.stringify(archiveBundle, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
@@ -4755,8 +5028,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
       await getAllStoredVehicles();
       appState.projectHistoryMeta.loadedFrom = loadedSource || 'indexeddb';
+      if (typeof loadServiceLogsFromProjectSources === 'function') {
+        await loadServiceLogsFromProjectSources();
+      }
       updateVehicleIdentityDom();
       updateProjectFolderBadge();
+      if (typeof refreshServiceTab === 'function' && appState.activeTab === 'service') {
+        refreshServiceTab();
+      }
       return loadedSource;
     }
 
@@ -4800,8 +5079,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
       });
       toggleNewVehicleForm(false);
       await persistSessionToProjectFolder(prof, null, [], null, { quiet: false });
+      if (typeof persistServiceLogToProjectFolder === 'function') {
+        await persistServiceLogToProjectFolder(prof.vin, { quiet: true });
+      }
       renderAllVariablesTable();
       await refreshHistoryTab();
+      if (typeof refreshServiceTab === 'function') await refreshServiceTab();
       logTerminal(`[VEHICLE ID] Created individual record vehicle_history/${prof.vin}/ (${prof.label}) and switched active workspace.`, 'text-[#047857] font-semibold');
     }
 
@@ -4821,6 +5104,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       registerOrSwitchVehicle(target, { activate: true, refreshUi: false });
       renderAllVariablesTable();
       await refreshHistoryTab();
+      if (typeof refreshServiceTab === 'function') await refreshServiceTab();
       logTerminal(`[VEHICLE ID] Active workspace switched to ${target.label || vin} (${vin}). New recordings save to vehicle_history/${vin}/`, 'text-[#1473E6] font-semibold');
     }
 
@@ -5786,6 +6070,1486 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (cfg.autoOnBt && cfg.saveHistory && cfg.prov === 'firebase' && updateNetworkBadgeUi() && isCloudEndpointConfigured(cfg)) {
         syncPendingDrivesToFirebase(false);
       }
+    }
+
+    // =========================================================================
+    // 10C. VEHICLE SERVICE, MAINTENANCE LOG & PRE-SERVICE HEALTH ENGINE
+    // =========================================================================
+    const SERVICE_STORAGE_KEY = 'pulseobd_service_log_v1';
+    const SERVICE_CATEGORIES = [
+      {
+        id: 'oil_filter',
+        label: 'Oil & Filter Change',
+        defaultTitle: 'Engine Oil & OEM Filter Change (VW 502.00 5W-40)',
+        intervalKm: 15000,
+        intervalMonths: 12,
+        defaultParts: 'VW 502.00 5W-40 4L · Mann W712/95 oil filter · drain plug N90813202'
+      },
+      {
+        id: 'inspection_service',
+        label: 'Annual / Major Inspection',
+        defaultTitle: 'Annual / Major Vehicle Inspection & Fluid Check',
+        intervalKm: 30000,
+        intervalMonths: 12,
+        defaultParts: '30-point chassis, coolant/brake fluid, drive belt & full OBD-II check'
+      },
+      {
+        id: 'spark_plugs',
+        label: 'Spark Plugs (EA211 TSI)',
+        defaultTitle: 'Spark Plug Replacement (EA211 1.2L TSI)',
+        intervalKm: 60000,
+        intervalMonths: 48,
+        defaultParts: '4x NGK PZKER7B8EGS / OEM 04E905602 iridium spark plugs'
+      },
+      {
+        id: 'air_filter',
+        label: 'Engine Air Filter',
+        defaultTitle: 'Engine Air Filter Replacement',
+        intervalKm: 30000,
+        intervalMonths: 24,
+        defaultParts: 'OEM 04E129620 / Mann C27009 air filter element'
+      },
+      {
+        id: 'cabin_filter',
+        label: 'Cabin / Pollen Filter',
+        defaultTitle: 'Cabin / Pollen Filter Replacement',
+        intervalKm: 30000,
+        intervalMonths: 24,
+        defaultParts: 'Mann CUK26010 / OEM 6R0819653 activated carbon cabin filter'
+      },
+      {
+        id: 'brakes_fluid',
+        label: 'Brakes & DOT4 Fluid',
+        defaultTitle: 'Brake Fluid Flush (DOT4) & Pad Inspection',
+        intervalKm: 30000,
+        intervalMonths: 24,
+        defaultParts: 'VW B000750M3 DOT4 LV brake fluid (1L) · front/rear pad thickness check'
+      },
+      {
+        id: 'battery_12v',
+        label: '12V Battery Test / Replace',
+        defaultTitle: '12V Battery Load Test & Terminal Service',
+        intervalKm: null,
+        intervalMonths: 48,
+        defaultParts: '60Ah EFB / AGM battery check · Pin 16 resting & alternator verification'
+      },
+      {
+        id: 'tires_alignment',
+        label: 'Tires & Alignment',
+        defaultTitle: 'Tire Rotation, Pressure & 4-Wheel Alignment',
+        intervalKm: 10000,
+        intervalMonths: 12,
+        defaultParts: 'Tire rotation · cold pressure check · balance & 4-wheel alignment'
+      },
+      {
+        id: 'inspection_baseline',
+        label: 'Pre-Service OBD-II Inspection',
+        defaultTitle: 'Pre-Service Read-Only OBD-II Baseline Check',
+        intervalKm: null,
+        intervalMonths: null,
+        defaultParts: 'Read-only Mode 01/03/06/07/09/0A & UDS ECU verification'
+      },
+      {
+        id: 'custom_repair',
+        label: 'Repair / Follow-Up',
+        defaultTitle: 'Repair / Diagnostic Follow-Up',
+        intervalKm: null,
+        intervalMonths: null,
+        defaultParts: ''
+      }
+    ];
+
+    const serviceState = {
+      selectedVin: '',
+      lastHealthRenderMs: 0,
+      lastCockpitSummaryKey: ''
+    };
+
+    function escapeHtml(val) {
+      return String(val === null || val === undefined ? '' : val)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function todayIsoDate() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addMonthsToIsoDate(isoDate, months) {
+      if (!isoDate || !months) return '';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate).trim());
+      if (!m) return '';
+      const dt = new Date(Number(m[1]), Number(m[2]) - 1 + Number(months), Number(m[3]));
+      const y = dt.getFullYear();
+      const mo = String(dt.getMonth() + 1).padStart(2, '0');
+      const da = String(dt.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${da}`;
+    }
+
+    function formatNumberKm(n) {
+      if (n === null || n === undefined || n === '' || Number.isNaN(Number(n))) return '—';
+      return `${Math.round(Number(n)).toLocaleString()} km`;
+    }
+
+    function getServiceCategoryDef(catId) {
+      return SERVICE_CATEGORIES.find(c => c.id === catId) || SERVICE_CATEGORIES[0];
+    }
+
+    function getServiceSelectedVin() {
+      const candidate = serviceState.selectedVin || getActiveVin();
+      return normalizeVinString(candidate);
+    }
+
+    function readServiceLocalFallback() {
+      try {
+        const raw = localStorage.getItem(SERVICE_STORAGE_KEY);
+        if (!raw) return { byVin: {} };
+        const parsed = JSON.parse(raw);
+        return (parsed && parsed.byVin) ? parsed : { byVin: {} };
+      } catch (_) {
+        return { byVin: {} };
+      }
+    }
+
+    function writeServiceLocalFallback(vin, meta, records) {
+      try {
+        const cleanVin = normalizeVinString(vin);
+        const all = readServiceLocalFallback();
+        all.byVin[cleanVin] = {
+          meta: {
+            vin: cleanVin,
+            latestOdometerKm: meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null,
+            deletedIds: Array.isArray(meta?.deletedIds) ? [...new Set(meta.deletedIds)] : [],
+            updatedAt: (meta && meta.updatedAt) || new Date().toISOString()
+          },
+          records: Array.isArray(records) ? records : []
+        };
+        localStorage.setItem(SERVICE_STORAGE_KEY, JSON.stringify(all));
+      } catch (_) {}
+    }
+
+    async function getServiceMetaForVin(vin) {
+      const cleanVin = normalizeVinString(vin);
+      const fb = readServiceLocalFallback().byVin[cleanVin]?.meta || null;
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('serviceMeta')) {
+        const dbMeta = await new Promise((resolve) => {
+          try {
+            const req = db.transaction('serviceMeta', 'readonly').objectStore('serviceMeta').get(cleanVin);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          } catch (_) {
+            resolve(null);
+          }
+        });
+        if (dbMeta) {
+          return {
+            vin: cleanVin,
+            latestOdometerKm: dbMeta.latestOdometerKm !== undefined && dbMeta.latestOdometerKm !== null
+              ? dbMeta.latestOdometerKm
+              : (fb ? fb.latestOdometerKm : null),
+            deletedIds: Array.from(new Set([...(fb?.deletedIds || []), ...(dbMeta.deletedIds || [])])),
+            updatedAt: dbMeta.updatedAt || fb?.updatedAt || ''
+          };
+        }
+      }
+      return fb || { vin: cleanVin, latestOdometerKm: null, deletedIds: [], updatedAt: '' };
+    }
+
+    async function saveServiceMetaForVin(meta) {
+      if (!meta || !meta.vin) return;
+      const cleanVin = normalizeVinString(meta.vin);
+      const cleanMeta = {
+        vin: cleanVin,
+        latestOdometerKm: (meta.latestOdometerKm !== undefined && meta.latestOdometerKm !== null && meta.latestOdometerKm !== '')
+          ? Math.max(0, Math.round(Number(meta.latestOdometerKm)))
+          : null,
+        deletedIds: Array.isArray(meta.deletedIds) ? Array.from(new Set(meta.deletedIds)) : [],
+        updatedAt: new Date().toISOString()
+      };
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('serviceMeta')) {
+        await new Promise((resolve) => {
+          try {
+            const tx = db.transaction('serviceMeta', 'readwrite');
+            tx.objectStore('serviceMeta').put(cleanMeta);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          } catch (_) { resolve(); }
+        });
+      }
+      const existingRecs = await getServiceRecordsForVin(cleanVin);
+      writeServiceLocalFallback(cleanVin, cleanMeta, existingRecs);
+      return cleanMeta;
+    }
+
+    async function getServiceRecordsForVin(vin) {
+      const cleanVin = normalizeVinString(vin);
+      const fbEntry = readServiceLocalFallback().byVin[cleanVin];
+      const byId = new Map();
+      if (fbEntry && Array.isArray(fbEntry.records)) {
+        fbEntry.records.forEach(r => { if (r && r.id) byId.set(r.id, r); });
+      }
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('serviceRecords')) {
+        const dbList = await new Promise((resolve) => {
+          try {
+            const tx = db.transaction('serviceRecords', 'readonly');
+            const idx = tx.objectStore('serviceRecords').index('vin');
+            const req = idx.getAll(IDBKeyRange.only(cleanVin));
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          } catch (_) {
+            resolve([]);
+          }
+        });
+        dbList.forEach(r => {
+          if (!r || !r.id) return;
+          const prev = byId.get(r.id);
+          if (!prev || String(r.updatedAt || '').localeCompare(String(prev.updatedAt || '')) >= 0) {
+            byId.set(r.id, r);
+          }
+        });
+      }
+      const deletedSet = new Set(fbEntry?.meta?.deletedIds || []);
+      if (db && db.objectStoreNames.contains('serviceMeta')) {
+        const m = await new Promise((resolve) => {
+          try {
+            const req = db.transaction('serviceMeta', 'readonly').objectStore('serviceMeta').get(cleanVin);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          } catch (_) { resolve(null); }
+        });
+        if (m && Array.isArray(m.deletedIds)) {
+          m.deletedIds.forEach(id => deletedSet.add(id));
+        }
+      }
+      return Array.from(byId.values())
+        .filter(r => !deletedSet.has(r.id))
+        .sort((a, b) => {
+          const dCmp = String(b.serviceDate || '').localeCompare(String(a.serviceDate || ''));
+          if (dCmp !== 0) return dCmp;
+          return String(b.createdAt || b.updatedAt || '').localeCompare(String(a.createdAt || a.updatedAt || ''));
+        });
+    }
+
+    async function putServiceRecordInDb(record) {
+      if (!record || !record.id || !record.vin) return;
+      const cleanVin = normalizeVinString(record.vin);
+      const normRec = { ...record, vin: cleanVin };
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('serviceRecords')) {
+        await new Promise((resolve) => {
+          try {
+            const tx = db.transaction('serviceRecords', 'readwrite');
+            tx.objectStore('serviceRecords').put(normRec);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          } catch (_) { resolve(); }
+        });
+      }
+      const meta = await getServiceMetaForVin(cleanVin);
+      if (Array.isArray(meta.deletedIds) && meta.deletedIds.includes(normRec.id)) {
+        meta.deletedIds = meta.deletedIds.filter(x => x !== normRec.id);
+        await saveServiceMetaForVin(meta);
+      }
+      const records = await getServiceRecordsForVin(cleanVin);
+      writeServiceLocalFallback(cleanVin, meta, records);
+    }
+
+    async function deleteServiceRecordFromDb(vin, recordId) {
+      const cleanVin = normalizeVinString(vin);
+      if (!recordId) return;
+      const meta = await getServiceMetaForVin(cleanVin);
+      const deletedSet = new Set(meta.deletedIds || []);
+      deletedSet.add(recordId);
+      meta.deletedIds = Array.from(deletedSet);
+
+      const db = await openDriveDb();
+      if (db && db.objectStoreNames.contains('serviceRecords')) {
+        await new Promise((resolve) => {
+          try {
+            const tx = db.transaction(['serviceRecords', 'serviceMeta'], 'readwrite');
+            tx.objectStore('serviceRecords').delete(recordId);
+            tx.objectStore('serviceMeta').put({
+              vin: cleanVin,
+              latestOdometerKm: meta.latestOdometerKm ?? null,
+              deletedIds: meta.deletedIds,
+              updatedAt: new Date().toISOString()
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          } catch (_) { resolve(); }
+        });
+      }
+      const fb = readServiceLocalFallback();
+      const prevRecs = (fb.byVin[cleanVin]?.records || []).filter(r => r && r.id !== recordId);
+      writeServiceLocalFallback(cleanVin, meta, prevRecs);
+    }
+
+    function evaluateVehicleServiceHealth(d, vehicle) {
+      const cur = d || appState.current || SNAPSHOTS.snap1;
+      const rpm = Number(cur.rpm || 0);
+      const engineRunning = rpm >= 50;
+      const dtcCount = Number(cur.dtcCount || 0);
+      const milOn = Boolean(cur.milOn);
+      const volt = Number(cur.volt || 0);
+      const coolant = Number(cur.coolant || 0);
+      const iat = Number(cur.iat || 0);
+      const amb = Number(cur.amb !== undefined ? cur.amb : 33);
+      const stft = Number(cur.stft || 0);
+      const ltft = Number(cur.ltft || 0);
+      const totalTrim = engineRunning ? (stft + ltft) : ltft;
+      const rail = Number(cur.rail || 0);
+      const fuelPct = Number(cur.fuel || 0);
+      const distClear = Number(cur.distClear !== undefined ? cur.distClear : 65535);
+      const warmups = Number(cur.warmups !== undefined ? cur.warmups : 255);
+
+      const o2H1 = (MODE06_TESTS.find(t => t.mid === '41')?.val) ?? 324;
+      const o2H2 = (MODE06_TESTS.find(t => t.mid === '42')?.val) ?? 332;
+      const maxEwma = MODE06_TESTS
+        .filter(t => ['A2', 'A3', 'A4', 'A5'].includes(t.mid) && t.tid === '0B')
+        .reduce((m, t) => Math.max(m, t.val || 0), 0);
+      const curMisfire = MODE06_TESTS
+        .filter(t => ['A2', 'A3', 'A4', 'A5'].includes(t.mid) && t.tid === '0C')
+        .reduce((s, t) => s + (t.val || 0), 0);
+      const catMon = READINESS_MONITORS.find(m => m.name.toLowerCase().includes('catalyst'));
+      const catStatus = catMon ? catMon.s0101 : 'Incomplete';
+      const ignCntr = (IUMPR_COUNTERS.find(c => c.id === 'IGNCNTR')?.val) ?? 15312;
+      const obdCond = (IUMPR_COUNTERS.find(c => c.id === 'OBDCOND')?.val) ?? 5134;
+
+      let score = 100;
+      const checks = [];
+
+      // 1. Fault Codes & MIL Audit (03/07/0A/0101)
+      if (dtcCount === 0 && !milOn) {
+        checks.push({
+          id: 'dtc_audit',
+          title: 'Fault Codes & MIL (03/07/0A)',
+          level: 'PASS',
+          badge: '0 DTCs · MIL OFF',
+          detail: 'Modes 03 (Stored), 07 (Pending) & 0A (Permanent) are clear.'
+        });
+      } else {
+        score -= 35;
+        checks.push({
+          id: 'dtc_audit',
+          title: 'Fault Codes & MIL (03/07/0A)',
+          level: 'FAIL',
+          badge: `${dtcCount} DTC${dtcCount === 1 ? '' : 's'} · ${milOn ? 'MIL ON' : 'Pending'}`,
+          detail: 'Active fault or MIL command detected — inspect Modes 03/07/0A before servicing.'
+        });
+      }
+
+      // 2. 12V Battery & Alternator Charging (0142 / ATRV)
+      if (engineRunning) {
+        if (volt >= 13.1 && volt <= 14.9) {
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery & Alternator (0142)',
+            level: 'PASS',
+            badge: `${volt.toFixed(2)}V Charging`,
+            detail: 'Healthy alternator charging voltage at idle/run (target 13.2V–14.8V).'
+          });
+        } else if (volt >= 12.4 && volt < 13.1) {
+          score -= 8;
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery & Alternator (0142)',
+            level: 'WARN',
+            badge: `${volt.toFixed(2)}V Marginal`,
+            detail: 'Engine running with low charging voltage — test alternator regulator & belt.'
+          });
+        } else {
+          score -= 18;
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery & Alternator (0142)',
+            level: 'FAIL',
+            badge: `${volt.toFixed(2)}V Fault`,
+            detail: 'Alternator voltage out of spec while engine is running — load-test battery & charging system.'
+          });
+        }
+      } else {
+        if (volt >= 12.4) {
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery Resting (Pin 16)',
+            level: 'PASS',
+            badge: `${volt.toFixed(2)}V Resting OK`,
+            detail: 'Engine off resting voltage healthy (>= 12.4V) for key-on diagnostics.'
+          });
+        } else if (volt >= 12.0) {
+          score -= 8;
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery Resting (Pin 16)',
+            level: 'WARN',
+            badge: `${volt.toFixed(2)}V Low Rest`,
+            detail: 'Resting battery below 12.4V — run 12V load test during service.'
+          });
+        } else {
+          score -= 18;
+          checks.push({
+            id: 'battery_alt',
+            title: '12V Battery Resting (Pin 16)',
+            level: 'FAIL',
+            badge: `${volt.toFixed(2)}V Weak`,
+            detail: 'Resting 12V battery discharged (< 12.0V) — charge or replace battery.'
+          });
+        }
+      }
+
+      // 3. Cooling System & Intake Heat-Soak (0105 / 010F / 0146)
+      if (coolant >= 108) {
+        score -= 20;
+        checks.push({
+          id: 'thermal',
+          title: 'Cooling & Intake Thermal',
+          level: 'FAIL',
+          badge: `Coolant ${Math.round(coolant)}°C HOT`,
+          detail: 'Coolant exceeds 108°C threshold — inspect radiator fans, thermostat & coolant level.'
+        });
+      } else if (coolant >= 103) {
+        score -= 5;
+        checks.push({
+          id: 'thermal',
+          title: 'Cooling & Intake Thermal',
+          level: 'WARN',
+          badge: `${Math.round(coolant)}°C Elevated`,
+          detail: `Coolant warm (${Math.round(coolant)}°C) with IAT ${Math.round(iat)}°C — verify cooling fan cycle.`
+        });
+      } else {
+        const heatDelta = Math.round(iat - amb);
+        checks.push({
+          id: 'thermal',
+          title: 'Cooling & Intake Thermal',
+          level: 'PASS',
+          badge: `Coolant ${Math.round(coolant)}°C`,
+          detail: `Normal thermal control (IAT ${Math.round(iat)}°C, ambient ${Math.round(amb)}°C, +${heatDelta}°C soak).`
+        });
+      }
+
+      // 4. Fuel Trims & HPFP Rail Pressure (0106 / 0107 / 0123)
+      if (!engineRunning) {
+        checks.push({
+          id: 'fuel_trims_hpfp',
+          title: 'Fuel Trims & TSI Rail (0106/07/23)',
+          level: 'PASS',
+          badge: `LTFT ${ltft >= 0 ? '+' : ''}${ltft.toFixed(2)}%`,
+          detail: `Engine off: learned LTFT nominal · residual rail ${rail.toFixed(2)} MPa.`
+        });
+      } else if (Math.abs(totalTrim) <= 6 && rail >= 10) {
+        checks.push({
+          id: 'fuel_trims_hpfp',
+          title: 'Fuel Trims & TSI Rail (0106/07/23)',
+          level: 'PASS',
+          badge: `Trim ${totalTrim >= 0 ? '+' : ''}${totalTrim.toFixed(1)}% · ${rail.toFixed(1)} MPa`,
+          detail: 'Direct-injection fuel pressure & closed-loop mixture well within ±6%.'
+        });
+      } else if (Math.abs(totalTrim) <= 10) {
+        score -= 7;
+        checks.push({
+          id: 'fuel_trims_hpfp',
+          title: 'Fuel Trims & TSI Rail (0106/07/23)',
+          level: 'WARN',
+          badge: `Trim ${totalTrim >= 0 ? '+' : ''}${totalTrim.toFixed(1)}%`,
+          detail: 'Fuel trims shifting toward ±10% — inspect air filter, PCV/vacuum hoses & injectors.'
+        });
+      } else {
+        score -= 15;
+        checks.push({
+          id: 'fuel_trims_hpfp',
+          title: 'Fuel Trims & TSI Rail (0106/07/23)',
+          level: 'FAIL',
+          badge: `Trim ${totalTrim >= 0 ? '+' : ''}${totalTrim.toFixed(1)}% High`,
+          detail: 'Excessive fuel trim or low rail pressure — inspect intake leaks & HPFP delivery.'
+        });
+      }
+
+      // 5. Mode 06 Ignition & Misfire Counters (0xA2..0xA5)
+      if (curMisfire > 0) {
+        score -= 22;
+        checks.push({
+          id: 'ignition_misfire',
+          title: 'Mode 06 Misfires (Cyl 1–4)',
+          level: 'FAIL',
+          badge: `${curMisfire} Active`,
+          detail: `Current cycle misfires detected (EWMA peak ${maxEwma}) — inspect spark plugs & coils.`
+        });
+      } else if (maxEwma > 15) {
+        score -= 8;
+        checks.push({
+          id: 'ignition_misfire',
+          title: 'Mode 06 Misfires (Cyl 1–4)',
+          level: 'WARN',
+          badge: `0 Live · EWMA ${maxEwma}`,
+          detail: 'Elevated 10-cycle EWMA history — schedule EA211 spark plug inspection.'
+        });
+      } else if (maxEwma > 0) {
+        score -= 2;
+        checks.push({
+          id: 'ignition_misfire',
+          title: 'Mode 06 Misfires (Cyl 1–4)',
+          level: 'INFO',
+          badge: `0 Live · EWMA ${maxEwma}`,
+          detail: 'Zero active misfires; light 10-cycle EWMA history (4/3/5/5 events) normal at 60k check.'
+        });
+      } else {
+        checks.push({
+          id: 'ignition_misfire',
+          title: 'Mode 06 Misfires (Cyl 1–4)',
+          level: 'PASS',
+          badge: '0 Active · 0 EWMA',
+          detail: 'Clean ignition across all 4 cylinders.'
+        });
+      }
+
+      // 6. Catalyst Monitor & O2 Sensor Heaters (0101 / 0641 / 0642)
+      if (catStatus === 'Ready') {
+        checks.push({
+          id: 'emissions_o2',
+          title: 'Catalyst & O2 Heaters (0101/06)',
+          level: 'PASS',
+          badge: `Cat Ready · ${o2H1}/${o2H2} mΩ`,
+          detail: 'Catalyst monitor complete & both O2 heater impedances within spec (<= 700 mΩ).'
+        });
+      } else {
+        score -= 2;
+        checks.push({
+          id: 'emissions_o2',
+          title: 'Catalyst & O2 Heaters (0101/06)',
+          level: 'INFO',
+          badge: `Cat ${catStatus} · ${o2H1}/${o2H2} mΩ`,
+          detail: `O2 heaters healthy (${o2H1}/${o2H2} mΩ); Cat B1 awaits steady 50–80 km/h cruise cycle.`
+        });
+      }
+
+      // 7. Fuel Tank Reserve Check (012F)
+      if (fuelPct < 10) {
+        score -= 5;
+        checks.push({
+          id: 'fuel_reserve',
+          title: 'Fuel Tank Level (012F)',
+          level: 'WARN',
+          badge: `${fuelPct.toFixed(1)}% (~${((fuelPct / 100) * 45).toFixed(1)} L)`,
+          detail: 'Fuel below 10% — refuel before road test so Catalyst & EVAP monitors can run.'
+        });
+      } else if (fuelPct < 18) {
+        score -= 1;
+        checks.push({
+          id: 'fuel_reserve',
+          title: 'Fuel Tank Level (012F)',
+          level: 'INFO',
+          badge: `${fuelPct.toFixed(1)}% Low`,
+          detail: 'Moderate reserve (~' + ((fuelPct / 100) * 45).toFixed(1) + ' L).'
+        });
+      } else {
+        checks.push({
+          id: 'fuel_reserve',
+          title: 'Fuel Tank Level (012F)',
+          level: 'PASS',
+          badge: `${fuelPct.toFixed(1)}% (~${((fuelPct / 100) * 45).toFixed(1)} L)`,
+          detail: 'Sufficient fuel for post-service road test & readiness completion.'
+        });
+      }
+
+      // 8. Clear-Code Audit & Read-Only Safety (0130 / 0131 / 0908)
+      if (warmups < 5 || distClear < 100) {
+        score -= 5;
+        checks.push({
+          id: 'cycle_reset_policy',
+          title: 'DTC Clear Audit & Read-Only',
+          level: 'WARN',
+          badge: `${warmups} warmups · ${distClear} km`,
+          detail: 'Recent DTC memory reset detected — complete full drive cycle after service.'
+        });
+      } else {
+        checks.push({
+          id: 'cycle_reset_policy',
+          title: 'DTC Clear Audit & Read-Only',
+          level: 'PASS',
+          badge: `${ignCntr.toLocaleString()} Ign · Read-Only`,
+          detail: 'No recent DTC resets (65,535 km / 255 warmups latched). ECU writes blocked.'
+        });
+      }
+
+      score = Math.max(0, Math.min(100, Math.round(score)));
+      const failCount = checks.filter(c => c.level === 'FAIL').length;
+      const warnCount = checks.filter(c => c.level === 'WARN').length;
+      const statusLabel = (score >= 85 && failCount === 0)
+        ? 'READY'
+        : ((score >= 65 && failCount === 0) ? 'ATTENTION' : 'SERVICE DUE');
+
+      const summaryText = failCount > 0
+        ? `${failCount} fault/attention check(s) flagged — inspect before road test.`
+        : (warnCount > 0
+            ? `${checks.filter(c => c.level === 'PASS').length}/8 clear · ${warnCount} advisory (Cat B1 / low fuel / maintenance note).`
+            : 'All 8 automated OBD-II pre-service checks clean.');
+
+      return {
+        score,
+        statusLabel,
+        summaryText,
+        failCount,
+        warnCount,
+        dtcCount,
+        milOn,
+        maxEwma,
+        curMisfire,
+        catStatus,
+        o2H1,
+        o2H2,
+        ignCntr,
+        obdCond,
+        distClear,
+        warmups,
+        checks
+      };
+    }
+
+    function buildCurrentObdSnapshot(d) {
+      const cur = d || appState.current || SNAPSHOTS.snap1;
+      const evalRes = evaluateVehicleServiceHealth(cur);
+      const srcSel = document.getElementById('source-select');
+      const srcLabel = (srcSel && srcSel.selectedOptions && srcSel.selectedOptions[0])
+        ? srcSel.selectedOptions[0].textContent.trim()
+        : (appState.source || 'Live Studio');
+      return {
+        capturedAt: new Date().toISOString(),
+        source: srcLabel,
+        rpm: Number((cur.rpm || 0).toFixed(1)),
+        coolantC: Math.round(cur.coolant || 0),
+        voltV: Number((cur.volt || 0).toFixed(3)),
+        fuelPct: Number((cur.fuel || 0).toFixed(1)),
+        stftPct: Number((cur.stft || 0).toFixed(2)),
+        ltftPct: Number((cur.ltft || 0).toFixed(2)),
+        dtcCount: Number(cur.dtcCount || 0),
+        milOn: Boolean(cur.milOn),
+        ignCntr: evalRes.ignCntr,
+        obdCond: evalRes.obdCond,
+        distSinceClearKm: evalRes.distClear,
+        warmupsSinceClear: evalRes.warmups,
+        misfireEwmaMax: evalRes.maxEwma,
+        o2HeaterB1S1Mohm: evalRes.o2H1,
+        o2HeaterB1S2Mohm: evalRes.o2H2,
+        catReadiness: evalRes.catStatus,
+        healthScore: evalRes.score
+      };
+    }
+
+    function updateCockpitServiceHealthCard(d) {
+      const evalRes = evaluateVehicleServiceHealth(d);
+      const key = `${evalRes.score}|${evalRes.statusLabel}|${evalRes.dtcCount}|${evalRes.milOn}|${evalRes.warnCount}|${evalRes.failCount}`;
+      if (key === serviceState.lastCockpitSummaryKey) return;
+      serviceState.lastCockpitSummaryKey = key;
+
+      const card = document.getElementById('adv-health-card');
+      const iconBox = document.getElementById('adv-health-icon-box');
+      const titleEl = document.getElementById('adv-health-title');
+      const badgeEl = document.getElementById('adv-health-badge');
+      const subEl = document.getElementById('adv-health-sub');
+
+      const isFail = evalRes.statusLabel === 'SERVICE DUE';
+      const isAttn = evalRes.statusLabel === 'ATTENTION';
+
+      if (card) {
+        card.className = isFail
+          ? 'cursor-pointer acro-card hover:border-[#D92B2B]/50 rounded-2xl p-3 flex items-center gap-3 transition'
+          : (isAttn
+              ? 'cursor-pointer acro-card hover:border-[#F59E0B]/50 rounded-2xl p-3 flex items-center gap-3 transition'
+              : 'cursor-pointer acro-card hover:border-[#047857]/40 rounded-2xl p-3 flex items-center gap-3 transition');
+      }
+      if (iconBox) {
+        iconBox.className = isFail
+          ? 'w-9 h-9 rounded-xl bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] flex items-center justify-center shrink-0'
+          : (isAttn
+              ? 'w-9 h-9 rounded-xl bg-[#FFF4ED] border border-[#FED7AA] text-[#B45309] flex items-center justify-center shrink-0'
+              : 'w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0');
+      }
+      if (titleEl) {
+        titleEl.textContent = `Service Health · ${evalRes.score}/100`;
+        titleEl.className = isFail
+          ? 'text-xs font-bold text-[#B91C1C] truncate'
+          : (isAttn ? 'text-xs font-bold text-[#B45309] truncate' : 'text-xs font-bold text-[#047857] truncate');
+      }
+      if (badgeEl) {
+        badgeEl.textContent = `${evalRes.dtcCount} DTC${evalRes.dtcCount === 1 ? '' : 's'} · ${evalRes.milOn ? 'MIL ON' : 'MIL OFF'}`;
+        badgeEl.className = isFail
+          ? 'text-xs font-bold font-mono-num text-[#B91C1C] whitespace-nowrap shrink-0'
+          : (isAttn ? 'text-xs font-bold font-mono-num text-[#B45309] whitespace-nowrap shrink-0' : 'text-xs font-bold font-mono-num text-[#047857] whitespace-nowrap shrink-0');
+      }
+      if (subEl) {
+        subEl.textContent = isFail
+          ? `${evalRes.failCount} check(s) need attention · Open Service Log →`
+          : `18/18 Mode 06 pass · Tap for Service Log & Checks →`;
+      }
+    }
+
+    function updateServiceHealthAndSnapshotUi(d, force) {
+      const now = Date.now();
+      if (!force && (now - serviceState.lastHealthRenderMs) < 1000) return;
+      serviceState.lastHealthRenderMs = now;
+
+      const evalRes = evaluateVehicleServiceHealth(d || appState.current);
+      const srcPill = document.getElementById('svc-health-source-pill');
+      const sumLine = document.getElementById('svc-health-summary-line');
+      const scoreBadge = document.getElementById('svc-health-score-badge');
+      const checksGrid = document.getElementById('svc-health-checks-grid');
+      const snapPreview = document.getElementById('svc-snapshot-preview');
+
+      if (srcPill) srcPill.textContent = `SOURCE: ${appState.source || 'snap1'}`;
+      if (sumLine) sumLine.textContent = evalRes.summaryText;
+      if (scoreBadge) {
+        scoreBadge.textContent = `${evalRes.score} / 100 · ${evalRes.statusLabel}`;
+        scoreBadge.className = evalRes.statusLabel === 'SERVICE DUE'
+          ? 'text-xs px-3 py-1 rounded-full bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] font-mono-num font-bold shrink-0'
+          : (evalRes.statusLabel === 'ATTENTION'
+              ? 'text-xs px-3 py-1 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold shrink-0'
+              : 'text-xs px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0');
+      }
+      if (checksGrid) {
+        checksGrid.innerHTML = evalRes.checks.map(chk => {
+          const pillCls = chk.level === 'FAIL'
+            ? 'bg-[#FEE2E2] border-[#FCA5A5] text-[#B91C1C]'
+            : (chk.level === 'WARN'
+                ? 'bg-[#FEF3C7] border-[#FDE68A] text-[#B45309]'
+                : (chk.level === 'INFO'
+                    ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1473E6]'
+                    : 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]'));
+          return `
+            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between gap-1.5 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <strong class="text-[#222222] leading-snug">${escapeHtml(chk.title)}</strong>
+                <span class="px-2 py-0.5 rounded-full border font-mono-num font-bold text-[10px] shrink-0 ${pillCls}">${escapeHtml(chk.level)}</span>
+              </div>
+              <div class="font-mono-num font-bold text-[#222222] truncate">${escapeHtml(chk.badge)}</div>
+              <p class="text-[11px] text-[#5A5F6A] leading-snug">${escapeHtml(chk.detail)}</p>
+            </div>
+          `;
+        }).join('');
+      }
+      if (snapPreview) {
+        const snap = buildCurrentObdSnapshot(d || appState.current);
+        snapPreview.textContent = `OBD Snapshot to attach: ${snap.dtcCount} DTCs · ${snap.milOn ? 'MIL ON' : 'MIL OFF'} · Coolant ${snap.coolantC}°C · ${snap.voltV.toFixed(2)}V · Fuel ${snap.fuelPct.toFixed(1)}% · Health ${snap.healthScore}/100`;
+      }
+    }
+
+    function computeServiceIntervalStatus(cat, lastRec, currentOdoKm) {
+      const todayMs = Date.parse(todayIsoDate() + 'T00:00:00');
+      let nextKm = null;
+      let nextDate = '';
+
+      if (lastRec) {
+        if (lastRec.nextDueKm !== null && lastRec.nextDueKm !== undefined && lastRec.nextDueKm !== '') {
+          nextKm = Number(lastRec.nextDueKm);
+        } else if (lastRec.odometerKm !== null && lastRec.odometerKm !== undefined && cat.intervalKm) {
+          nextKm = Number(lastRec.odometerKm) + Number(cat.intervalKm);
+        }
+        if (lastRec.nextDueDate) {
+          nextDate = String(lastRec.nextDueDate);
+        } else if (lastRec.serviceDate && cat.intervalMonths) {
+          nextDate = addMonthsToIsoDate(lastRec.serviceDate, cat.intervalMonths);
+        }
+      }
+
+      if (!lastRec) {
+        return {
+          status: 'NO RECORD',
+          badgeCls: 'bg-white border-[#D4D6DC] text-[#5A5F6A]',
+          nextKm: null,
+          nextDate: '',
+          remLine: `Every ${cat.intervalKm ? cat.intervalKm.toLocaleString() + ' km / ' : ''}${cat.intervalMonths ? cat.intervalMonths + ' mo' : ''}`
+        };
+      }
+
+      let kmRem = (nextKm !== null && currentOdoKm !== null && currentOdoKm !== undefined)
+        ? (nextKm - Number(currentOdoKm))
+        : null;
+      let daysRem = null;
+      if (nextDate) {
+        const dueMs = Date.parse(nextDate + 'T00:00:00');
+        if (!Number.isNaN(dueMs) && !Number.isNaN(todayMs)) {
+          daysRem = Math.round((dueMs - todayMs) / 86400000);
+        }
+      }
+
+      const overdue = (kmRem !== null && kmRem <= 0) || (daysRem !== null && daysRem <= 0);
+      const dueSoon = !overdue && ((kmRem !== null && kmRem <= 1500) || (daysRem !== null && daysRem <= 30));
+
+      const status = overdue ? 'DUE NOW' : (dueSoon ? 'DUE SOON' : 'ON TRACK');
+      const badgeCls = overdue
+        ? 'bg-[#FEE2E2] border-[#FCA5A5] text-[#B91C1C]'
+        : (dueSoon
+            ? 'bg-[#FEF3C7] border-[#FDE68A] text-[#B45309]'
+            : 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]');
+
+      const remParts = [];
+      if (kmRem !== null) remParts.push(kmRem <= 0 ? `${Math.abs(Math.round(kmRem)).toLocaleString()} km overdue` : `${Math.round(kmRem).toLocaleString()} km left`);
+      else if (nextKm !== null) remParts.push(`Due ${Math.round(nextKm).toLocaleString()} km`);
+      if (daysRem !== null) remParts.push(daysRem <= 0 ? `${Math.abs(daysRem)}d overdue` : `${daysRem}d left`);
+      else if (nextDate) remParts.push(`Due ${nextDate}`);
+
+      return {
+        status,
+        badgeCls,
+        nextKm,
+        nextDate,
+        remLine: remParts.join(' · ') || 'Logged'
+      };
+    }
+
+    function renderServiceIntervalsUi(vin, meta, records) {
+      const grid = document.getElementById('svc-intervals-grid');
+      const summary = document.getElementById('svc-intervals-summary');
+      if (!grid) return;
+
+      const scheduledCats = SERVICE_CATEGORIES.filter(c => c.intervalKm !== null || c.intervalMonths !== null);
+      const currentOdoKm = meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null;
+      let dueCount = 0;
+
+      grid.innerHTML = scheduledCats.map(cat => {
+        const lastRec = (records || []).find(r => r.category === cat.id) || null;
+        const st = computeServiceIntervalStatus(cat, lastRec, currentOdoKm);
+        if (st.status === 'DUE NOW' || st.status === 'DUE SOON') dueCount++;
+        const lastLine = lastRec
+          ? `Last: ${escapeHtml(lastRec.serviceDate || '—')}${lastRec.odometerKm != null ? ' @ ' + formatNumberKm(lastRec.odometerKm) : ''}`
+          : 'Not yet logged for this VIN';
+        return `
+          <div class="acro-well rounded-2xl p-3 flex flex-col justify-between gap-2 min-w-0">
+            <div class="space-y-1">
+              <div class="flex items-start justify-between gap-1.5">
+                <strong class="text-[#222222] leading-snug">${escapeHtml(cat.label)}</strong>
+                <span class="px-2 py-0.5 rounded-full border font-mono-num font-bold text-[10px] shrink-0 ${st.badgeCls}">${escapeHtml(st.status)}</span>
+              </div>
+              <div class="text-[11px] text-[#5A5F6A] font-mono-num truncate">${lastLine}</div>
+              <div class="text-[11px] font-semibold text-[#222222] font-mono-num truncate">${escapeHtml(st.remLine)}</div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#E6E8EE]">
+              <span class="text-[10px] text-[#6B7280] font-mono-num truncate">${cat.intervalKm ? (cat.intervalKm / 1000) + 'k km' : 'Condition'}${cat.intervalMonths ? ' / ' + cat.intervalMonths + 'm' : ''}</span>
+              <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (summary) {
+        summary.textContent = dueCount > 0
+          ? `${scheduledCats.length} Tracked · ${dueCount} Due / Soon`
+          : `${scheduledCats.length} Service Items Tracked`;
+      }
+    }
+
+    function renderServiceRecordsListUi(vin, records) {
+      const listEl = document.getElementById('svc-records-list');
+      const countEl = document.getElementById('svc-record-count');
+      const subEl = document.getElementById('svc-history-subtitle');
+      if (countEl) countEl.textContent = `${records.length} record${records.length === 1 ? '' : 's'}`;
+      if (subEl) subEl.textContent = `Stored per VIN (${vin}) in IndexedDB + vehicle_history/${vin}/service_log.json`;
+      if (!listEl) return;
+
+      if (!records.length) {
+        listEl.innerHTML = `<div class="acro-well rounded-2xl p-4 text-[#5A5F6A]">No service or inspection entries stored for <strong>${escapeHtml(vin)}</strong> yet. Use the form or tap <strong>Capture Pre-Service OBD Snapshot</strong>.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = records.map(r => {
+        const snap = r.obdSnapshot || null;
+        const catDef = getServiceCategoryDef(r.category);
+        const snapPills = snap
+          ? `<div class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono-num pt-1">
+              <span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222]">OBD ${snap.healthScore ?? '--'}/100</span>
+              <span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222]">${snap.dtcCount ?? 0} DTCs</span>
+              <span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222]">${Number(snap.voltV || 0).toFixed(2)}V</span>
+              <span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222]">Cool ${Math.round(snap.coolantC || 0)}°C</span>
+              ${snap.catReadiness ? `<span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#5A5F6A]">Cat ${escapeHtml(snap.catReadiness)}</span>` : ''}
+            </div>`
+          : '';
+        const nextDueStr = (r.nextDueKm != null || r.nextDueDate)
+          ? `Next due: ${[r.nextDueKm != null ? formatNumberKm(r.nextDueKm) : '', r.nextDueDate || ''].filter(Boolean).join(' / ')}`
+          : '';
+        const metaRow = [
+          r.serviceDate || 'No date',
+          r.odometerKm != null ? formatNumberKm(r.odometerKm) : 'Odo N/A',
+          r.workshop || '',
+          r.cost || ''
+        ].filter(Boolean).join(' · ');
+
+        return `
+          <div class="acro-well rounded-2xl p-3 space-y-1.5">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] text-[10px] font-bold">${escapeHtml(r.categoryLabel || catDef.label)}</span>
+                  <span class="font-mono-num text-[11px] text-[#5A5F6A]">${escapeHtml(metaRow)}</span>
+                </div>
+                <div class="font-bold text-sm text-[#222222] mt-1">${escapeHtml(r.title || catDef.defaultTitle)}</div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="editServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold text-[11px] hover:bg-[#ECEEF2]">Edit</button>
+                <button type="button" onclick="deleteServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold text-[11px] hover:bg-[#FECACA]">Delete</button>
+              </div>
+            </div>
+            ${r.partsSpec ? `<div class="text-[11px] text-[#4A4E57]"><strong>Spec:</strong> ${escapeHtml(r.partsSpec)}</div>` : ''}
+            ${nextDueStr ? `<div class="text-[11px] font-mono-num text-[#1473E6] font-semibold">${escapeHtml(nextDueStr)}</div>` : ''}
+            ${r.notes ? `<p class="text-[11px] text-[#5A5F6A] leading-relaxed">${escapeHtml(r.notes)}</p>` : ''}
+            ${snapPills}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function buildServiceLogDocForVin(vin) {
+      const cleanVin = normalizeVinString(vin);
+      const veh = appState.vehicleRegistry[cleanVin] || (cleanVin === DEFAULT_VEHICLE_PROFILE.vin ? DEFAULT_VEHICLE_PROFILE : { vin: cleanVin });
+      const meta = await getServiceMetaForVin(cleanVin);
+      const records = await getServiceRecordsForVin(cleanVin);
+      return {
+        version: 1,
+        vin: cleanVin,
+        vehicleLabel: veh.label || `Vehicle ${cleanVin}`,
+        updatedAt: new Date().toISOString(),
+        latestOdometerKm: meta.latestOdometerKm ?? null,
+        records
+      };
+    }
+
+    async function persistServiceLogToProjectFolder(vin, opts = {}) {
+      const cleanVin = normalizeVinString(vin || getServiceSelectedVin());
+      const doc = await buildServiceLogDocForVin(cleanVin);
+      let writtenDest = '';
+
+      // 1. Linked Project Folder
+      if (appState.projectFolderHandle) {
+        const granted = await ensureDirHandlePermission(appState.projectFolderHandle, Boolean(opts.interactive));
+        if (granted) {
+          try {
+            const histRoot = await resolveVehicleHistoryDirHandle(appState.projectFolderHandle, true);
+            const vinDir = await histRoot.getDirectoryHandle(cleanVin, { create: true });
+            await writeJsonToDirHandle(vinDir, 'service_log.json', doc);
+            const allVehicles = await getAllStoredVehicles();
+            const allSessions = await getAllStoredSessions();
+            const idxPayload = await buildVehiclesIndexPayload(allVehicles, allSessions);
+            await writeJsonToDirHandle(histRoot, 'vehicles_index.json', idxPayload);
+            writtenDest = `${appState.projectFolderName || 'folder'}/vehicle_history/${cleanVin}/service_log.json`;
+          } catch (err) {
+            if (!opts.quiet) logTerminal(`[SERVICE LOG] Linked folder write note: ${err.message}`, 'text-[#B45309]');
+          }
+        }
+      }
+
+      // 2. Local Windows Bridge
+      if (appState.bridgeAutoSync) {
+        try {
+          const res = await fetch(getBridgeBaseUrl() + '/api/save-service', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(doc)
+          });
+          if (res.ok) {
+            writtenDest = writtenDest ? `${writtenDest} + Bridge` : `Bridge vehicle_history/${cleanVin}/service_log.json`;
+          }
+        } catch (_) {}
+      }
+
+      // 3. Optional Firebase RTDB mirror if configured and online
+      const cfg = getCloudEndpointConfig();
+      if (isCloudEndpointConfigured(cfg) && cfg.prov === 'firebase' && updateNetworkBadgeUi()) {
+        try {
+          const paths = buildFirebasePaths({ ...cfg, channel: cleanVin });
+          if (paths.serviceLogUrl) {
+            fetch(paths.serviceLogUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(doc)
+            }).catch(() => {});
+          }
+        } catch (_) {}
+      }
+
+      const badge = document.getElementById('svc-sync-badge');
+      if (badge) {
+        badge.textContent = writtenDest
+          ? `SYNCED · vehicle_history/${cleanVin}/service_log.json`
+          : `vehicle_history/${cleanVin}/service_log.json`;
+      }
+      if (writtenDest && !opts.quiet) {
+        logTerminal(`[SERVICE LOG] Saved ${doc.records.length} record(s) for ${cleanVin} → ${writtenDest}`, 'text-[#047857] font-semibold');
+      }
+      return writtenDest;
+    }
+
+    async function ingestExternalServiceDoc(cleanVin, extDoc) {
+      if (!extDoc || !cleanVin) return;
+      const meta = await getServiceMetaForVin(cleanVin);
+      const deletedSet = new Set(meta.deletedIds || []);
+      let metaChanged = false;
+
+      if (extDoc.latestOdometerKm !== null && extDoc.latestOdometerKm !== undefined && meta.latestOdometerKm === null) {
+        meta.latestOdometerKm = Math.round(Number(extDoc.latestOdometerKm));
+        metaChanged = true;
+      }
+      if (metaChanged) await saveServiceMetaForVin(meta);
+
+      const localRecs = await getServiceRecordsForVin(cleanVin);
+      const localMap = new Map(localRecs.map(r => [r.id, r]));
+      const extRecs = Array.isArray(extDoc.records) ? extDoc.records : [];
+      for (const r of extRecs) {
+        if (!r || !r.id || deletedSet.has(r.id)) continue;
+        const prev = localMap.get(r.id);
+        if (!prev || String(r.updatedAt || '').localeCompare(String(prev.updatedAt || '')) > 0) {
+          await putServiceRecordInDb({ ...r, vin: cleanVin });
+        }
+      }
+    }
+
+    async function loadServiceLogsFromProjectSources() {
+      const vehicles = await getAllStoredVehicles();
+      const vinSet = new Set(vehicles.map(v => v.vin).filter(Boolean));
+      vinSet.add(getActiveVin());
+
+      for (const vin of vinSet) {
+        let extDoc = null;
+        if (appState.projectFolderHandle) {
+          try {
+            const histDir = await resolveVehicleHistoryDirHandle(appState.projectFolderHandle, false);
+            if (histDir) {
+              const vinDir = await histDir.getDirectoryHandle(vin, { create: false });
+              extDoc = await readJsonFromDirHandle(vinDir, 'service_log.json');
+            }
+          } catch (_) {}
+        }
+        if (!extDoc && typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
+          try {
+            const res = await fetch(`./vehicle_history/${encodeURIComponent(vin)}/service_log.json`, { cache: 'no-store' });
+            if (res.ok) extDoc = await res.json();
+          } catch (_) {}
+        }
+        if (!extDoc && appState.bridgeAutoSync) {
+          try {
+            const res = await fetch(`${getBridgeBaseUrl()}/api/service-log?vin=${encodeURIComponent(vin)}`, { cache: 'no-store' });
+            if (res.ok) extDoc = await res.json();
+          } catch (_) {}
+        }
+        if (extDoc) await ingestExternalServiceDoc(vin, extDoc);
+      }
+    }
+
+    async function refreshServiceTab() {
+      const vehicles = await getAllStoredVehicles();
+      const activeVin = getActiveVin();
+      if (!serviceState.selectedVin || !vehicles.some(v => v.vin === serviceState.selectedVin)) {
+        serviceState.selectedVin = activeVin;
+      }
+      const vin = getServiceSelectedVin();
+      const veh = appState.vehicleRegistry[vin] || (vin === DEFAULT_VEHICLE_PROFILE.vin ? DEFAULT_VEHICLE_PROFILE : { vin });
+
+      const sel = document.getElementById('svc-vin-select');
+      if (sel && document.activeElement !== sel) {
+        const list = vehicles.length ? vehicles : [veh];
+        sel.innerHTML = list.map(v => {
+          const lbl = `${v.vin} · ${v.label || 'Vehicle'}`;
+          return `<option value="${escapeHtml(v.vin)}">${escapeHtml(lbl)}</option>`;
+        }).join('');
+        sel.value = vin;
+      }
+
+      const specVin = document.getElementById('svc-spec-vin');
+      const specEng = document.getElementById('svc-spec-engine');
+      const specPart = document.getElementById('svc-spec-part');
+      const specHw = document.getElementById('svc-spec-hw');
+      const specCalid = document.getElementById('svc-spec-calid');
+      const specIgn = document.getElementById('svc-spec-ign');
+
+      if (specVin) specVin.textContent = vin;
+      if (specEng) specEng.textContent = [veh.label, veh.engine].filter(Boolean).join(' · ') || 'OBD-II Powertrain';
+      if (specPart) specPart.textContent = [veh.partNumber || '—', veh.softwareVersion ? `SW ${veh.softwareVersion}` : ''].filter(Boolean).join(' · ');
+      if (specHw) specHw.textContent = [veh.hardwarePart || '—', veh.hardwareVersion || ''].filter(Boolean).join(' · ');
+      if (specCalid) specCalid.textContent = [veh.calid || '—', veh.cvn || ''].filter(Boolean).join(' · ');
+
+      const ignCntr = (IUMPR_COUNTERS.find(c => c.id === 'IGNCNTR')?.val) ?? 15312;
+      const obdCond = (IUMPR_COUNTERS.find(c => c.id === 'OBDCOND')?.val) ?? 5134;
+      if (specIgn) specIgn.textContent = `${ignCntr.toLocaleString()} Ign · ${obdCond.toLocaleString()} OBD Cond`;
+
+      const meta = await getServiceMetaForVin(vin);
+      const records = await getServiceRecordsForVin(vin);
+
+      const odoBadge = document.getElementById('svc-odo-badge');
+      if (odoBadge) {
+        odoBadge.textContent = meta.latestOdometerKm != null
+          ? `Odometer: ${formatNumberKm(meta.latestOdometerKm)}`
+          : 'Odometer: Not Set';
+      }
+      const odoInput = document.getElementById('svc-current-odo');
+      if (odoInput && document.activeElement !== odoInput) {
+        odoInput.value = meta.latestOdometerKm != null ? String(meta.latestOdometerKm) : '';
+      }
+
+      const syncBadge = document.getElementById('svc-sync-badge');
+      if (syncBadge) {
+        syncBadge.textContent = (appState.projectFolderHandle || appState.bridgeAutoSync)
+          ? `SYNCED · vehicle_history/${vin}/service_log.json`
+          : `vehicle_history/${vin}/service_log.json`;
+      }
+
+      // Initialize default form fields only when form is fresh and user is not typing in #tab-service
+      const editId = document.getElementById('svc-edit-id')?.value || '';
+      const activeEl = document.activeElement;
+      const isEditingInService = Boolean(activeEl && activeEl.closest && activeEl.closest('#tab-service'));
+      if (!editId && !isEditingInService) {
+        const dateEl = document.getElementById('svc-date');
+        if (dateEl && !dateEl.value) dateEl.value = todayIsoDate();
+        const formOdo = document.getElementById('svc-odometer');
+        if (formOdo && !formOdo.value && meta.latestOdometerKm != null) formOdo.value = String(meta.latestOdometerKm);
+        const catEl = document.getElementById('svc-category');
+        if (catEl && document.getElementById('svc-title') && !document.getElementById('svc-title').value) {
+          onServiceCategoryChange(catEl.value, true);
+        }
+      }
+
+      updateServiceHealthAndSnapshotUi(appState.current, true);
+      renderServiceIntervalsUi(vin, meta, records);
+      renderServiceRecordsListUi(vin, records);
+    }
+
+    async function onServiceVinSelect(vin) {
+      if (!vin) return;
+      serviceState.selectedVin = normalizeVinString(vin);
+      cancelServiceEdit(true);
+      await refreshServiceTab();
+    }
+
+    function onServiceCategoryChange(catId, onlyIfEmpty) {
+      const cat = getServiceCategoryDef(catId);
+      const editId = document.getElementById('svc-edit-id')?.value || '';
+      if (editId && onlyIfEmpty) return;
+
+      const titleEl = document.getElementById('svc-title');
+      const partsEl = document.getElementById('svc-parts');
+      const dateEl = document.getElementById('svc-date');
+      const odoEl = document.getElementById('svc-odometer');
+      const nextKmEl = document.getElementById('svc-next-km');
+      const nextDateEl = document.getElementById('svc-next-date');
+
+      if (dateEl && !dateEl.value) dateEl.value = todayIsoDate();
+      if (titleEl && (!onlyIfEmpty || !titleEl.value)) titleEl.value = cat.defaultTitle || cat.label;
+      if (partsEl && (!onlyIfEmpty || !partsEl.value)) partsEl.value = cat.defaultParts || '';
+
+      if (!editId) {
+        const odoVal = odoEl && odoEl.value ? Number(odoEl.value) : null;
+        if (nextKmEl) {
+          nextKmEl.value = (cat.intervalKm && odoVal !== null && !Number.isNaN(odoVal))
+            ? String(Math.round(odoVal + cat.intervalKm))
+            : '';
+        }
+        if (nextDateEl) {
+          nextDateEl.value = (cat.intervalMonths && dateEl && dateEl.value)
+            ? addMonthsToIsoDate(dateEl.value, cat.intervalMonths)
+            : '';
+        }
+      }
+    }
+
+    async function prefillServiceCategory(catId) {
+      cancelServiceEdit(true);
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      const catEl = document.getElementById('svc-category');
+      const dateEl = document.getElementById('svc-date');
+      const odoEl = document.getElementById('svc-odometer');
+      if (catEl) catEl.value = catId;
+      if (dateEl) dateEl.value = todayIsoDate();
+      if (odoEl) odoEl.value = meta.latestOdometerKm != null ? String(meta.latestOdometerKm) : '';
+      onServiceCategoryChange(catId, false);
+      const titleEl = document.getElementById('svc-title');
+      if (titleEl) {
+        titleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        titleEl.focus();
+      }
+    }
+
+    async function updateVehicleOdometerFromInput() {
+      const vin = getServiceSelectedVin();
+      const inp = document.getElementById('svc-current-odo');
+      const raw = (inp?.value || '').trim();
+      const parsed = Number(raw);
+      if (!raw || Number.isNaN(parsed) || parsed < 0) {
+        logTerminal('[SERVICE LOG] Enter a valid non-negative odometer value in km.', 'text-[#B45309]');
+        inp?.focus();
+        return;
+      }
+      const odoKm = Math.round(parsed);
+      const meta = await getServiceMetaForVin(vin);
+      meta.latestOdometerKm = odoKm;
+      await saveServiceMetaForVin(meta);
+      const formOdo = document.getElementById('svc-odometer');
+      if (formOdo && !formOdo.value) formOdo.value = String(odoKm);
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      await refreshServiceTab();
+      logTerminal(`[SERVICE LOG] Updated cluster odometer for ${vin} → ${odoKm.toLocaleString()} km.`, 'text-[#047857] font-semibold');
+    }
+
+    async function capturePreServiceSnapshotRecord() {
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      const snap = buildCurrentObdSnapshot(appState.current);
+      const nowIso = new Date().toISOString();
+      const dateStr = todayIsoDate();
+      const id = 'svc_' + Date.now() + '_obd';
+      const veh = appState.vehicleRegistry[vin] || DEFAULT_VEHICLE_PROFILE;
+      const specSummary = [
+        veh.partNumber ? `ECU ${veh.partNumber}` : '',
+        veh.softwareVersion ? `SW ${veh.softwareVersion}` : '',
+        veh.hardwarePart ? `HW ${veh.hardwarePart}` : '',
+        veh.engine || ''
+      ].filter(Boolean).join(' · ');
+
+      const rec = {
+        id,
+        vin,
+        category: 'inspection_baseline',
+        categoryLabel: 'Pre-Service OBD-II Inspection',
+        title: `Pre-Service OBD-II Health Snapshot (${snap.healthScore}/100)`,
+        serviceDate: dateStr,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        odometerKm: meta.latestOdometerKm ?? null,
+        nextDueKm: null,
+        nextDueDate: '',
+        partsSpec: specSummary || 'Read-only Mode 01/03/06/07/09/0A & UDS verification',
+        workshop: 'PulseOBD Automated Read-Only Health Check',
+        cost: '',
+        notes: `${snap.dtcCount} DTCs (${snap.milOn ? 'MIL ON' : 'MIL OFF'}) · ${snap.voltV.toFixed(2)}V · Coolant ${snap.coolantC}°C · STFT ${snap.stftPct >= 0 ? '+' : ''}${snap.stftPct.toFixed(2)}% / LTFT ${snap.ltftPct >= 0 ? '+' : ''}${snap.ltftPct.toFixed(2)}% · Cat ${snap.catReadiness} · IGNCNTR ${snap.ignCntr.toLocaleString()}.`,
+        obdSnapshot: snap
+      };
+      await putServiceRecordInDb(rec);
+      await persistServiceLogToProjectFolder(vin, { quiet: false });
+      await refreshServiceTab();
+      logTerminal(`[SERVICE LOG] Captured pre-service OBD snapshot (${snap.healthScore}/100) for ${vin}.`, 'text-[#047857] font-semibold');
+    }
+
+    async function saveServiceRecordFromForm() {
+      const vin = getServiceSelectedVin();
+      const editId = (document.getElementById('svc-edit-id')?.value || '').trim();
+      const catId = document.getElementById('svc-category')?.value || 'oil_filter';
+      const cat = getServiceCategoryDef(catId);
+      const titleRaw = (document.getElementById('svc-title')?.value || '').trim();
+      const dateRaw = (document.getElementById('svc-date')?.value || '').trim() || todayIsoDate();
+      const odoRaw = (document.getElementById('svc-odometer')?.value || '').trim();
+      const nextKmRaw = (document.getElementById('svc-next-km')?.value || '').trim();
+      const nextDateRaw = (document.getElementById('svc-next-date')?.value || '').trim();
+      const partsRaw = (document.getElementById('svc-parts')?.value || '').trim();
+      const workshopRaw = (document.getElementById('svc-workshop')?.value || '').trim();
+      const costRaw = (document.getElementById('svc-cost')?.value || '').trim();
+      const notesRaw = (document.getElementById('svc-notes')?.value || '').trim();
+
+      const odoVal = (odoRaw !== '' && !Number.isNaN(Number(odoRaw)) && Number(odoRaw) >= 0)
+        ? Math.round(Number(odoRaw))
+        : null;
+      let nextKmVal = (nextKmRaw !== '' && !Number.isNaN(Number(nextKmRaw)) && Number(nextKmRaw) >= 0)
+        ? Math.round(Number(nextKmRaw))
+        : null;
+      if (nextKmVal === null && odoVal !== null && cat.intervalKm) {
+        nextKmVal = odoVal + cat.intervalKm;
+      }
+      let nextDateVal = nextDateRaw;
+      if (!nextDateVal && dateRaw && cat.intervalMonths) {
+        nextDateVal = addMonthsToIsoDate(dateRaw, cat.intervalMonths);
+      }
+
+      const existing = editId ? (await getServiceRecordsForVin(vin)).find(r => r.id === editId) : null;
+      const nowIso = new Date().toISOString();
+
+      const rec = {
+        id: existing ? existing.id : ('svc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+        vin,
+        category: cat.id,
+        categoryLabel: cat.label,
+        title: titleRaw || cat.defaultTitle || cat.label,
+        serviceDate: dateRaw,
+        createdAt: existing ? (existing.createdAt || nowIso) : nowIso,
+        updatedAt: nowIso,
+        odometerKm: odoVal,
+        nextDueKm: nextKmVal,
+        nextDueDate: nextDateVal || '',
+        partsSpec: partsRaw || cat.defaultParts || '',
+        workshop: workshopRaw,
+        cost: costRaw,
+        notes: notesRaw,
+        obdSnapshot: (existing && existing.obdSnapshot) ? existing.obdSnapshot : buildCurrentObdSnapshot(appState.current)
+      };
+
+      await putServiceRecordInDb(rec);
+
+      const meta = await getServiceMetaForVin(vin);
+      if (odoVal !== null && (meta.latestOdometerKm == null || odoVal >= meta.latestOdometerKm)) {
+        meta.latestOdometerKm = odoVal;
+        await saveServiceMetaForVin(meta);
+      }
+
+      await persistServiceLogToProjectFolder(vin, { quiet: false });
+      cancelServiceEdit(true);
+      await refreshServiceTab();
+      logTerminal(`[SERVICE LOG] ${existing ? 'Updated' : 'Saved'} "${rec.title}" for ${vin}.`, 'text-[#047857] font-semibold');
+    }
+
+    async function editServiceRecord(recordId) {
+      const vin = getServiceSelectedVin();
+      const records = await getServiceRecordsForVin(vin);
+      const rec = records.find(r => r.id === recordId);
+      if (!rec) return;
+
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+      setVal('svc-edit-id', rec.id);
+      setVal('svc-category', rec.category || 'custom_repair');
+      setVal('svc-title', rec.title || '');
+      setVal('svc-date', rec.serviceDate || todayIsoDate());
+      setVal('svc-odometer', rec.odometerKm != null ? String(rec.odometerKm) : '');
+      setVal('svc-next-km', rec.nextDueKm != null ? String(rec.nextDueKm) : '');
+      setVal('svc-next-date', rec.nextDueDate || '');
+      setVal('svc-parts', rec.partsSpec || '');
+      setVal('svc-workshop', rec.workshop || '');
+      setVal('svc-cost', rec.cost || '');
+      setVal('svc-notes', rec.notes || '');
+
+      const heading = document.getElementById('svc-form-heading');
+      if (heading) heading.textContent = 'Edit Service / Maintenance Entry';
+      const saveBtn = document.getElementById('svc-save-btn');
+      if (saveBtn) saveBtn.textContent = 'Update Service Entry';
+      const cancelBtn = document.getElementById('svc-cancel-edit-btn');
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+      document.getElementById('svc-title')?.focus();
+    }
+
+    function cancelServiceEdit(skipRefresh) {
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+      setVal('svc-edit-id', '');
+      setVal('svc-title', '');
+      setVal('svc-date', todayIsoDate());
+      setVal('svc-odometer', '');
+      setVal('svc-next-km', '');
+      setVal('svc-next-date', '');
+      setVal('svc-parts', '');
+      setVal('svc-workshop', '');
+      setVal('svc-cost', '');
+      setVal('svc-notes', '');
+
+      const heading = document.getElementById('svc-form-heading');
+      if (heading) heading.textContent = 'Log Service / Maintenance Entry';
+      const saveBtn = document.getElementById('svc-save-btn');
+      if (saveBtn) saveBtn.textContent = 'Save Service Entry';
+      const cancelBtn = document.getElementById('svc-cancel-edit-btn');
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+
+      if (!skipRefresh) refreshServiceTab();
+    }
+
+    async function deleteServiceRecord(recordId) {
+      const vin = getServiceSelectedVin();
+      await deleteServiceRecordFromDb(vin, recordId);
+      if ((document.getElementById('svc-edit-id')?.value || '') === recordId) {
+        cancelServiceEdit(true);
+      }
+      await persistServiceLogToProjectFolder(vin, { quiet: false });
+      await refreshServiceTab();
+      logTerminal(`[SERVICE LOG] Deleted service entry ${recordId} for ${vin}.`, 'text-[#B45309]');
+    }
+
+    async function saveServiceLogNow(manual) {
+      const vin = getServiceSelectedVin();
+      const dest = await persistServiceLogToProjectFolder(vin, { quiet: false, interactive: Boolean(manual) });
+      if (!dest && manual) {
+        logTerminal('[SERVICE LOG] Saved in local IndexedDB. Link Project Folder or run Windows Bridge to write vehicle_history/<VIN>/service_log.json to disk.', 'text-[#1473E6] font-semibold');
+      }
+    }
+
+    async function copyPartsAndEcuSpec() {
+      const vin = getServiceSelectedVin();
+      const veh = appState.vehicleRegistry[vin] || DEFAULT_VEHICLE_PROFILE;
+      const meta = await getServiceMetaForVin(vin);
+      const lines = [
+        `PulseOBD Parts & ECU Passport`,
+        `VIN (0902 / 22F190): ${vin}`,
+        `Vehicle / Engine (22F197): ${[veh.label, veh.engine].filter(Boolean).join(' · ') || 'OBD-II Powertrain'}`,
+        `ECU Spare Part (22F187/89): ${veh.partNumber || '—'}${veh.softwareVersion ? ' SW ' + veh.softwareVersion : ''}`,
+        `ECU Hardware (22F191/A3): ${[veh.hardwarePart || '—', veh.hardwareVersion || ''].filter(Boolean).join(' ')}`,
+        `CALID / CVN (0904/06): ${[veh.calid || '—', veh.cvn || ''].filter(Boolean).join(' / ')}`,
+        `Cluster Odometer: ${meta.latestOdometerKm != null ? formatNumberKm(meta.latestOdometerKm) : 'Not Set'}`
+      ].join('\n');
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lines).catch(() => {});
+      }
+      const btn = document.getElementById('btn-copy-parts-spec');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied ECU & Parts Spec ✓';
+        setTimeout(() => { btn.textContent = orig; }, 2200);
+      }
+      logTerminal(`[SERVICE LOG] Copied Parts & ECU spec for VIN ${vin}.`, 'text-[#1473E6] font-semibold');
+    }
+
+    async function exportServiceReportJson() {
+      const vin = getServiceSelectedVin();
+      const doc = await buildServiceLogDocForVin(vin);
+      const veh = appState.vehicleRegistry[vin] || DEFAULT_VEHICLE_PROFILE;
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        readOnlyEnforced: true,
+        vehicle: veh,
+        latestHealthCheck: evaluateVehicleServiceHealth(appState.current, veh),
+        ...doc
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pulseobd_${vin}_service_log.json`;
+      a.click();
+      logTerminal(`[EXPORT] Exported pulseobd_${vin}_service_log.json (${doc.records.length} record(s)).`, 'text-[#047857]');
+    }
+
+    async function exportServiceHistoryCsv() {
+      const vin = getServiceSelectedVin();
+      const doc = await buildServiceLogDocForVin(vin);
+      const qCsv = (v) => `"${String(v === null || v === undefined ? '' : v).replace(/"/g, '""')}"`;
+      const headers = [
+        'id,vin,category,title,service_date,odometer_km,next_due_km,next_due_date,parts_spec,workshop,cost,notes,obd_health_score,obd_dtc_count,obd_volt_v,obd_coolant_c'
+      ];
+      const rows = (doc.records || []).map(r => {
+        const s = r.obdSnapshot || {};
+        return [
+          qCsv(r.id),
+          qCsv(r.vin || vin),
+          qCsv(r.categoryLabel || r.category),
+          qCsv(r.title),
+          qCsv(r.serviceDate),
+          r.odometerKm != null ? r.odometerKm : '',
+          r.nextDueKm != null ? r.nextDueKm : '',
+          qCsv(r.nextDueDate),
+          qCsv(r.partsSpec),
+          qCsv(r.workshop),
+          qCsv(r.cost),
+          qCsv(r.notes),
+          s.healthScore != null ? s.healthScore : '',
+          s.dtcCount != null ? s.dtcCount : '',
+          s.voltV != null ? s.voltV : '',
+          s.coolantC != null ? s.coolantC : ''
+        ].join(',');
+      });
+      const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pulseobd_${vin}_service_history.csv`;
+      a.click();
+      logTerminal(`[EXPORT] Exported pulseobd_${vin}_service_history.csv (${doc.records.length} row(s)).`, 'text-[#047857]');
     }
 
     function commitLiveFrame() {
@@ -6859,7 +8623,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
           vin: data.vin || data.vehicle?.vin,
           lastSeenAt: new Date().toISOString()
         }, { activate: true, refreshUi: false });
-        if (resolved.vin !== prevVin) renderAllVariablesTable();
+        if (resolved.vin !== prevVin) {
+          renderAllVariablesTable();
+          if (appState.activeTab === 'service' && typeof refreshServiceTab === 'function') {
+            refreshServiceTab();
+          }
+        }
       }
       const merged = { ...appState.current, ...data };
       const derived = computeDerivedMetrics(merged);
@@ -7395,7 +9164,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (srcParam && ['snap1', 'snap2', 'parked_off', 'sim_city', 'sim_highway', 'sim_boost'].includes(srcParam)) {
           changeDataSource(srcParam);
         }
-        if (tabParam && ['cockpit', 'graphs', 'history', 'infographics', 'passport', 'cloud', 'bluetooth'].includes(tabParam)) {
+        if (tabParam && ['cockpit', 'graphs', 'history', 'infographics', 'service', 'passport', 'cloud', 'bluetooth'].includes(tabParam)) {
           switchTab(tabParam);
         }
         if (params.get('cloud') === 'watch') {
@@ -7437,6 +9206,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         renderAllVariablesTable();
         refreshPassiveSessionsUi();
         refreshHistoryTab();
+        if (typeof refreshServiceTab === 'function') refreshServiceTab();
         evaluateAutoCloudConnection('startup');
       })
       .catch(() => {});

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "vin": "AAVZZZ6RZHU112564",
+  "vehicleLabel": "VW Polo 1.2L TSI (R4 1.2l TFS)",
+  "updatedAt": "2026-11-16T17:14:08.0506401+02:00",
+  "latestOdometerKm": null,
+  "records": [
+    {
+      "id": "svc_2026-11-16_baseline_obd",
+      "vin": "AAVZZZ6RZHU112564",
+      "category": "inspection_baseline",
+      "categoryLabel": "Pre-Service OBD-II Inspection",
+      "title": "Baseline Read-Only OBD-II Pre-Service Check",
+      "serviceDate": "2026-11-16",
+      "createdAt": "2026-11-16T17:14:08.0506401+02:00",
+      "updatedAt": "2026-11-16T17:14:08.0506401+02:00",
+      "odometerKm": null,
+      "nextDueKm": null,
+      "nextDueDate": "",
+      "partsSpec": "ECU 04E906027LH (SW 3997) · HW 04E907309AF H24 · Engine R4 1.2l TFS",
+      "workshop": "PulseOBD Read-Only Capture (COM3)",
+      "cost": "",
+      "notes": "Baseline from 16:43 & 17:10 captures: 0 DTCs (MIL OFF), 18/18 Mode 06 tests pass, IGNCNTR 15,312, OBDCOND 5,134, O2 heater 324/332 mOhm, EWMA misfires 4/3/5/5, Catalyst B1 Incomplete, fuel 6.3%-8.2%. Enter cluster odometer km before scheduling next service.",
+      "obdSnapshot": {
+        "capturedAt": "2026-11-16T17:10:07+02:00",
+        "source": "COM3 · ELM327 v2.1 (Follow-up + Mode 06/UDS)",
+        "rpm": 771,
+        "coolantC": 87,
+        "voltV": 13.499,
+        "fuelPct": 6.3,
+        "stftPct": -2.34,
+        "ltftPct": 1.56,
+        "dtcCount": 0,
+        "milOn": false,
+        "ignCntr": 15312,
+        "obdCond": 5134,
+        "distSinceClearKm": 65535,
+        "warmupsSinceClear": 255,
+        "misfireEwmaMax": 5,
+        "o2HeaterB1S1Mohm": 324,
+        "o2HeaterB1S2Mohm": 332,
+        "catReadiness": "Incomplete",
+        "healthScore": 91
+      }
+    }
+  ]
+}
