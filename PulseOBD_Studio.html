@@ -91,7 +91,97 @@ Check your Browserslist config to be sure that your targets are set up correctly
  */
 /*! https://mths.be/cssesc v3.0.0 by @mathias */
 </script>
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('pulseobd_theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var resolved = (saved === 'dark' || saved === 'light') ? saved : (prefersDark ? 'dark' : 'light');
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(resolved);
+      } catch (_) {
+        document.documentElement.classList.add('light');
+      }
+    })();
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Geist Variable"', 'Geist', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+            mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          },
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            'card-foreground': 'var(--card-foreground)',
+            primary: 'var(--primary)',
+            'primary-foreground': 'var(--primary-foreground)',
+            secondary: 'var(--secondary)',
+            'secondary-foreground': 'var(--secondary-foreground)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+            accent: 'var(--accent)',
+            'accent-foreground': 'var(--accent-foreground)',
+            destructive: 'var(--destructive)',
+            border: 'var(--border)',
+            input: 'var(--input)',
+            ring: 'var(--ring)'
+          }
+        }
+      }
+    };
+  </script>
   <style>
+    :root {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.145 0 0);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.145 0 0);
+      --primary: oklch(0.205 0 0);
+      --primary-foreground: oklch(0.985 0 0);
+      --secondary: oklch(0.97 0 0);
+      --secondary-foreground: oklch(0.205 0 0);
+      --muted: oklch(0.97 0 0);
+      --muted-foreground: oklch(0.556 0 0);
+      --accent: oklch(0.97 0 0);
+      --accent-foreground: oklch(0.205 0 0);
+      --destructive: oklch(0.577 0.245 27.325);
+      --border: oklch(0.922 0 0);
+      --input: oklch(0.922 0 0);
+      --ring: oklch(0.708 0 0);
+      --radius: 0.625rem;
+      --gauge-track: oklch(0.922 0 0);
+      --ring-track-ok: #D1FAE5;
+      --ring-track-info: #DBEAFE;
+      --ring-track-warn: #FEF3C7;
+      color-scheme: light;
+    }
+    html.dark {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.205 0 0);
+      --card-foreground: oklch(0.985 0 0);
+      --primary: oklch(0.922 0 0);
+      --primary-foreground: oklch(0.205 0 0);
+      --secondary: oklch(0.269 0 0);
+      --secondary-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --accent: oklch(0.269 0 0);
+      --accent-foreground: oklch(0.985 0 0);
+      --destructive: oklch(0.704 0.191 22.216);
+      --border: rgba(255, 255, 255, 0.12);
+      --input: rgba(255, 255, 255, 0.16);
+      --ring: oklch(0.556 0 0);
+      --gauge-track: rgba(255, 255, 255, 0.12);
+      --ring-track-ok: rgba(16, 185, 129, 0.20);
+      --ring-track-info: rgba(59, 130, 246, 0.22);
+      --ring-track-warn: rgba(245, 158, 11, 0.22);
+      color-scheme: dark;
+    }
     html {
       scrollbar-gutter: stable;
       overflow-x: clip;
@@ -99,9 +189,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
     }
     body {
       overflow-x: clip;
-      font-family: "Adobe Clean", "Source Sans 3", "Source Sans Pro", "Myriad Pro", "Segoe UI Variable", "Segoe UI", "DejaVu Sans", "Liberation Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #FFFFFF;
-      color: #222222;
+      font-family: "Geist Variable", Geist, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -114,24 +204,32 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
     .font-mono-num {
-      font-family: "Adobe Clean", "Source Sans 3", "Source Sans Pro", "Segoe UI", ui-monospace, SFMono-Regular, monospace;
+      font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
     }
     .tabular { font-variant-numeric: tabular-nums; }
     .acro-glass {
-      background-color: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      background-color: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    html.dark .acro-glass {
+      background-color: rgba(24, 24, 27, 0.88);
     }
     .acro-card {
-      background-color: #FFFFFF;
-      border: 1px solid #E6E8EE;
-      box-shadow: 0 2px 14px rgba(20, 24, 38, 0.035);
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    html.dark .acro-card {
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
     }
     .acro-well {
-      background-color: #F7F8FA;
-      border: 1px solid #ECEEF2;
+      background-color: var(--muted);
+      color: var(--foreground);
+      border: 1px solid var(--border);
     }
     /* Immutable shortened graph box — identical fixed height on mobile & web */
     .telemetry-chart-box {
@@ -162,33 +260,58 @@ Check your Browserslist config to be sure that your targets are set up correctly
       text-overflow: ellipsis;
     }
     .acro-pill-primary {
-      background-color: #222222;
-      color: #FFFFFF;
-      border-radius: 9999px;
-      font-weight: 600;
-      transition: background-color 0.15s ease;
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      transition: opacity 0.15s ease, background-color 0.15s ease;
     }
-    .acro-pill-primary:hover { background-color: #111111; }
+    .acro-pill-primary:hover { opacity: 0.88; }
     .acro-pill-secondary {
-      background-color: #FFFFFF;
-      color: #222222;
-      border: 1px solid #D4D6DC;
-      border-radius: 9999px;
-      font-weight: 600;
+      background-color: var(--background);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-weight: 500;
       transition: background-color 0.15s ease, border-color 0.15s ease;
     }
-    .acro-pill-secondary:hover { background-color: #F7F8FA; border-color: #B4B8C2; }
+    .acro-pill-secondary:hover { background-color: var(--muted); }
+    html.dark .acro-pill-secondary {
+      background-color: rgba(255, 255, 255, 0.04);
+      border-color: var(--input);
+    }
+    html.dark .acro-pill-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.09);
+    }
+    .nova-tab-active {
+      background-color: var(--background);
+      color: var(--foreground);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border);
+    }
+    html.dark .nova-tab-active {
+      background-color: var(--card);
+      border-color: var(--input);
+    }
+    .nova-tab-idle {
+      color: var(--muted-foreground);
+      border: 1px solid transparent;
+    }
+    .nova-tab-idle:hover {
+      color: var(--foreground);
+    }
     .gauge-arc {
       transition: stroke-dashoffset 0.2s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.25s ease;
     }
     .phone-frame-wrapper {
       max-width: 430px;
       margin: 1.25rem auto;
-      border-radius: 46px;
-      border: 10px solid #D5D8E0;
-      box-shadow: 0 25px 70px -15px rgba(20, 24, 38, 0.22);
+      border-radius: 40px;
+      border: 10px solid var(--border);
+      box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.28);
       overflow: hidden;
-      background-color: #FFFFFF;
+      background-color: var(--background);
     }
     #app-shell.phone-frame-wrapper {
       padding-bottom: 0 !important;
@@ -230,14 +353,181 @@ Check your Browserslist config to be sure that your targets are set up correctly
     #app-shell.phone-frame-wrapper .sm\:flex-nowrap {
       flex-wrap: wrap !important;
     }
+    #app-shell.phone-frame-wrapper .sm\:flex-row,
+    #app-shell.phone-frame-wrapper .md\:flex-row,
+    #app-shell.phone-frame-wrapper .lg\:flex-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    #app-shell.phone-frame-wrapper .lg\:truncate {
+      overflow: visible !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+    }
+    #app-shell.phone-frame-wrapper .sm\:self-auto {
+      align-self: flex-start !important;
+    }
     #app-shell.phone-frame-wrapper select,
     #app-shell.phone-frame-wrapper input {
       min-width: 0 !important;
       max-width: 100% !important;
     }
+    /* Semantic shadcn/ui base-nova Dark Mode adaptation for static and JS-rendered panels */
+    html.dark body,
+    html.dark #app-shell,
+    html.dark main {
+      background-color: var(--background) !important;
+      color: var(--foreground) !important;
+    }
+    html.dark option {
+      background-color: var(--card);
+      color: var(--foreground);
+    }
+    html.dark #app-shell select,
+    html.dark #app-shell input[type="text"],
+    html.dark #app-shell input[type="password"],
+    html.dark #app-shell input[type="number"],
+    html.dark #app-shell input[type="date"],
+    html.dark #app-shell textarea {
+      background-color: var(--background) !important;
+      color: var(--foreground) !important;
+      border-color: var(--input) !important;
+    }
+    html.dark #app-shell select:focus,
+    html.dark #app-shell input:focus,
+    html.dark #app-shell textarea:focus {
+      border-color: var(--ring) !important;
+    }
+    html.dark .bg-white,
+    html.dark .bg-white\/95 {
+      background-color: var(--card) !important;
+    }
+    html.dark button.bg-white {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border-color: var(--input) !important;
+    }
+    html.dark button.bg-white:hover {
+      background-color: rgba(255, 255, 255, 0.11) !important;
+    }
+    html.dark header.bg-white\/95,
+    html.dark nav.bg-white\/95 {
+      background-color: rgba(24, 24, 27, 0.88) !important;
+    }
+    html.dark .bg-\[\#F7F8FA\],
+    html.dark .bg-\[\#F4F5F7\],
+    html.dark .bg-\[\#F3F4F6\],
+    html.dark .bg-\[\#F9FAFB\] {
+      background-color: var(--muted) !important;
+    }
+    html.dark .bg-\[\#222222\] {
+      background-color: var(--primary) !important;
+      color: var(--primary-foreground) !important;
+    }
+    html.dark .bg-\[\#222222\] .text-white,
+    html.dark .bg-\[\#222222\].text-white {
+      color: var(--primary-foreground) !important;
+    }
+    html.dark .bg-\[\#ECFDF5\],
+    html.dark .bg-\[\#ECFDF5\]\/60 {
+      background-color: rgba(16, 185, 129, 0.14) !important;
+    }
+    html.dark .bg-\[\#EFF6FF\],
+    html.dark .bg-\[\#EFF6FF\]\/60,
+    html.dark .bg-\[\#F4F6FC\],
+    html.dark .bg-\[\#F8FAFF\] {
+      background-color: rgba(59, 130, 246, 0.14) !important;
+    }
+    html.dark .bg-\[\#FEF3C7\],
+    html.dark .bg-\[\#FFFBEB\],
+    html.dark .bg-\[\#FFF4ED\] {
+      background-color: rgba(245, 158, 11, 0.14) !important;
+    }
+    html.dark .bg-\[\#FEE2E2\] {
+      background-color: rgba(239, 68, 68, 0.16) !important;
+    }
+    html.dark .bg-\[\#FDF2F8\] {
+      background-color: rgba(236, 72, 153, 0.14) !important;
+    }
+    html.dark .border-\[\#E6E8EE\],
+    html.dark .border-\[\#ECEEF2\],
+    html.dark .border-\[\#D4D6DC\],
+    html.dark .border-\[\#D7DFF6\],
+    html.dark .divide-\[\#ECEEF2\] > :not([hidden]) ~ :not([hidden]) {
+      border-color: var(--border) !important;
+    }
+    html.dark .border-\[\#222222\] { border-color: var(--ring) !important; }
+    html.dark .border-\[\#1473E6\] { border-color: #60A5FA !important; }
+    html.dark .border-\[\#9CA3AF\],
+    html.dark .hover\:border-\[\#9CA3AF\]:hover { border-color: var(--ring) !important; }
+    html.dark .border-\[\#A7F3D0\] { border-color: rgba(52, 211, 153, 0.32) !important; }
+    html.dark .border-\[\#BFDBFE\],
+    html.dark .border-\[\#93C5FD\] { border-color: rgba(96, 165, 250, 0.34) !important; }
+    html.dark .border-\[\#FDE68A\],
+    html.dark .border-\[\#FED7AA\] { border-color: rgba(251, 191, 36, 0.34) !important; }
+    html.dark .border-\[\#FCA5A5\] { border-color: rgba(248, 113, 113, 0.34) !important; }
+    html.dark .border-\[\#FBCFE8\] { border-color: rgba(244, 114, 182, 0.34) !important; }
+    html.dark .ring-\[\#222222\] { --tw-ring-color: var(--ring) !important; }
+    html.dark .ring-\[\#1473E6\] { --tw-ring-color: #60A5FA !important; }
+    html.dark .text-\[\#222222\],
+    html.dark .text-\[\#2F333B\],
+    html.dark .text-\[\#3B3E45\] {
+      color: var(--foreground) !important;
+    }
+    html.dark .text-\[\#4A4E57\],
+    html.dark .text-\[\#50545E\],
+    html.dark .text-\[\#5A5F6A\],
+    html.dark .text-\[\#6B7280\] {
+      color: var(--muted-foreground) !important;
+    }
+    html.dark .placeholder-\[\#9CA3AF\]::placeholder { color: var(--muted-foreground) !important; }
+    html.dark .text-\[\#047857\],
+    html.dark .text-\[\#059669\],
+    html.dark .text-\[\#065F46\] {
+      color: #34D399 !important;
+    }
+    html.dark .text-\[\#1473E6\],
+    html.dark .text-\[\#1E3A8A\] {
+      color: #60A5FA !important;
+    }
+    html.dark .text-\[\#4F46E5\] { color: #818CF8 !important; }
+    html.dark .text-\[\#B45309\],
+    html.dark .text-\[\#92400E\],
+    html.dark .text-\[\#D97706\] {
+      color: #FBBF24 !important;
+    }
+    html.dark .text-\[\#C2410C\],
+    html.dark .text-\[\#F25F3A\] {
+      color: #FB923C !important;
+    }
+    html.dark .text-\[\#B91C1C\],
+    html.dark .text-\[\#D92B2B\] {
+      color: #F87171 !important;
+    }
+    html.dark .text-\[\#BE185D\],
+    html.dark .text-\[\#E13C7A\] {
+      color: #F472B6 !important;
+    }
+    html.dark .hover\:bg-\[\#F7F8FA\]:hover,
+    html.dark .hover\:bg-\[\#F3F4F6\]:hover,
+    html.dark .hover\:bg-\[\#ECEEF2\]:hover,
+    html.dark .hover\:bg-\[\#EAEFFA\]:hover {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    html.dark .hover\:bg-\[\#DBEAFE\]:hover { background-color: rgba(59, 130, 246, 0.24) !important; }
+    html.dark .hover\:bg-\[\#D1FAE5\]:hover { background-color: rgba(16, 185, 129, 0.24) !important; }
+    html.dark .hover\:bg-\[\#FECACA\]:hover { background-color: rgba(239, 68, 68, 0.26) !important; }
+    html.dark .hover\:bg-\[\#FDE68A\]\/70:hover,
+    html.dark .hover\:bg-\[\#FDE68A\]\/60:hover { background-color: rgba(245, 158, 11, 0.24) !important; }
+    html.dark .hover\:bg-\[\#FCE7F3\]:hover { background-color: rgba(236, 72, 153, 0.24) !important; }
+    html.dark .hover\:bg-\[\#222222\]:hover,
+    html.dark .hover\:bg-\[\#222222\]:hover.hover\:text-white:hover {
+      background-color: var(--primary) !important;
+      color: var(--primary-foreground) !important;
+    }
+    html.dark .hover\:text-\[\#222222\]:hover { color: var(--foreground) !important; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(34, 34, 34, 0.18); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb { background: rgba(128, 128, 136, 0.28); border-radius: 9999px; }
     @keyframes sparkPulse {
       0%, 100% { opacity: 0.3; transform: scale(0.92); }
       50% { opacity: 1; transform: scale(1.08); }
@@ -245,35 +535,35 @@ Check your Browserslist config to be sure that your targets are set up correctly
     .spark-anim { animation: sparkPulse 0.9s infinite ease-in-out; }
   </style>
 </head>
-<body class="bg-white text-[#222222] selection:bg-rose-500/15">
+<body class="bg-background text-foreground selection:bg-foreground/15">
 
-  <div id="app-shell" class="flex flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-8 bg-white overflow-x-clip">
+  <div id="app-shell" class="flex flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-8 bg-background overflow-x-clip">
 
     <!-- Top Minimal Sticky Navigation Bar -->
     <header class="sticky top-0 z-30 bg-white/95 acro-glass border-b border-[#ECEEF2] px-3 sm:px-6 py-2">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-[#D92B2B] flex items-center justify-center text-white shadow-sm">
+          <div class="w-9 h-9 rounded-lg bg-[#D92B2B] flex items-center justify-center text-white shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <div>
             <div class="flex items-center flex-wrap gap-1.5">
-              <h1 class="text-sm sm:text-base font-bold tracking-[-0.025em] text-[#222222]">PulseOBD</h1>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold flex items-center gap-1">
+              <h1 class="text-sm sm:text-base font-semibold tracking-tight text-[#222222]">PulseOBD</h1>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-medium flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
                 READ-ONLY SAFE
               </span>
-              <span id="cloud-header-pill" onclick="switchTab('cloud')" class="cursor-pointer text-xs px-2.5 py-0.5 rounded-full bg-[#F4F6FC] border border-[#D7DFF6] text-[#1473E6] font-mono-num font-semibold flex items-center gap-1 hover:bg-[#EAEFFA] transition">
+              <span id="cloud-header-pill" onclick="switchTab('cloud')" class="cursor-pointer text-xs px-2 py-0.5 rounded-full bg-[#F4F6FC] border border-[#D7DFF6] text-[#1473E6] font-mono-num font-medium flex items-center gap-1 hover:bg-[#EAEFFA] transition">
                 <span id="cloud-dot" class="w-1.5 h-1.5 rounded-full bg-[#1473E6]"></span>
                 <span id="cloud-pill-text">CLOUD RELAY READY</span>
               </span>
-              <button type="button" id="screen-wakelock-pill" onclick="toggleKeepScreenAwake()" title="Keep mobile phone screen active while app is running (tap to toggle)" class="cursor-pointer text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-semibold flex items-center gap-1 hover:bg-[#F3F4F6] transition whitespace-nowrap">
+              <button type="button" id="screen-wakelock-pill" onclick="toggleKeepScreenAwake()" title="Keep mobile phone screen active while app is running (tap to toggle)" class="cursor-pointer text-xs px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-medium flex items-center gap-1 hover:bg-[#F3F4F6] transition whitespace-nowrap">
                 <span id="screen-wakelock-dot" class="w-1.5 h-1.5 rounded-full bg-[#9CA3AF]"></span>
                 <span id="screen-wakelock-pill-text">SCREEN AUTO</span>
               </button>
-              <span id="conn-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#4A4E57] font-mono-num font-medium">
+              <span id="conn-badge" class="text-xs px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#4A4E57] font-mono-num font-medium">
                 VW Polo 1.2 TSI · 16:43 Dump
               </span>
             </div>
@@ -283,21 +573,21 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
         </div>
 
-        <!-- Crisp Pill Segmented Navigation (Desktop, Mobile uses bottom bar) -->
-        <nav id="desktop-nav" class="hidden lg:flex flex-wrap items-center bg-[#F4F5F7] border border-[#E6E8EE] rounded-full p-1 gap-0.5 text-xs font-semibold">
-          <button onclick="switchTab('cockpit')" id="dtab-cockpit" class="px-3 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition whitespace-nowrap">Cockpit</button>
-          <button onclick="switchTab('graphs')" id="dtab-graphs" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">6 Graphs</button>
-          <button onclick="switchTab('history')" id="dtab-history" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">History</button>
-          <button onclick="switchTab('infographics')" id="dtab-infographics" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Health</button>
-          <button onclick="switchTab('service')" id="dtab-service" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Service</button>
-          <button onclick="switchTab('passport')" id="dtab-passport" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">124 Vars</button>
-          <button onclick="switchTab('cloud')" id="dtab-cloud" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Cloud Stream</button>
-          <button onclick="switchTab('bluetooth')" id="dtab-bluetooth" class="px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap">Bluetooth</button>
+        <!-- shadcn/ui base-nova TabsList Navigation (Desktop, Mobile uses bottom bar) -->
+        <nav id="desktop-nav" class="hidden lg:flex flex-wrap items-center bg-[#F4F5F7] border border-[#E6E8EE] rounded-lg p-[3px] gap-0.5 text-xs font-medium">
+          <button onclick="switchTab('cockpit')" id="dtab-cockpit" class="px-2.5 py-1 rounded-md nova-tab-active font-semibold transition whitespace-nowrap">Cockpit</button>
+          <button onclick="switchTab('graphs')" id="dtab-graphs" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">6 Graphs</button>
+          <button onclick="switchTab('history')" id="dtab-history" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">History</button>
+          <button onclick="switchTab('infographics')" id="dtab-infographics" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">Health</button>
+          <button onclick="switchTab('service')" id="dtab-service" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">Service</button>
+          <button onclick="switchTab('passport')" id="dtab-passport" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">124 Vars</button>
+          <button onclick="switchTab('cloud')" id="dtab-cloud" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">Cloud Stream</button>
+          <button onclick="switchTab('bluetooth')" id="dtab-bluetooth" class="px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap">Bluetooth</button>
         </nav>
 
-        <!-- Quick Action Pills -->
+        <!-- Quick Action Controls -->
         <div id="header-actions-bar" class="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
-          <select id="source-select" onchange="changeDataSource(this.value)" aria-label="Telemetry Source" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3 py-1.5 font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 flex-1 sm:flex-initial">
+          <select id="source-select" onchange="changeDataSource(this.value)" aria-label="Telemetry Source" class="h-8 text-xs bg-white border border-[#D4D6DC] rounded-lg px-2.5 font-medium text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 flex-1 sm:flex-initial">
             <option value="snap1">16:43 Dump (Warm Idle 98°C)</option>
             <option value="snap2">17:10 Dump (Follow-up 87°C)</option>
             <option value="parked_off">Vehicle Off / Parked (KOEO &amp; 12V Battery)</option>
@@ -308,7 +598,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <option value="remote_cloud">Remote Cloud Stream (Live Online)</option>
           </select>
 
-          <button id="btn-phone-view" onclick="togglePhoneFrame()" title="Toggle Mobile Phone / Full Web Layout" class="text-xs px-3 py-1.5 acro-pill-secondary hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
+          <button id="btn-theme-toggle" type="button" onclick="toggleTheme()" title="Toggle Light / Dark theme (shortcut: press d)" class="h-8 text-xs px-2.5 acro-pill-secondary flex items-center gap-1.5 whitespace-nowrap shrink-0">
+            <span id="theme-toggle-icon" class="inline-flex items-center">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </span>
+            <span id="theme-toggle-label">Dark mode</span>
+          </button>
+
+          <button id="btn-phone-view" onclick="togglePhoneFrame()" title="Toggle Mobile Phone / Full Web Layout" class="h-8 text-xs px-2.5 acro-pill-secondary hidden sm:flex items-center gap-1.5 whitespace-nowrap shrink-0">
             <svg class="w-3.5 h-3.5 text-[#222222]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <rect x="6" y="2" width="12" height="20" rx="2" />
               <line x1="12" y1="18" x2="12.01" y2="18" />
@@ -316,7 +613,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <span id="phone-view-label">Mobile View</span>
           </button>
 
-          <button onclick="switchTab('cloud')" class="text-xs px-3.5 py-1.5 acro-pill-primary flex items-center gap-1.5 shadow-sm whitespace-nowrap shrink-0">
+          <button onclick="switchTab('cloud')" class="h-8 text-xs px-3 acro-pill-primary flex items-center gap-1.5 shadow-sm whitespace-nowrap shrink-0">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
             </svg>
@@ -326,67 +623,35 @@ Check your Browserslist config to be sure that your targets are set up correctly
       </div>
     </header>
 
-    <!-- =================================================================== -->
-    <!-- SUNLIT PASTEL MESH & TRANSLUCENT WAVE HERO (ATTACHED LOOK & FEEL)   -->
-    <!-- =================================================================== -->
-    <section class="relative w-full border-b border-[#ECEEF2] overflow-hidden bg-white">
-      <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1440 310" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="acro-hero-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#FF7CA3" stop-opacity="0.72" />
-            <stop offset="38%" stop-color="#D7D0F9" stop-opacity="0.58" />
-            <stop offset="66%" stop-color="#BCD2FC" stop-opacity="0.62" />
-            <stop offset="100%" stop-color="#FF7852" stop-opacity="0.78" />
-          </linearGradient>
-          <linearGradient id="acro-hero-fade" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.02" />
-            <stop offset="68%" stop-color="#FFFFFF" stop-opacity="0.55" />
-            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="1" />
-          </linearGradient>
-        </defs>
-        <rect width="1440" height="310" fill="url(#acro-hero-grad)" />
-        <!-- Overlapping Soft White Wave Arcs matching image.png -->
-        <path d="M 140 310 C 260 15, 590 10, 745 310 Z" fill="rgba(255,255,255,0.34)" />
-        <path d="M 690 310 C 890 -10, 1210 15, 1440 215 L 1440 310 Z" fill="rgba(255,255,255,0.30)" />
-        <path d="M -80 265 C 120 110, 340 160, 560 310 L -80 310 Z" fill="rgba(255,255,255,0.22)" />
-        <rect width="1440" height="310" fill="url(#acro-hero-fade)" />
-      </svg>
+    <!-- Main base-nova Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4 bg-background">
 
-      <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-4 sm:pt-5 sm:pb-5 text-center">
-        <!-- Mini Centered Eyebrow Badge (Matching image.png) -->
-        <div class="inline-flex items-center justify-center gap-2 mb-2">
-          <span class="w-5 h-5 rounded-md bg-[#D92B2B] text-white inline-flex items-center justify-center shadow-sm">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </span>
-          <span id="hero-status-line" class="text-xs sm:text-sm font-medium text-[#2F333B]">
-            PulseOBD cloud streaming &amp; all 124 ECU variables ready!
-          </span>
+      <!-- Clean Minimalist base-nova Workspace Subheader Strip -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 border-b border-[#ECEEF2]">
+        <div class="space-y-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#10B981] shrink-0"></span>
+            <span id="hero-status-line" class="text-xs font-medium text-[#5A5F6A]">
+              PulseOBD cloud streaming &amp; all 124 ECU variables ready!
+            </span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-[#222222]">
+            Live drive telemetry &amp; cloud health
+          </h2>
+          <p id="hero-vehicle-subtitle" class="text-xs sm:text-sm text-[#5A5F6A] max-w-2xl leading-relaxed">
+            Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and per-VIN project folder archiving for your VW Polo 1.2L TSI.
+          </p>
         </div>
 
-        <!-- Crisp Bold Humanist Display Headline -->
-        <h2 class="text-xl sm:text-[34px] font-bold tracking-[-0.03em] leading-[1.15] text-[#222222]">
-          Live drive telemetry &amp; cloud health
-        </h2>
-        <p id="hero-vehicle-subtitle" class="mt-1.5 text-xs sm:text-sm text-[#4A4E57] max-w-xl mx-auto leading-relaxed">
-          Explore read-only Bluetooth diagnostics, synchronized multi-channel graphs, and per-VIN project folder archiving for your VW Polo 1.2L TSI.
-        </p>
-
-        <!-- Signature Dual Pill CTAs -->
-        <div class="mt-3.5 flex flex-wrap items-center justify-center gap-2.5">
-          <button onclick="switchTab('cloud')" class="acro-pill-primary px-5 py-2 text-xs sm:text-sm shadow-sm">
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button onclick="switchTab('cloud')" class="acro-pill-primary h-8 px-3.5 text-xs shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap">
             Open Cloud Stream
           </button>
-          <button id="hero-sim-btn" onclick="toggleHeroDriveSim()" class="acro-pill-secondary px-5 py-2 text-xs sm:text-sm">
+          <button id="hero-sim-btn" onclick="toggleHeroDriveSim()" class="acro-pill-secondary h-8 px-3.5 text-xs inline-flex items-center gap-1.5 whitespace-nowrap">
             Simulate Live Drive
           </button>
         </div>
       </div>
-    </section>
-
-    <!-- Main Pure White Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4 bg-white">
 
       <!-- =================================================================== -->
       <!-- TAB 1: COCKPIT (LIVE DRIVE VIEW)                                    -->
@@ -394,7 +659,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <section id="tab-cockpit" class="space-y-4">
 
         <!-- Authentic Stopped / Engine-Off Telemetry Truthfulness Banner -->
-        <div id="cockpit-stopped-banner" class="rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs">
+        <div id="cockpit-stopped-banner" class="rounded-xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs">
           <div class="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
             <span id="stopped-banner-pill" class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto">STATIC CAPTURE · 0 km/h</span>
             <p id="stopped-banner-active" class="text-[#222222] font-medium leading-snug min-w-0 lg:truncate">
@@ -408,8 +673,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- Smart Notification Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="acro-card rounded-2xl p-3 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-[#FFF4ED] border border-[#FED7AA] text-[#C2410C] flex items-center justify-center shrink-0">
+          <div class="acro-card rounded-xl p-3 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-[#FFF4ED] border border-[#FED7AA] text-[#C2410C] flex items-center justify-center shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -423,8 +688,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div id="adv-health-card" onclick="switchTab('service')" title="Open Service Log & Pre-Service Health Checks" class="cursor-pointer acro-card hover:border-[#047857]/40 rounded-2xl p-3 flex items-center gap-3 transition">
-            <div id="adv-health-icon-box" class="w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
+          <div id="adv-health-card" onclick="switchTab('service')" title="Open Service Log & Pre-Service Health Checks" class="cursor-pointer acro-card hover:border-[#047857]/40 rounded-xl p-3 flex items-center gap-3 transition">
+            <div id="adv-health-icon-box" class="w-9 h-9 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -438,8 +703,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div onclick="switchTab('cloud')" class="cursor-pointer acro-card hover:border-[#1473E6]/40 rounded-2xl p-3 flex items-center gap-3 transition">
-            <div class="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] flex items-center justify-center shrink-0">
+          <div onclick="switchTab('cloud')" class="cursor-pointer acro-card hover:border-[#1473E6]/40 rounded-xl p-3 flex items-center gap-3 transition">
+            <div class="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] flex items-center justify-center shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
@@ -458,7 +723,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
 
           <!-- Left + Right Radial Clusters (7 cols) -->
-          <div class="lg:col-span-7 acro-card rounded-3xl p-4 sm:p-5 flex flex-col justify-between">
+          <div class="lg:col-span-7 acro-card rounded-xl p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-2 mb-2 min-w-0">
               <div class="flex items-center gap-2 min-w-0">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A] truncate">Instrument Cluster</span>
@@ -471,7 +736,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <!-- TACHOMETER (010C) -->
               <div class="relative flex flex-col items-center min-w-0">
                 <svg class="w-36 h-36 sm:w-44 sm:h-44 -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="#ECEEF3" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-track)" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#D92B2B" stroke-width="9" class="opacity-25" stroke-dasharray="36 314.2" stroke-dashoffset="-199.6" stroke-linecap="round" />
                   <circle id="cockpit-rpm-arc" cx="60" cy="60" r="50" fill="none" stroke="#1473E6" stroke-width="9" stroke-linecap="round" class="gauge-arc" stroke-dasharray="235.6 314.2" stroke-dashoffset="208" />
                 </svg>
@@ -491,7 +756,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <!-- SPEEDOMETER (010D) -->
               <div class="relative flex flex-col items-center min-w-0">
                 <svg class="w-36 h-36 sm:w-44 sm:h-44 -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="#ECEEF3" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gauge-track)" stroke-width="9" stroke-dasharray="235.6 314.2" stroke-linecap="round" />
                   <circle id="cockpit-spd-arc" cx="60" cy="60" r="50" fill="none" stroke="#10B981" stroke-width="9" stroke-linecap="round" class="gauge-arc" stroke-dasharray="235.6 314.2" stroke-dashoffset="235.6" />
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
@@ -513,7 +778,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <span id="cockpit-map-label" class="font-bold font-mono-num text-[#1473E6] whitespace-nowrap shrink-0">27 kPa (-0.56 bar)</span>
                 </div>
                 <div class="w-full h-2 rounded-full bg-[#F3F4F6] overflow-hidden border border-[#E6E8EE]">
-                  <div id="cockpit-map-bar" class="h-full bg-gradient-to-r from-[#FF7CA3] via-[#6366F1] to-[#1473E6]" style="width: 15%"></div>
+                  <div id="cockpit-map-bar" class="h-full bg-gradient-to-r from-[#10B981] via-[#1473E6] to-[#6366F1]" style="width: 15%"></div>
                 </div>
               </div>
               <div class="min-w-0">
@@ -532,7 +797,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <div class="lg:col-span-5 grid grid-cols-2 gap-3">
 
             <!-- Thermal Profile Card -->
-            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+            <div class="acro-card rounded-xl p-3.5 flex flex-col justify-between min-w-0">
               <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#F25F3A] uppercase tracking-wider">Thermal</span>
                 <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0105·0F·3C</span>
@@ -563,7 +828,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
 
             <!-- Fuel Trim & Mixture Card -->
-            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+            <div class="acro-card rounded-xl p-3.5 flex flex-col justify-between min-w-0">
               <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#047857] uppercase tracking-wider">Fuel &amp; O2</span>
                 <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0106·07·14</span>
@@ -594,7 +859,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
 
             <!-- Fuel Tank, EVAP & Derived Flow Card -->
-            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+            <div class="acro-card rounded-xl p-3.5 flex flex-col justify-between min-w-0">
               <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#B45309] uppercase tracking-wider">Fuel &amp; Flow</span>
                 <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-bold shrink-0">RESERVE</span>
@@ -624,7 +889,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
 
             <!-- Electrical, Altitude & Distance Card -->
-            <div class="acro-card rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+            <div class="acro-card rounded-xl p-3.5 flex flex-col justify-between min-w-0">
               <div class="flex items-center justify-between gap-1">
                 <span class="text-xs font-bold text-[#1473E6] uppercase tracking-wider">Electrical</span>
                 <span class="text-[11px] font-mono-num text-[#6B7280] truncate">0142 · ATRV</span>
@@ -658,7 +923,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <!-- Live Cockpit Multi-Trace Strip (Fixed Shortened Height) -->
-        <div class="acro-card rounded-2xl p-3 sm:p-3.5">
+        <div class="acro-card rounded-xl p-3 sm:p-3.5">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 min-w-0 flex-wrap">
@@ -688,7 +953,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- TAB 2: 6 SYNCHRONIZED LIVE TELEMETRY GRAPHS                         -->
       <!-- =================================================================== -->
       <section id="tab-graphs" class="hidden space-y-3">
-        <div class="acro-card rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="acro-card rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
           <div class="min-w-0">
             <h2 class="text-sm sm:text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs</h2>
             <p class="text-xs text-[#5A5F6A]">Stopped/off subsystems stay truthfully flat; only active sensors &amp; live drives animate</p>
@@ -696,10 +961,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
           <div class="flex flex-wrap items-center gap-1.5">
             <button onclick="changeDataSource('snap1')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">16:43 Idle</button>
             <button onclick="changeDataSource('snap2')" class="text-xs px-3 py-1 acro-pill-secondary whitespace-nowrap">17:10 Idle</button>
-            <button onclick="changeDataSource('parked_off')" class="text-xs px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] font-semibold hover:bg-[#FDE68A]/70 transition whitespace-nowrap">Engine Off</button>
-            <button onclick="changeDataSource('sim_city')" class="text-xs px-3 py-1 rounded-full bg-[#EFF6FF] text-[#1473E6] border border-[#BFDBFE] font-semibold hover:bg-[#DBEAFE] transition whitespace-nowrap">Urban Sim</button>
-            <button onclick="changeDataSource('sim_highway')" class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] font-semibold hover:bg-[#D1FAE5] transition whitespace-nowrap">Highway Sim</button>
-            <button onclick="changeDataSource('sim_boost')" class="text-xs px-3 py-1 rounded-full bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8] font-semibold hover:bg-[#FCE7F3] transition whitespace-nowrap">TSI Boost Sim</button>
+            <button onclick="changeDataSource('parked_off')" class="text-xs px-3 py-1 rounded-lg bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] font-semibold hover:bg-[#FDE68A]/70 transition whitespace-nowrap">Engine Off</button>
+            <button onclick="changeDataSource('sim_city')" class="text-xs px-3 py-1 rounded-lg bg-[#EFF6FF] text-[#1473E6] border border-[#BFDBFE] font-semibold hover:bg-[#DBEAFE] transition whitespace-nowrap">Urban Sim</button>
+            <button onclick="changeDataSource('sim_highway')" class="text-xs px-3 py-1 rounded-lg bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] font-semibold hover:bg-[#D1FAE5] transition whitespace-nowrap">Highway Sim</button>
+            <button onclick="changeDataSource('sim_boost')" class="text-xs px-3 py-1 rounded-lg bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8] font-semibold hover:bg-[#FCE7F3] transition whitespace-nowrap">TSI Boost Sim</button>
             <button onclick="exportTelemetryCsv()" class="text-xs px-3.5 py-1 acro-pill-primary flex items-center gap-1 shadow-sm whitespace-nowrap">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               Export CSV
@@ -708,7 +973,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">1. Engine RPM, Speed &amp; Loads</h3>
@@ -719,7 +984,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-dynamics" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">2. Thermal: Coolant, IAT, Ambient &amp; Catalyst</h3>
@@ -730,7 +995,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-thermal" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">3. Fuel Trims (STFT/LTFT/Sec) &amp; O2</h3>
@@ -741,7 +1006,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-trims" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">4. TSI Fuel Rail, Intake MAP &amp; Timing</h3>
@@ -752,7 +1017,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-boost" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">5. Throttle &amp; Pedal 6-Sensor Correlation</h3>
@@ -763,7 +1028,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-xl telemetry-chart-box"><canvas id="chart-throttle" height="94" class="telemetry-chart-canvas"></canvas></div>
           </div>
 
-          <div class="acro-card rounded-2xl p-3 sm:p-3.5 min-w-0">
+          <div class="acro-card rounded-xl p-3 sm:p-3.5 min-w-0">
             <div class="mb-1.5 min-w-0">
               <div class="flex items-center justify-between gap-2 min-w-0">
                 <h3 class="text-xs sm:text-sm font-bold text-[#222222] truncate">6. ECU Voltage, Fuel Tank, EVAP &amp; Flow</h3>
@@ -780,7 +1045,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- TAB 2B: DRIVE HISTORY & PER-VIN PROJECT FOLDER ARCHIVE              -->
       <!-- =================================================================== -->
       <section id="tab-history" class="hidden space-y-4">
-        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+        <div class="acro-card rounded-xl p-4 sm:p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
@@ -793,24 +1058,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <button onclick="saveCurrentBufferAsDrive()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Save Current Drive Now</button>
               <button id="btn-link-project-folder" onclick="linkProjectDirectory()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Link Project Folder</button>
               <button onclick="syncAllVehiclesToProjectFolder(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Save All to Project Folder</button>
-              <button onclick="toggleNewVehicleForm()" class="text-xs px-3 py-1.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold hover:bg-[#DBEAFE] transition">+ Add / Switch Vehicle</button>
+              <button onclick="toggleNewVehicleForm()" class="text-xs px-3 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold hover:bg-[#DBEAFE] transition">+ Add / Switch Vehicle</button>
               <button onclick="syncPendingDrivesToFirebase(true)" class="text-xs px-3 py-1.5 acro-pill-secondary">Sync Firebase</button>
-              <button onclick="clearStoredDrives()" class="text-xs px-3 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Local</button>
+              <button onclick="clearStoredDrives()" class="text-xs px-3 py-1.5 rounded-lg bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Local</button>
             </div>
           </div>
 
           <!-- Inline New Vehicle Registration / Switch Form -->
-          <div id="new-vehicle-form" class="hidden acro-well rounded-2xl p-3.5 border border-[#D7DFF6] space-y-2.5 text-xs">
+          <div id="new-vehicle-form" class="hidden acro-well rounded-xl p-3.5 border border-[#D7DFF6] space-y-2.5 text-xs">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-bold text-[#222222]">Create Individual Vehicle Record (<code class="font-mono-num text-[#1473E6]">vehicle_history/&lt;VIN&gt;/</code>)</span>
               <span class="text-[11px] text-[#5A5F6A]">Or connect OBD-II / import JSON — PulseOBD auto-reads VIN <code class="font-mono-num">0902</code> / <code class="font-mono-num">22F190</code></span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-              <input id="new-veh-vin" type="text" placeholder="VIN (e.g. WVWZZZ1KZ8W000001)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] uppercase focus:outline-none focus:border-[#222222]" />
-              <input id="new-veh-label" type="text" placeholder="Label (e.g. 2019 VW Golf 1.4 TSI)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 text-[#222222] focus:outline-none focus:border-[#222222]" />
-              <input id="new-veh-engine" type="text" placeholder="Engine (e.g. CZDA 1.4 TFSI)" class="bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <input id="new-veh-vin" type="text" placeholder="VIN (e.g. WVWZZZ1KZ8W000001)" class="bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num text-[#222222] uppercase focus:outline-none focus:border-[#222222]" />
+              <input id="new-veh-label" type="text" placeholder="Label (e.g. 2019 VW Golf 1.4 TSI)" class="bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <input id="new-veh-engine" type="text" placeholder="Engine (e.g. CZDA 1.4 TFSI)" class="bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
               <div class="flex gap-2">
-                <input id="new-veh-part" type="text" placeholder="ECU Part (optional)" class="min-w-0 flex-1 bg-white border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <input id="new-veh-part" type="text" placeholder="ECU Part (optional)" class="min-w-0 flex-1 bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 <button type="button" onclick="createNewVehicleRecordFromForm()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Create Record</button>
               </div>
             </div>
@@ -828,23 +1093,23 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- Summary KPI Strip -->
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div class="acro-card rounded-2xl p-3.5">
+          <div class="acro-card rounded-xl p-3.5">
             <span class="text-xs text-[#5A5F6A] font-medium block">Stored Drives</span>
             <strong id="hist-total-drives" class="font-mono-num text-xl font-bold text-[#222222]">0</strong>
           </div>
-          <div class="acro-card rounded-2xl p-3.5">
+          <div class="acro-card rounded-xl p-3.5">
             <span class="text-xs text-[#5A5F6A] font-medium block">Total Frames</span>
             <strong id="hist-total-frames" class="font-mono-num text-xl font-bold text-[#1473E6]">0</strong>
           </div>
-          <div class="acro-card rounded-2xl p-3.5">
+          <div class="acro-card rounded-xl p-3.5">
             <span class="text-xs text-[#5A5F6A] font-medium block">Peak Speed</span>
             <strong id="hist-max-spd" class="font-mono-num text-xl font-bold text-[#059669]">0 km/h</strong>
           </div>
-          <div class="acro-card rounded-2xl p-3.5">
+          <div class="acro-card rounded-xl p-3.5">
             <span class="text-xs text-[#5A5F6A] font-medium block">Peak RPM</span>
             <strong id="hist-max-rpm" class="font-mono-num text-xl font-bold text-[#222222]">0</strong>
           </div>
-          <div class="acro-card rounded-2xl p-3.5 col-span-2 sm:col-span-1">
+          <div class="acro-card rounded-xl p-3.5 col-span-2 sm:col-span-1">
             <span class="text-xs text-[#5A5F6A] font-medium block">Peak Coolant</span>
             <strong id="hist-max-coolant" class="font-mono-num text-xl font-bold text-[#D92B2B]">0°C</strong>
           </div>
@@ -852,7 +1117,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <!-- 2-Column Layout: Saved Sessions List + Trip Timeline Inspector -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 flex flex-col min-w-0">
+          <div class="lg:col-span-5 acro-card rounded-xl p-4 sm:p-5 flex flex-col min-w-0">
             <div class="flex items-center justify-between gap-2 mb-3">
               <h3 class="text-sm font-bold text-[#222222]">Individual Vehicle Sessions</h3>
               <button onclick="refreshHistoryTab()" class="text-xs px-2.5 py-1 acro-pill-secondary">Refresh</button>
@@ -862,7 +1127,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="lg:col-span-7 acro-card rounded-2xl p-3 sm:p-4 space-y-2.5 min-w-0">
+          <div class="lg:col-span-7 acro-card rounded-xl p-3 sm:p-4 space-y-2.5 min-w-0">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="min-w-0">
                 <h3 id="hist-inspect-title" class="text-sm font-bold text-[#222222] truncate">Trip Timeline Inspector</h3>
@@ -875,7 +1140,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <canvas id="history-inspect-canvas" height="94" class="telemetry-chart-canvas"></canvas>
             </div>
 
-            <div class="acro-well rounded-2xl p-3 space-y-2">
+            <div class="acro-well rounded-xl p-3 space-y-2">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-semibold text-[#222222]">Frame Scrubber</span>
                 <span id="hist-scrubber-label" class="font-mono-num text-[#5A5F6A] truncate">Frame 0 / 0</span>
@@ -911,13 +1176,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <section id="tab-infographics" class="hidden space-y-5">
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div class="lg:col-span-5 acro-card rounded-3xl p-5 flex flex-col justify-between">
+          <div class="lg:col-span-5 acro-card rounded-xl p-5 flex flex-col justify-between">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-[#5A5F6A]">Diagnostic Integrity Summary</span>
                 <h2 class="text-lg font-bold text-[#222222] mt-0.5">Overall Vehicle Health: 96 / 100</h2>
               </div>
-              <button type="button" onclick="switchTab('service')" class="text-xs px-3 py-1.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold hover:bg-[#DBEAFE] transition shrink-0 whitespace-nowrap">
+              <button type="button" onclick="switchTab('service')" class="text-xs px-3 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold hover:bg-[#DBEAFE] transition shrink-0 whitespace-nowrap">
                 Service Log &amp; Checks →
               </button>
             </div>
@@ -925,11 +1190,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="flex items-center gap-6 my-4">
               <div class="relative w-36 h-36 shrink-0">
                 <svg class="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="#D1FAE5" stroke-width="9" />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-track-ok)" stroke-width="9" />
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#10B981" stroke-width="9" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="0" />
-                  <circle cx="60" cy="60" r="38" fill="none" stroke="#DBEAFE" stroke-width="9" />
+                  <circle cx="60" cy="60" r="38" fill="none" stroke="var(--ring-track-info)" stroke-width="9" />
                   <circle cx="60" cy="60" r="38" fill="none" stroke="#1473E6" stroke-width="9" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="0" />
-                  <circle cx="60" cy="60" r="26" fill="none" stroke="#FEF3C7" stroke-width="9" />
+                  <circle cx="60" cy="60" r="26" fill="none" stroke="var(--ring-track-warn)" stroke-width="9" />
                   <circle cx="60" cy="60" r="26" fill="none" stroke="#F59E0B" stroke-width="9" stroke-linecap="round" stroke-dasharray="163.36" stroke-dashoffset="23.3" />
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
@@ -978,7 +1243,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="lg:col-span-7 acro-card rounded-3xl p-5 flex flex-col justify-between">
+          <div class="lg:col-span-7 acro-card rounded-xl p-5 flex flex-col justify-between">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Mode 06 Cylinder Balance (06A2 – 06A5)</span>
@@ -990,9 +1255,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
-              <div class="acro-well rounded-2xl p-3 text-center">
+              <div class="acro-well rounded-xl p-3 text-center">
                 <div class="flex items-center justify-between text-xs mb-2"><span class="font-bold text-[#222222]">CYL 1</span><span class="font-mono-num text-[#6B7280]">06A2</span></div>
-                <div class="w-12 h-14 mx-auto rounded-xl bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
+                <div class="w-12 h-14 mx-auto rounded-lg bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
                   <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] spark-anim"></span>
                   <span class="text-xs font-mono-num font-bold text-[#222222] mt-1">0</span>
                 </div>
@@ -1001,9 +1266,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <div class="flex justify-between"><span class="text-[#5A5F6A]">10-Cyc EWMA</span><strong class="font-mono-num text-[#222222]">4</strong></div>
                 </div>
               </div>
-              <div class="acro-well rounded-2xl p-3 text-center">
+              <div class="acro-well rounded-xl p-3 text-center">
                 <div class="flex items-center justify-between text-xs mb-2"><span class="font-bold text-[#222222]">CYL 2</span><span class="font-mono-num text-[#6B7280]">06A3</span></div>
-                <div class="w-12 h-14 mx-auto rounded-xl bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
+                <div class="w-12 h-14 mx-auto rounded-lg bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
                   <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] spark-anim" style="animation-delay:0.45s"></span>
                   <span class="text-xs font-mono-num font-bold text-[#222222] mt-1">0</span>
                 </div>
@@ -1012,9 +1277,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <div class="flex justify-between"><span class="text-[#5A5F6A]">10-Cyc EWMA</span><strong class="font-mono-num text-[#222222]">3</strong></div>
                 </div>
               </div>
-              <div class="acro-well rounded-2xl p-3 text-center">
+              <div class="acro-well rounded-xl p-3 text-center">
                 <div class="flex items-center justify-between text-xs mb-2"><span class="font-bold text-[#222222]">CYL 3</span><span class="font-mono-num text-[#6B7280]">06A4</span></div>
-                <div class="w-12 h-14 mx-auto rounded-xl bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
+                <div class="w-12 h-14 mx-auto rounded-lg bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
                   <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] spark-anim" style="animation-delay:0.22s"></span>
                   <span class="text-xs font-mono-num font-bold text-[#222222] mt-1">0</span>
                 </div>
@@ -1023,9 +1288,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
                   <div class="flex justify-between"><span class="text-[#5A5F6A]">10-Cyc EWMA</span><strong class="font-mono-num text-[#222222]">5</strong></div>
                 </div>
               </div>
-              <div class="acro-well rounded-2xl p-3 text-center">
+              <div class="acro-well rounded-xl p-3 text-center">
                 <div class="flex items-center justify-between text-xs mb-2"><span class="font-bold text-[#222222]">CYL 4</span><span class="font-mono-num text-[#6B7280]">06A5</span></div>
-                <div class="w-12 h-14 mx-auto rounded-xl bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
+                <div class="w-12 h-14 mx-auto rounded-lg bg-white border border-[#D7DFF6] flex flex-col items-center justify-center my-1 shadow-sm">
                   <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] spark-anim" style="animation-delay:0.67s"></span>
                   <span class="text-xs font-mono-num font-bold text-[#222222] mt-1">0</span>
                 </div>
@@ -1036,14 +1301,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
               </div>
             </div>
 
-            <div class="text-xs text-[#4A4E57] acro-well rounded-2xl p-3">
+            <div class="text-xs text-[#4A4E57] acro-well rounded-xl p-3">
               <strong class="text-[#222222]">Diagnostic Insight:</strong> TID <span class="font-mono-num">0C</span> (Current Drive Cycle Misfires) is <strong class="text-[#047857]">0</strong> across all 4 cylinders. TID <span class="font-mono-num">0B</span> (10-cycle EWMA) shows <span class="font-mono-num font-semibold text-[#222222]">4, 3, 5, 5</span> (limit <span class="font-mono-num">65,535</span>).
             </div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="acro-card rounded-3xl p-5">
+          <div class="acro-card rounded-xl p-5">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h3 class="text-base font-bold text-[#222222]">Readiness Monitors (0101 vs 0141)</h3>
@@ -1054,7 +1319,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div id="readiness-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
           </div>
 
-          <div class="acro-card rounded-3xl p-5">
+          <div class="acro-card rounded-xl p-5">
             <div class="flex items-center justify-between mb-3">
               <div>
                 <h3 class="text-base font-bold text-[#222222]">All 20 IUMPR Counters (Mode 09 PID 08)</h3>
@@ -1066,7 +1331,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
         </div>
 
-        <div class="acro-card rounded-3xl p-5">
+        <div class="acro-card rounded-xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div>
               <h3 class="text-base font-bold text-[#222222]">All 18 Mode 06 On-Board Monitoring Test Range Infographics</h3>
@@ -1085,7 +1350,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <section id="tab-service" class="hidden space-y-4">
 
         <!-- Top Vehicle & Parts / ECU Passport Header -->
-        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3.5 min-w-0">
+        <div class="acro-card rounded-xl p-4 sm:p-5 space-y-3.5 min-w-0">
           <div class="flex flex-wrap items-start justify-between gap-3 min-w-0">
             <div class="min-w-0 w-full lg:w-auto flex-1">
               <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
@@ -1098,7 +1363,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
             <div class="flex flex-wrap items-center gap-2 min-w-0 w-full sm:w-auto">
               <label for="svc-vin-select" class="text-xs font-semibold text-[#5A5F6A] shrink-0">Vehicle:</label>
-              <select id="svc-vin-select" onchange="onServiceVinSelect(this.value)" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3 py-1.5 font-mono-num font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 max-w-full flex-1 sm:flex-initial truncate"></select>
+              <select id="svc-vin-select" onchange="onServiceVinSelect(this.value)" class="text-xs bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition min-w-0 max-w-full flex-1 sm:flex-initial truncate"></select>
             </div>
           </div>
 
@@ -1112,34 +1377,34 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
           <!-- OEM Parts Ordering & ECU Identity Spec -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">Active VIN (<span class="font-mono-num">0902 / 22F190</span>)</span>
               <strong id="svc-spec-vin" class="font-mono-num text-[#1473E6] block truncate">AAVZZZ6RZHU112564</strong>
             </div>
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">Engine Code (<span class="font-mono-num">22F197</span>)</span>
               <strong id="svc-spec-engine" class="font-mono-num text-[#222222] block truncate">VW Polo 1.2L TSI · R4 1.2l TFS</strong>
             </div>
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">ECU Spare Part &amp; SW (<span class="font-mono-num">22F187/89</span>)</span>
               <strong id="svc-spec-part" class="font-mono-num text-[#222222] block truncate">04E906027LH · SW 3997</strong>
             </div>
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">ECU Hardware (<span class="font-mono-num">22F191/A3</span>)</span>
               <strong id="svc-spec-hw" class="font-mono-num text-[#222222] block truncate">04E907309AF · H24</strong>
             </div>
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">Calibration ID &amp; CVN (<span class="font-mono-num">0904/06</span>)</span>
               <strong id="svc-spec-calid" class="font-mono-num text-[#222222] block truncate">04E027LH3997AAAD · 40819633</strong>
             </div>
-            <div class="acro-well rounded-2xl p-2.5 min-w-0">
+            <div class="acro-well rounded-xl p-2.5 min-w-0">
               <span class="text-[#5A5F6A] block">Lifetime ECU Cycles (<span class="font-mono-num">0908</span>)</span>
               <strong id="svc-spec-ign" class="font-mono-num text-[#047857] block truncate">15,312 Ign · 5,134 OBD Cond</strong>
             </div>
           </div>
 
           <!-- Cluster Odometer Quick Entry Bar (since 22F4A6 is gateway-gated on 0x17) -->
-          <div class="acro-well rounded-2xl p-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs min-w-0">
+          <div class="acro-well rounded-xl p-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs min-w-0">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-bold text-[#222222]">Cluster Odometer (km)</span>
@@ -1148,14 +1413,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <p class="text-[#5A5F6A] mt-0.5">UDS <span class="font-mono-num">22 F4A6</span> returns NRC <span class="font-mono-num">0x31</span> (gated behind Instrument Cluster <span class="font-mono-num">0x17</span>). Enter dash km for exact service interval countdowns.</p>
             </div>
             <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 w-full lg:w-auto">
-              <input id="svc-current-odo" type="number" min="0" step="1" placeholder="e.g. 124500 km" class="min-w-0 flex-1 sm:flex-initial sm:w-40 bg-white border border-[#D4D6DC] rounded-full px-3.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <input id="svc-current-odo" type="number" min="0" step="1" placeholder="e.g. 124500 km" class="min-w-0 flex-1 sm:flex-initial sm:w-40 bg-white border border-[#D4D6DC] rounded-lg px-3.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
               <button type="button" onclick="updateVehicleOdometerFromInput()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Save Odometer</button>
             </div>
           </div>
         </div>
 
         <!-- Automated Pre-Service Health Evaluator (8 Checks) -->
-        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+        <div class="acro-card rounded-xl p-4 sm:p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
@@ -1171,7 +1436,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <!-- Maintenance Schedule & Next-Due Tracker -->
-        <div class="acro-card rounded-3xl p-4 sm:p-5 space-y-3">
+        <div class="acro-card rounded-xl p-4 sm:p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 class="text-sm sm:text-base font-bold text-[#222222]">Maintenance Schedule &amp; Next-Due Tracker</h3>
@@ -1187,13 +1452,13 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
           <!-- Left Column: Log / Edit Service Entry (5 cols) -->
-          <div class="lg:col-span-5 acro-card rounded-3xl p-4 sm:p-5 space-y-3 min-w-0">
+          <div class="lg:col-span-5 acro-card rounded-xl p-4 sm:p-5 space-y-3 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <div>
                 <h3 id="svc-form-heading" class="text-sm sm:text-base font-bold text-[#222222]">Log Service / Maintenance Entry</h3>
                 <p class="text-xs text-[#5A5F6A]">Automatically attaches a read-only OBD-II health snapshot on save.</p>
               </div>
-              <button type="button" id="svc-cancel-edit-btn" onclick="cancelServiceEdit()" class="hidden text-xs px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold">Cancel Edit</button>
+              <button type="button" id="svc-cancel-edit-btn" onclick="cancelServiceEdit()" class="hidden text-xs px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold">Cancel Edit</button>
             </div>
 
             <input type="hidden" id="svc-edit-id" value="" />
@@ -1201,7 +1466,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="space-y-2.5 text-xs">
               <div>
                 <label for="svc-category" class="block font-semibold text-[#4A4E57] mb-1">Service Category</label>
-                <select id="svc-category" onchange="onServiceCategoryChange(this.value)" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-semibold text-[#222222] focus:outline-none focus:border-[#222222]">
+                <select id="svc-category" onchange="onServiceCategoryChange(this.value)" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-semibold text-[#222222] focus:outline-none focus:border-[#222222]">
                   <option value="oil_filter">Oil &amp; Filter Change (VW 502.00 / 15,000 km / 12 mo)</option>
                   <option value="inspection_service">Annual / Major Inspection (30,000 km / 12 mo)</option>
                   <option value="spark_plugs">Spark Plugs — EA211 1.2L TSI (60,000 km / 48 mo)</option>
@@ -1217,53 +1482,53 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
               <div>
                 <label for="svc-title" class="block font-semibold text-[#4A4E57] mb-1">Service Title</label>
-                <input id="svc-title" type="text" placeholder="e.g. Engine Oil & OEM Filter Change (5W-40)" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <input id="svc-title" type="text" placeholder="e.g. Engine Oil & OEM Filter Change (5W-40)" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
               </div>
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label for="svc-date" class="block font-semibold text-[#4A4E57] mb-1">Service Date</label>
-                  <input id="svc-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
                 <div>
                   <label for="svc-odometer" class="block font-semibold text-[#4A4E57] mb-1">Odometer (km)</label>
-                  <input id="svc-odometer" type="number" min="0" step="1" placeholder="e.g. 124500" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-odometer" type="number" min="0" step="1" placeholder="e.g. 124500" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label for="svc-next-km" class="block font-semibold text-[#4A4E57] mb-1">Next Due (km)</label>
-                  <input id="svc-next-km" type="number" min="0" step="1" placeholder="Auto or custom" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-next-km" type="number" min="0" step="1" placeholder="Auto or custom" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
                 <div>
                   <label for="svc-next-date" class="block font-semibold text-[#4A4E57] mb-1">Next Due Date</label>
-                  <input id="svc-next-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-next-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
               </div>
 
               <div>
                 <label for="svc-parts" class="block font-semibold text-[#4A4E57] mb-1">Parts / Oil / Filter Specification</label>
-                <input id="svc-parts" type="text" placeholder="e.g. VW 502.00 5W-40 4L · Mann W712/95 oil filter" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <input id="svc-parts" type="text" placeholder="e.g. VW 502.00 5W-40 4L · Mann W712/95 oil filter" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
               </div>
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label for="svc-workshop" class="block font-semibold text-[#4A4E57] mb-1">Workshop / Tech</label>
-                  <input id="svc-workshop" type="text" placeholder="e.g. DIY / Service Center" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-workshop" type="text" placeholder="e.g. DIY / Service Center" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
                 <div>
                   <label for="svc-cost" class="block font-semibold text-[#4A4E57] mb-1">Cost (Optional)</label>
-                  <input id="svc-cost" type="text" placeholder="e.g. R 1,450" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="svc-cost" type="text" placeholder="e.g. R 1,450" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
               </div>
 
               <div>
                 <label for="svc-notes" class="block font-semibold text-[#4A4E57] mb-1">Service Notes &amp; Findings</label>
-                <textarea id="svc-notes" rows="2" placeholder="Observations, filter condition, battery load test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
+                <textarea id="svc-notes" rows="2" placeholder="Observations, filter condition, battery load test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
               </div>
 
-              <div id="svc-snapshot-preview" class="acro-well rounded-2xl p-2.5 text-[11px] font-mono-num text-[#4A4E57] leading-relaxed">
+              <div id="svc-snapshot-preview" class="acro-well rounded-xl p-2.5 text-[11px] font-mono-num text-[#4A4E57] leading-relaxed">
                 OBD Snapshot to attach: 0 DTCs · MIL OFF · Coolant 98°C · 13.74V · Fuel 8.2% · Health 91/100
               </div>
 
@@ -1274,7 +1539,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
 
           <!-- Right Column: Per-VIN Chronological Service History (7 cols) -->
-          <div class="lg:col-span-7 acro-card rounded-3xl p-4 sm:p-5 flex flex-col min-w-0 space-y-3">
+          <div class="lg:col-span-7 acro-card rounded-xl p-4 sm:p-5 flex flex-col min-w-0 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="min-w-0">
                 <h3 class="text-sm sm:text-base font-bold text-[#222222]">Recorded Service &amp; Inspection History</h3>
@@ -1296,14 +1561,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- =================================================================== -->
       <section id="tab-passport" class="hidden space-y-4">
 
-        <div class="acro-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 min-w-0">
+        <div class="acro-card rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 min-w-0">
           <div class="min-w-0 flex-1">
             <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Complete Vehicle Variable Collector</span>
             <h2 class="text-lg font-bold text-[#222222] mt-0.5">All 124 Collected Variables (Live Matrix &amp; Raw Hex Register)</h2>
             <p class="text-xs text-[#5A5F6A]">Includes all 40 Mode 01 PIDs, 6 Derived Physics Metrics, 11 Readiness Monitors, 3 DTC Modes, 18 Mode 06 Tests, 24 Mode 09/IUMPR Counters, and 22 UDS 0x22 DIDs</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full w-full lg:w-auto">
-            <select id="var-cat-filter" onchange="renderAllVariablesTable()" class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 font-semibold text-[#222222] focus:outline-none min-w-0 max-w-full w-full sm:w-auto truncate">
+            <select id="var-cat-filter" onchange="renderAllVariablesTable()" class="text-xs bg-white border border-[#D4D6DC] rounded-lg px-3.5 py-2 font-semibold text-[#222222] focus:outline-none min-w-0 max-w-full w-full sm:w-auto truncate">
               <option value="ALL">All Categories (124 Variables)</option>
               <option value="MODE01">Mode 01 Live &amp; Bitmasks (40)</option>
               <option value="DERIVED">Derived Physics &amp; Economy (6)</option>
@@ -1312,21 +1577,21 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <option value="MODE09">Mode 09 Vehicle &amp; IUMPR (24)</option>
               <option value="UDS22">UDS 0x22 &amp; Adapter AT (20)</option>
             </select>
-            <input id="pid-search" type="text" oninput="renderAllVariablesTable()" placeholder="Search PID, DID, name, or value..." class="text-xs bg-white border border-[#D4D6DC] rounded-full px-3.5 py-2 min-w-0 max-w-full flex-1 sm:flex-initial sm:w-56 text-[#222222] placeholder-[#9CA3AF] focus:outline-none focus:border-[#222222]" />
+            <input id="pid-search" type="text" oninput="renderAllVariablesTable()" placeholder="Search PID, DID, name, or value..." class="text-xs bg-white border border-[#D4D6DC] rounded-lg px-3.5 py-2 min-w-0 max-w-full flex-1 sm:flex-initial sm:w-56 text-[#222222] placeholder-[#9CA3AF] focus:outline-none focus:border-[#222222]" />
             <button onclick="exportFullJsonSnapshot()" class="text-xs px-4 py-2 acro-pill-primary shadow-sm whitespace-nowrap shrink-0">Export Full 124-Var JSON</button>
           </div>
         </div>
 
-        <div class="acro-card rounded-3xl p-4 overflow-x-auto">
+        <div class="acro-card rounded-xl p-4 overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="border-b border-[#ECEEF2] bg-[#F7F8FA] text-[#5A5F6A]">
-                <th class="py-2.5 px-3 font-bold rounded-l-xl">Mode / ID</th>
+                <th class="py-2.5 px-3 font-bold rounded-l-lg">Mode / ID</th>
                 <th class="py-2.5 px-3 font-bold">Category</th>
                 <th class="py-2.5 px-3 font-bold">Variable Name</th>
                 <th class="py-2.5 px-3 font-bold">Live / Decoded Value</th>
                 <th class="py-2.5 px-3 font-bold">Raw CAN Frame / Formula</th>
-                <th class="py-2.5 px-3 font-bold rounded-r-xl">Status</th>
+                <th class="py-2.5 px-3 font-bold rounded-r-lg">Status</th>
               </tr>
             </thead>
             <tbody id="all-vars-tbody" class="divide-y divide-[#ECEEF2]"></tbody>
@@ -1340,10 +1605,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- =================================================================== -->
       <section id="tab-cloud" class="hidden space-y-4">
 
-        <!-- Soft Pastel Mesh Cloud Overview Banner -->
-        <div class="rounded-3xl p-5 border border-[#E6E8EE] flex flex-wrap items-center justify-between gap-4" style="background: linear-gradient(120deg, rgba(255,140,174,0.16), rgba(186,208,252,0.22), rgba(255,154,116,0.16));">
+        <!-- Real-Time Cloud Overview Card -->
+        <div class="acro-card rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-11 h-11 rounded-2xl bg-[#222222] text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div class="w-11 h-11 rounded-lg bg-[#222222] text-white flex items-center justify-center shrink-0 shadow-sm">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
@@ -1362,15 +1627,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
           <!-- Live Packet Counters -->
           <div class="flex items-center gap-2.5 text-xs font-mono-num">
-            <div class="bg-white border border-[#E6E8EE] rounded-2xl px-3.5 py-2 text-center shadow-sm">
+            <div class="acro-well rounded-lg px-3.5 py-2 text-center">
               <span class="text-[#5A5F6A] block font-medium">Sent (TX)</span>
               <strong id="cloud-tx-count" class="text-[#1473E6] text-sm font-bold">0</strong>
             </div>
-            <div class="bg-white border border-[#E6E8EE] rounded-2xl px-3.5 py-2 text-center shadow-sm">
+            <div class="acro-well rounded-lg px-3.5 py-2 text-center">
               <span class="text-[#5A5F6A] block font-medium">Received (RX)</span>
               <strong id="cloud-rx-count" class="text-[#047857] text-sm font-bold">0</strong>
             </div>
-            <div class="bg-white border border-[#E6E8EE] rounded-2xl px-3.5 py-2 text-center shadow-sm">
+            <div class="acro-well rounded-lg px-3.5 py-2 text-center">
               <span class="text-[#5A5F6A] block font-medium">Queued Offline</span>
               <strong id="cloud-queue-count" class="text-[#B45309] text-sm font-bold">0</strong>
             </div>
@@ -1381,7 +1646,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           <!-- Card 1: Cloud Provider & Private Channel Key -->
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between space-y-3">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between space-y-3">
             <div>
               <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">1. Firebase &amp; Cloud Relay Channel</span>
               <h3 class="text-base font-bold text-[#222222] mt-0.5">Firebase RTDB (Default) &amp; Fallbacks</h3>
@@ -1392,7 +1657,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <div class="mt-3 space-y-2.5 text-xs">
                 <div>
                   <label class="text-[#5A5F6A] block mb-1 font-semibold">Cloud Provider</label>
-                  <select id="cloud-provider" onchange="updateCloudProviderUi(); saveCloudConfig(); evaluateAutoCloudConnection('provider-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 font-semibold text-[#222222] focus:outline-none">
+                  <select id="cloud-provider" onchange="updateCloudProviderUi(); saveCloudConfig(); evaluateAutoCloudConnection('provider-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 font-semibold text-[#222222] focus:outline-none">
                     <option value="firebase" selected>Firebase Realtime Database (Default · Live + History)</option>
                     <option value="ntfy">Instant Cloud Pub/Sub (ntfy.sh HTTPS/SSE — Fallback)</option>
                     <option value="supabase">Supabase Table (REST POST/GET)</option>
@@ -1402,36 +1667,36 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
                 <div id="channel-id-group">
                   <label class="text-[#5A5F6A] block mb-1 font-semibold">Vehicle VIN / Firebase Key</label>
-                  <input id="cloud-channel-id" type="text" oninput="onCloudEndpointInput()" value="AAVZZZ6RZHU112564" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                  <input id="cloud-channel-id" type="text" oninput="onCloudEndpointInput()" value="AAVZZZ6RZHU112564" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                 </div>
 
                 <div id="custom-url-group" class="space-y-2">
                   <div>
                     <label id="custom-url-label" class="text-[#5A5F6A] block mb-1 font-semibold">Firebase Realtime Database URL</label>
-                    <input id="cloud-custom-url" type="text" oninput="onCloudEndpointInput()" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                    <input id="cloud-custom-url" type="text" oninput="onCloudEndpointInput()" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <div id="firebase-setup-hint" class="acro-well rounded-xl p-2.5 text-[11px] text-[#4A4E57]">
                     <span id="firebase-url-status-text">Apply your VIN-based Firebase RTDB URL below or paste your Firebase Console RTDB URL to start saving live frames &amp; trip history automatically whenever online.</span>
                   </div>
 
                   <!-- Dedicated VIN-Based Firebase URL Generator -->
-                  <div id="vin-firebase-box" class="rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 p-3 space-y-2 text-[11px]">
+                  <div id="vin-firebase-box" class="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]/60 p-3 space-y-2 text-[11px]">
                     <div class="flex items-center justify-between gap-2">
                       <span class="font-bold text-[#1473E6] uppercase tracking-wider">VIN Firebase URL</span>
                       <span id="cloud-vin-badge" class="font-mono-num font-bold text-[#222222]">AAVZZZ6RZHU112564</span>
                     </div>
-                    <div class="bg-white border border-[#D7DFF6] rounded-xl p-2 font-mono-num text-[#222222] space-y-1">
+                    <div class="bg-white border border-[#D7DFF6] rounded-lg p-2 font-mono-num text-[#222222] space-y-1">
                       <div class="text-[10px] text-[#5A5F6A]">Dedicated Vehicle Endpoint:</div>
                       <div id="vin-firebase-preview" class="font-bold text-[#1473E6] break-all select-all">Loading VIN URL...</div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                      <button id="btn-apply-vin-fb" type="button" onclick="applySuggestedVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-full bg-[#1473E6] hover:bg-[#0F5CC0] text-white font-semibold transition">
+                      <button id="btn-apply-vin-fb" type="button" onclick="applySuggestedVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-lg bg-[#1473E6] hover:bg-[#0F5CC0] text-white font-semibold transition">
                         Apply VIN Firebase URL
                       </button>
-                      <button type="button" onclick="copyVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
+                      <button type="button" onclick="copyVinFirebaseUrl()" class="px-2.5 py-1.5 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
                         Copy VIN URL
                       </button>
-                      <button type="button" onclick="downloadBridgeFirebaseConfig()" class="px-2.5 py-1.5 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
+                      <button type="button" onclick="downloadBridgeFirebaseConfig()" class="px-2.5 py-1.5 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#F7F8FA] transition">
                         Download bridge/firebase.local.json
                       </button>
                     </div>
@@ -1448,11 +1713,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
                   <div id="supabase-table-group" class="hidden">
                     <label class="text-[#5A5F6A] block mb-1 font-semibold">Supabase Table Name</label>
-                    <input id="cloud-supabase-table" type="text" oninput="saveCloudConfig()" value="pulseobd_telemetry" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                    <input id="cloud-supabase-table" type="text" oninput="saveCloudConfig()" value="pulseobd_telemetry" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <div>
                     <label id="api-key-label" class="text-[#5A5F6A] block mb-1 font-semibold">Firebase Database Auth / Secret (Optional)</label>
-                    <input id="cloud-api-key" type="password" oninput="saveCloudConfig()" placeholder="Leave blank if RTDB rules allow channel read/write" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                    <input id="cloud-api-key" type="password" oninput="saveCloudConfig()" placeholder="Leave blank if RTDB rules allow channel read/write" class="w-full font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
                   </div>
                   <details id="supabase-sql-tip" class="hidden acro-well rounded-xl p-2.5 text-xs text-[#4A4E57]">
                     <summary class="cursor-pointer font-semibold text-[#222222]">Show 1-Click Supabase SQL Table Setup</summary>
@@ -1468,7 +1733,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
                 <div>
                   <label class="text-[#5A5F6A] block mb-1 font-semibold">Broadcast Interval</label>
-                  <select id="cloud-interval-ms" onchange="saveCloudConfig()" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-mono-num font-semibold text-[#222222] focus:outline-none">
+                  <select id="cloud-interval-ms" onchange="saveCloudConfig()" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num font-semibold text-[#222222] focus:outline-none">
                     <option value="1500">Every 1.5 seconds (Real-Time Drive)</option>
                     <option value="3000" selected>Every 3.0 seconds (Balanced Mobile Data)</option>
                     <option value="5000">Every 5.0 seconds (Low Bandwidth)</option>
@@ -1484,7 +1749,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
 
           <!-- Card 2: In-Car Telemetry Broadcaster (TX) -->
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between space-y-3">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between space-y-3">
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#E13C7A]">2. In-Vehicle Sender (TX)</span>
@@ -1495,7 +1760,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 Streams all 124 variables to <span id="cloud-tx-path-lbl" class="font-mono-num text-[#222222]">/vehicles/AAVZZZ6RZHU112564/latest.json</span> and archives timestamped frames to <span class="font-mono-num text-[#222222]">history/</span> automatically when online.
               </p>
 
-              <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
+              <div class="mt-3 acro-well rounded-xl p-3 text-xs space-y-1.5">
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Firebase Live + History</span>
                   <strong class="font-mono-num text-[#047857]">latest + /history/frames</strong>
@@ -1513,7 +1778,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <div class="mt-3 space-y-2 text-xs text-[#222222]">
                 <div>
                   <label class="text-[#5A5F6A] block mb-1 font-semibold">Auto-Connect Mode (When Internet Is Available)</label>
-                  <select id="cloud-auto-role" onchange="saveCloudConfig(); evaluateAutoCloudConnection('role-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-1.5 font-semibold text-[#222222] focus:outline-none">
+                  <select id="cloud-auto-role" onchange="saveCloudConfig(); evaluateAutoCloudConnection('role-change');" class="w-full bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-semibold text-[#222222] focus:outline-none">
                     <option value="smart" selected>Smart Auto (TX on OBD/Queue · RX on Remote)</option>
                     <option value="tx_always">Always Auto-TX whenever Online</option>
                     <option value="rx_always">Always Auto-Watch (RX) whenever Online</option>
@@ -1541,7 +1806,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
 
           <!-- Card 3: Remote Live Viewer (RX) -->
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between space-y-3">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between space-y-3">
             <div>
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#047857]">3. Remote Viewer (RX)</span>
@@ -1552,7 +1817,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 Open on any computer or phone to watch live Firebase RTDB Server-Sent Events (SSE) with automatic reconnect when signal returns.
               </p>
 
-              <div class="mt-3 acro-well rounded-2xl p-3 text-xs space-y-1.5">
+              <div class="mt-3 acro-well rounded-xl p-3 text-xs space-y-1.5">
                 <div class="flex justify-between">
                   <span class="text-[#5A5F6A]">Stream Protocol</span>
                   <strong id="cloud-rx-proto" class="font-mono-num text-[#1473E6]">Firebase SSE Stream + REST</strong>
@@ -1569,7 +1834,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
 
             <div class="space-y-2">
-              <button id="btn-toggle-rx" onclick="toggleCloudViewer()" class="w-full py-2.5 px-4 rounded-full bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm">
+              <button id="btn-toggle-rx" onclick="toggleCloudViewer()" class="w-full py-2.5 px-4 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm">
                 Watch Remote Vehicle Stream (RX)
               </button>
               <button onclick="fetchLatestCloudSnapshot()" class="w-full py-2.5 px-4 acro-pill-secondary text-xs">
@@ -1581,7 +1846,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <!-- Live Cloud Telemetry Inspector Log -->
-        <div class="acro-card rounded-3xl p-5">
+        <div class="acro-card rounded-xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div>
               <h3 class="text-sm font-bold text-[#222222]">Live Cloud &amp; Firebase Sync Log</h3>
@@ -1589,7 +1854,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
             <button onclick="clearCloudLog()" class="text-xs px-3 py-1 acro-pill-secondary">Clear Log</button>
           </div>
-          <div id="cloud-log" class="acro-well rounded-2xl p-3.5 h-44 overflow-y-auto font-mono-num text-xs space-y-1">
+          <div id="cloud-log" class="acro-well rounded-xl p-3.5 h-44 overflow-y-auto font-mono-num text-xs space-y-1">
             <div class="text-[#1473E6] font-semibold">[ARCHIVE] Local Project Folder archiving ready (vehicle_history/&lt;VIN&gt;/). Optional Cloud VIN Channel ready.</div>
             <div class="text-[#5A5F6A]">[INFO] Drives are stored per VIN inside vehicle_history/ and IndexedDB; add a Firebase URL anytime to also mirror remotely.</div>
           </div>
@@ -1602,9 +1867,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       <!-- =================================================================== -->
       <section id="tab-bluetooth" class="hidden space-y-4">
 
-        <div class="bg-[#ECFDF5] border border-[#A7F3D0] rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
+            <div class="w-10 h-10 rounded-lg bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-sm">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -1621,7 +1886,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">1. Direct COM3 / Web Serial</span>
@@ -1631,7 +1896,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <p class="text-xs text-[#5A5F6A] mt-1">
                 Connects directly to <span class="font-mono-num font-semibold text-[#222222]">OBDII (00:10:CC:4F:36:03)</span> on <span class="font-mono-num font-semibold text-[#222222]">COM3</span> in Chrome/Edge and starts the full 39-PID + Mode 06/09/UDS read-only sweep.
               </p>
-              <div class="mt-3 space-y-1 text-xs acro-well rounded-2xl p-3 font-mono-num text-[#3B3E45]">
+              <div class="mt-3 space-y-1 text-xs acro-well rounded-xl p-3 font-mono-num text-[#3B3E45]">
                 <div>Device: OBDII (ELM327 v2.1)</div>
                 <div>Port: COM3 (\Device\BthModem0)</div>
                 <div>Sweep: All 40 Mode 01 + 03/06/07/09/0A/22</div>
@@ -1647,7 +1912,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#E13C7A]">2. Mobile BLE GATT</span>
@@ -1657,7 +1922,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <p class="text-xs text-[#5A5F6A] mt-1">
                 For BLE OBD-II adapters on Android Chrome or iOS Bluefy, or import any captured <span class="font-mono-num font-semibold text-[#222222]">obd2_dump.json</span> / <span class="font-mono-num font-semibold text-[#222222]">obd2_extended_dump.json</span> file.
               </p>
-              <div class="mt-3 space-y-1 text-xs acro-well rounded-2xl p-3 font-mono-num text-[#3B3E45]">
+              <div class="mt-3 space-y-1 text-xs acro-well rounded-xl p-3 font-mono-num text-[#3B3E45]">
                 <div>UUIDs: 0xFFF0, 0xFFE0, Nordic UART</div>
                 <div>Protocol: ISO 15765-4 CAN 11/500</div>
                 <div>Target ECU: 7E0 → 7E8</div>
@@ -1674,7 +1939,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
           </div>
 
-          <div class="acro-card rounded-3xl p-5 flex flex-col justify-between">
+          <div class="acro-card rounded-xl p-5 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-[#047857]">3. Mobile Wi-Fi + Cloud Bridge</span>
@@ -1685,11 +1950,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 Streams all 124 variables from Windows <span class="font-mono-num font-semibold text-[#222222]">COM3</span> to your local Wi-Fi AND automatically broadcasts them online to your Cloud Channel!
               </p>
               <div class="mt-3">
-                <input id="bridge-url-input" type="text" value="http://localhost:8765" placeholder="http://192.168.1.x:8765" class="w-full text-xs font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-xl px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <input id="bridge-url-input" type="text" value="http://localhost:8765" placeholder="http://192.168.1.x:8765" class="w-full text-xs font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
               </div>
             </div>
             <div class="mt-4 space-y-2">
-              <button onclick="connectWifiBridge()" class="w-full py-2.5 px-4 rounded-full bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm">
+              <button onclick="connectWifiBridge()" class="w-full py-2.5 px-4 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm">
                 Connect to Wi-Fi COM3 Bridge
               </button>
               <button onclick="runFullReadOnlySweepLog()" class="w-full py-2 px-4 acro-pill-secondary text-xs">
@@ -1700,7 +1965,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         </div>
 
         <!-- Bluetooth Audio & Multi-Device Coexistence (Car Stereo, Calls, Smartwatch, Extra BLE) -->
-        <div id="bt-coexist-card" class="acro-card rounded-3xl p-5 space-y-3">
+        <div id="bt-coexist-card" class="acro-card rounded-xl p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
@@ -1719,16 +1984,16 @@ Check your Browserslist config to be sure that your targets are set up correctly
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div class="acro-well rounded-2xl p-3">
+            <div class="acro-well rounded-xl p-3">
               <label class="text-[#5A5F6A] block mb-1 font-semibold">RF Radio Coexistence Profile</label>
-              <select id="ble-coexist-mode" onchange="saveBtPrefs()" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-2.5 py-1.5 font-semibold text-[#222222] focus:outline-none">
+              <select id="ble-coexist-mode" onchange="saveBtPrefs()" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-semibold text-[#222222] focus:outline-none">
                 <option value="coexist" selected>Balanced Coexistence (550ms · ~70% Free BT)</option>
                 <option value="audio_priority">Audio / Multi-BT Priority (950ms · ~86% Free BT)</option>
                 <option value="shared_release">Shared BT Unlock (Poll &amp; Release Port)</option>
                 <option value="performance">High-Speed Telemetry (120ms Burst Rate)</option>
               </select>
             </div>
-            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
+            <div class="acro-well rounded-xl p-3 flex flex-col justify-between">
               <span class="text-[#5A5F6A] font-semibold block">ATT GATT &amp; Radio Strategy</span>
               <div class="flex items-center justify-between mt-1">
                 <strong id="bt-write-mode-lbl" class="font-mono-num text-[#1473E6]">WriteWithoutResponse Ready</strong>
@@ -1739,19 +2004,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <span>Auto-pause &amp; settle OBD while connecting other BT</span>
               </label>
             </div>
-            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
+            <div class="acro-well rounded-xl p-3 flex flex-col justify-between">
               <span class="text-[#5A5F6A] font-semibold block">Strict OS / Single-Radio BT Tip</span>
               <p class="text-[11px] text-[#4A4E57] mt-1 leading-snug">If your phone or Windows BT adapter refuses a 2nd Classic device, tap <strong class="text-[#222222]">Yield 20s</strong> or <strong class="text-[#222222]">Unlock / Release BT</strong> (or pick <strong class="text-[#222222]">Shared BT Unlock</strong>) to free COM3/GATT cleanly, then resume with 1 tap.</p>
             </div>
           </div>
 
-          <div id="bt-connected-devices-list" class="acro-well rounded-2xl p-3 text-xs space-y-1.5">
+          <div id="bt-connected-devices-list" class="acro-well rounded-xl p-3 text-xs space-y-1.5">
             <div class="text-[#5A5F6A]">No active browser BLE link yet. Connect OBD-II above or add a companion BLE sensor without disconnecting OBD.</div>
           </div>
         </div>
 
         <!-- Passive Phone Drive Recorder & On-Device Storage (IndexedDB) -->
-        <div class="acro-card rounded-3xl p-5">
+        <div class="acro-card rounded-xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
               <div class="flex items-center gap-2">
@@ -1764,24 +2029,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="flex flex-wrap items-center gap-2">
               <button onclick="exportStoredDriveCsv()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Export Stored CSV</button>
               <button onclick="exportStoredDriveJson()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Export Stored JSON</button>
-              <button onclick="clearStoredDrives()" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Drives</button>
+              <button onclick="clearStoredDrives()" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-semibold hover:bg-[#FECACA] transition">Clear Drives</button>
             </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3 text-xs">
-            <div class="acro-well rounded-2xl p-3">
+            <div class="acro-well rounded-xl p-3">
               <span class="text-[#5A5F6A] block">Stored Frames (Phone)</span>
               <strong id="passive-sample-count" class="font-mono-num text-base text-[#222222]">0</strong>
             </div>
-            <div class="acro-well rounded-2xl p-3">
+            <div class="acro-well rounded-xl p-3">
               <span class="text-[#5A5F6A] block">Active Drive Session</span>
               <strong id="passive-session-label" class="font-mono-num text-sm text-[#1473E6] truncate block">Not started</strong>
             </div>
-            <div class="acro-well rounded-2xl p-3">
+            <div class="acro-well rounded-xl p-3">
               <span class="text-[#5A5F6A] block">Screen Wake Lock</span>
               <strong id="passive-wakelock-state" class="font-mono-num text-sm text-[#5A5F6A]">Inactive</strong>
             </div>
-            <div class="acro-well rounded-2xl p-3">
+            <div class="acro-well rounded-xl p-3">
               <span class="text-[#5A5F6A] block">BLE Auto-Reconnect</span>
               <strong id="passive-reconnect-state" class="font-mono-num text-sm text-[#047857]">Armed</strong>
             </div>
@@ -1802,24 +2067,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </label>
           </div>
 
-          <div id="passive-sessions-list" class="acro-well rounded-2xl p-3 text-xs space-y-1.5 max-h-36 overflow-y-auto">
+          <div id="passive-sessions-list" class="acro-well rounded-xl p-3 text-xs space-y-1.5 max-h-36 overflow-y-auto">
             <div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>
           </div>
         </div>
 
-        <div class="acro-card rounded-3xl p-5">
+        <div class="acro-card rounded-xl p-5">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
               <h3 class="text-sm font-bold text-[#222222]">Read-Only ELM327 CAN Frame Log &amp; Command Tester</h3>
               <p class="text-xs text-[#5A5F6A]">Send any read-only query (<span class="font-mono-num">010C</span>, <span class="font-mono-num">013C</span>, <span class="font-mono-num">06A2</span>, <span class="font-mono-num">0908</span>, <span class="font-mono-num">22F187</span>) or test the Mode 04 firewall block</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <input id="cmd-input" type="text" value="010C" placeholder="e.g. 010C, 22F197, 04" class="text-xs font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-full px-3.5 py-1.5 w-40 text-[#222222] focus:outline-none focus:border-[#222222]" />
+              <input id="cmd-input" type="text" value="010C" placeholder="e.g. 010C, 22F197, 04" class="text-xs font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3.5 py-1.5 w-40 text-[#222222] focus:outline-none focus:border-[#222222]" />
               <button onclick="sendManualCommand()" class="text-xs px-4 py-1.5 acro-pill-primary">Send Read-Only Query</button>
-              <button onclick="sendManualCommand('04')" class="text-xs px-3.5 py-1.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-bold hover:bg-[#FECACA] transition">Test Mode 04 Block</button>
+              <button onclick="sendManualCommand('04')" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] font-bold hover:bg-[#FECACA] transition">Test Mode 04 Block</button>
             </div>
           </div>
-          <div id="elm-terminal" class="acro-well rounded-2xl p-3.5 h-48 overflow-y-auto font-mono-num text-xs space-y-1 text-[#3B3E45]">
+          <div id="elm-terminal" class="acro-well rounded-xl p-3.5 h-48 overflow-y-auto font-mono-num text-xs space-y-1 text-[#3B3E45]">
             <div class="text-[#047857] font-semibold">[SYSTEM] Strictly Read-Only All-Variable Collector armed. 124 vehicle variables mapped.</div>
             <div class="text-[#1473E6]">&gt; ATZ → ELM327 v2.1 | AT@1 → OBDII to RS232 Interpreter | ATRV → 13.8V..13.9V | ATDP → ISO 15765-4 (CAN 11/500) (A6)</div>
             <div class="text-[#5A5F6A]">&gt; 0100..0140 → 39 Mode 01 PIDs discovered (01,03,04,05,06,07,0B,0C,0D,0E,0F,11,13,14,15,1C,1F,20,21,23,2E,2F,30,31,33,3C,40,41,42,43,44,45,46,47,49,4A,4C,51,56)</div>
@@ -1834,35 +2099,35 @@ Check your Browserslist config to be sure that your targets are set up correctly
     <!-- Bottom Mobile Navigation Bar -->
     <nav id="mobile-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 acro-glass border-t border-[#E6E8EE] px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
       <div class="max-w-lg mx-auto grid grid-cols-8 gap-0.5 text-center">
-        <button onclick="switchTab('cockpit')" id="mtab-cockpit" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('cockpit')" id="mtab-cockpit" class="flex flex-col items-center py-1 px-0.5 rounded-lg bg-[#F4F5F7] text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span>Cockpit</span>
         </button>
-        <button onclick="switchTab('graphs')" id="mtab-graphs" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('graphs')" id="mtab-graphs" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
           <span>Graphs</span>
         </button>
-        <button onclick="switchTab('history')" id="mtab-history" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('history')" id="mtab-history" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span>History</span>
         </button>
-        <button onclick="switchTab('infographics')" id="mtab-infographics" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('infographics')" id="mtab-infographics" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           <span>Health</span>
         </button>
-        <button onclick="switchTab('service')" id="mtab-service" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('service')" id="mtab-service" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
           <span>Service</span>
         </button>
-        <button onclick="switchTab('passport')" id="mtab-passport" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('passport')" id="mtab-passport" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>Vars</span>
         </button>
-        <button onclick="switchTab('cloud')" id="mtab-cloud" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('cloud')" id="mtab-cloud" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
           <span>Cloud</span>
         </button>
-        <button onclick="switchTab('bluetooth')" id="mtab-bluetooth" class="flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
+        <button onclick="switchTab('bluetooth')" id="mtab-bluetooth" class="flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap">
           <svg class="w-4 h-4 mb-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>
           <span>OBD</span>
         </button>
@@ -2971,7 +3236,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         appState.cloud.txActive = true;
         if (btn) {
           btn.textContent = 'Stop Cloud Broadcast (TX Active)';
-          btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
+          btn.className = 'w-full py-2.5 px-4 rounded-lg bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
         }
         logCloud(`[TX STARTED] Streaming every ${(cfg.intervalMs / 1000).toFixed(1)}s → ${cfg.prov.toUpperCase()} (live + history)...`, 'text-[#1473E6] font-bold');
         requestDriveWakeLock({ reason: 'cloud-tx' });
@@ -3194,7 +3459,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         }
         if (btn) {
           btn.textContent = 'Watch Remote Vehicle Stream (RX)';
-          btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm';
+          btn.className = 'w-full py-2.5 px-4 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition shadow-sm';
         }
         logCloud('[RX STOPPED] Disconnected from remote cloud stream.', 'text-[#B45309]');
       } else if (!appState.cloud.rxActive) {
@@ -3210,7 +3475,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         if (btn) {
           btn.textContent = 'Stop Watching Remote Stream (RX Active)';
-          btn.className = 'w-full py-2.5 px-4 rounded-full bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
+          btn.className = 'w-full py-2.5 px-4 rounded-lg bg-[#D92B2B] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-sm';
         }
 
         openCloudEventSource(cfg);
@@ -3449,14 +3714,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
         const dbtn = document.getElementById('dtab-' + id);
         if (dbtn) {
           dbtn.className = (id === tabId)
-            ? 'px-3 py-1.5 rounded-full bg-[#222222] text-white shadow-sm transition whitespace-nowrap'
-            : 'px-3 py-1.5 rounded-full text-[#50545E] hover:text-[#222222] transition whitespace-nowrap';
+            ? 'px-2.5 py-1 rounded-md nova-tab-active font-semibold transition whitespace-nowrap'
+            : 'px-2.5 py-1 rounded-md nova-tab-idle transition whitespace-nowrap';
         }
         const mbtn = document.getElementById('mtab-' + id);
         if (mbtn) {
           mbtn.className = (id === tabId)
-            ? 'flex flex-col items-center py-1 px-0.5 rounded-xl text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap'
-            : 'flex flex-col items-center py-1 px-0.5 rounded-xl text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap';
+            ? 'flex flex-col items-center py-1 px-0.5 rounded-lg bg-[#F4F5F7] text-[#222222] font-bold text-[9.5px] leading-tight whitespace-nowrap'
+            : 'flex flex-col items-center py-1 px-0.5 rounded-lg text-[#6B7280] font-medium text-[9.5px] leading-tight whitespace-nowrap';
         }
       });
       if (tabId === 'passport') renderAllVariablesTable();
@@ -3694,7 +3959,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const pillWarnCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-bold shrink-0';
 
       if (act.kind === 'off') {
-        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        if (bannerEl) bannerEl.className = 'rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'ENGINE OFF · 0 RPM', 'px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
         if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Active:</strong> Pin 16 (${d.volt.toFixed(2)}V) · Baro/MAP (${baroKpa} kPa) · Fuel (${d.fuel.toFixed(1)}%) · Thermal · BT/Cloud`;
@@ -3708,7 +3973,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         setBadgeState('g5-state', 'KOEO PEDAL / THR OFF', pillBlueCls);
         setBadgeState('g6-state', 'PIN 16 BATT & TANK LIVE', pillLiveCls);
       } else if (act.kind === 'static_idle') {
-        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        if (bannerEl) bannerEl.className = 'rounded-xl border border-[#E6E8EE] bg-[#F7F8FA] px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'STATIC CAPTURE · 0 km/h', 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
         if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Capture Active:</strong> Idle (${Math.round(d.rpm)} RPM) · O2/STFT · ${d.volt.toFixed(2)}V · Thermal &amp; HPFP`;
@@ -3722,7 +3987,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         setBadgeState('g5-state', 'STATIC IDLE', pillOffCls);
         setBadgeState('g6-state', 'STATIC CHARGE & TANK', pillLiveCls);
       } else if (act.kind === 'idling_stopped') {
-        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        if (bannerEl) bannerEl.className = 'rounded-xl border border-[#BFDBFE] bg-[#EFF6FF]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', 'VEHICLE STOPPED · IDLING', 'px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
         if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">Active:</strong> Idle (${Math.round(d.rpm)} RPM) · ${d.volt.toFixed(2)}V · Closed-Loop O2 · Thermal &amp; HPFP`;
@@ -3736,7 +4001,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         setBadgeState('g5-state', 'LIVE IDLE PEDAL', pillBlueCls);
         setBadgeState('g6-state', 'ALT CHARGING & TANK', pillLiveCls);
       } else {
-        if (bannerEl) bannerEl.className = 'rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
+        if (bannerEl) bannerEl.className = 'rounded-xl border border-[#A7F3D0] bg-[#ECFDF5]/60 px-3.5 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 text-xs';
         setBadgeState('stopped-banner-pill', `LIVE TELEMETRY · ${Math.round(d.spd)} km/h`, 'px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto');
         const activeP = document.getElementById('stopped-banner-active');
         if (activeP) activeP.innerHTML = `<strong class="text-[#047857]">All Systems Running:</strong> ${Math.round(d.rpm)} RPM · Turbo/MAP ${Math.round(d.map)} kPa · ${d.volt.toFixed(2)}V Charging · Closed-Loop Fuel`;
@@ -3776,6 +4041,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
     // =========================================================================
     // 8. 6-CHANNEL SYNCHRONIZED CANVAS CHART ENGINE (ZERO-JITTER FIXED SIZE)
     // =========================================================================
+    function isDarkThemeActive() {
+      return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+    }
+
     function drawMultiLineCanvas(canvasId, seriesList, minVal, maxVal, customHistory) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
@@ -3797,9 +4066,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
+      const isDark = isDarkThemeActive();
+
       // Pixel-snapped horizontal gridlines (zero subpixel shimmer)
       ctx.save();
-      ctx.strokeStyle = 'rgba(34, 34, 34, 0.08)';
+      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(24, 24, 27, 0.08)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       for (let i = 1; i <= 3; i++) {
@@ -3846,8 +4117,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
         if (sIdx === 0) {
           const grad = ctx.createLinearGradient(0, 0, 0, h);
-          grad.addColorStop(0, 'rgba(20, 115, 230, 0.14)');
-          grad.addColorStop(1, 'rgba(20, 115, 230, 0.00)');
+          grad.addColorStop(0, isDark ? 'rgba(59, 130, 246, 0.22)' : 'rgba(20, 115, 230, 0.14)');
+          grad.addColorStop(1, isDark ? 'rgba(59, 130, 246, 0.00)' : 'rgba(20, 115, 230, 0.00)');
           ctx.fillStyle = grad;
           traceSmoothPath();
           ctx.lineTo(points[points.length - 1].x, h);
@@ -4081,7 +4352,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             ? 'bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857]'
             : (isInc ? 'bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309]' : 'bg-white border border-[#E6E8EE] text-[#5A5F6A]');
           return `
-            <div class="acro-well rounded-2xl p-2.5 flex items-center justify-between gap-2">
+            <div class="acro-well rounded-xl p-2.5 flex items-center justify-between gap-2">
               <div class="min-w-0">
                 <span class="font-bold text-[#222222] block truncate">${m.name}</span>
                 <span class="text-[#5A5F6A]">Cycle: ${m.s0141}</span>
@@ -4095,7 +4366,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const iGrid = document.getElementById('iumpr-grid');
       if (iGrid) {
         iGrid.innerHTML = IUMPR_COUNTERS.map(c => `
-          <div class="acro-well rounded-2xl p-2.5">
+          <div class="acro-well rounded-xl p-2.5">
             <div class="flex items-center justify-between">
               <span class="font-mono-num font-bold text-[#1473E6]">${c.id}</span>
               <strong class="font-mono-num text-sm text-[#222222]">${c.val.toLocaleString()}</strong>
@@ -4113,7 +4384,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             pct = Math.min(98, Math.max(4, ((t.val - t.min) / (t.max - t.min)) * 100));
           }
           return `
-            <div class="acro-well rounded-2xl p-3.5 flex flex-col justify-between">
+            <div class="acro-well rounded-xl p-3.5 flex flex-col justify-between">
               <div class="flex items-center justify-between text-xs mb-1">
                 <span class="font-bold text-[#222222] truncate pr-2">${t.name}</span>
                 <span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">PASS</span>
@@ -4123,7 +4394,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <strong class="text-[#222222]">Val: ${t.val} ${t.unit}</strong>
               </div>
               <div class="w-full h-2 rounded-full bg-white border border-[#E6E8EE] relative overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-[#FF7CA3] via-[#6366F1] to-[#1473E6] rounded-full" style="width: ${pct.toFixed(1)}%"></div>
+                <div class="h-full bg-gradient-to-r from-[#10B981] via-[#1473E6] to-[#6366F1] rounded-full" style="width: ${pct.toFixed(1)}%"></div>
               </div>
               <div class="flex justify-between text-xs text-[#6B7280] font-mono-num mt-1">
                 <span>Min: ${t.min}</span>
@@ -4586,7 +4857,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         }
         if (linkBtn) {
           linkBtn.textContent = `Linked: ${appState.projectFolderName || appState.projectFolderHandle.name} ✓`;
-          linkBtn.className = 'text-xs px-3.5 py-1.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold transition';
+          linkBtn.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold transition';
         }
       } else if (appState.bridgeAutoSync) {
         if (badge) {
@@ -5155,7 +5426,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           ? '<span class="px-2 py-0.5 rounded-full bg-[#1473E6] text-white font-bold text-[10px] shrink-0">ACTIVE</span>'
           : '';
         return `
-          <div class="border ${cardBorder} rounded-2xl p-3 space-y-2 min-w-0 transition">
+          <div class="border ${cardBorder} rounded-xl p-3 space-y-2 min-w-0 transition">
             <div class="flex items-start justify-between gap-2 min-w-0">
               <div class="min-w-0">
                 <div class="font-bold text-[#222222] truncate" title="${v.label || v.vin}">${v.label || `Vehicle ${v.vin}`}</div>
@@ -5169,9 +5440,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="text-[#047857]">vehicle_history/${v.vin.slice(-6)}/</span>
             </div>
             <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <button onclick="switchToVehicleRecord('${v.vin}')" class="px-2.5 py-1 rounded-full ${isCurrent ? 'bg-[#222222] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isCurrent ? 'Active ✓' : 'Use Vehicle'}</button>
-              <button onclick="selectVehicleFilter('${v.vin}')" class="px-2.5 py-1 rounded-full ${isFiltered ? 'bg-[#1473E6] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isFiltered ? 'Show All' : 'Filter'}</button>
-              <button onclick="exportVehicleArchiveJson('${v.vin}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2] ml-auto">Export VIN</button>
+              <button onclick="switchToVehicleRecord('${v.vin}')" class="px-2.5 py-1 rounded-lg ${isCurrent ? 'bg-[#222222] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isCurrent ? 'Active ✓' : 'Use Vehicle'}</button>
+              <button onclick="selectVehicleFilter('${v.vin}')" class="px-2.5 py-1 rounded-lg ${isFiltered ? 'bg-[#1473E6] text-white' : 'bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${isFiltered ? 'Show All' : 'Filter'}</button>
+              <button onclick="exportVehicleArchiveJson('${v.vin}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2] ml-auto">Export VIN</button>
             </div>
           </div>
         `;
@@ -5682,8 +5953,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
             ${syncPill}
           </div>
           <div class="flex items-center gap-1.5">
-            <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
-            <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#222222] text-white font-semibold">CSV</button>
+            <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-lg bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
+            <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-lg bg-[#222222] text-white font-semibold">CSV</button>
           </div>
         </div>
       `;
@@ -5861,7 +6132,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
         const syncPill = pills.join(' ');
         return `
-          <div class="bg-[#F9FAFB] border ${borderCls} rounded-2xl p-3 space-y-2 transition">
+          <div class="bg-[#F9FAFB] border ${borderCls} rounded-xl p-3 space-y-2 transition">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <div class="text-[11px] font-mono-num text-[#1473E6] font-bold truncate">${vehLabel}</div>
@@ -5871,11 +6142,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-mono-num px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222] font-semibold shrink-0">${Math.round(s.maxSpd || 0)} km/h</span>
             </div>
             <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <button onclick="inspectHistorySession('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#222222] text-white font-semibold">Inspect</button>
-              <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
-              <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">CSV</button>
-              <button onclick="exportStoredDriveJson('${s.id}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">JSON</button>
-              <button onclick="deleteStoredDrive('${s.id}')" class="px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold hover:bg-[#FECACA] ml-auto">Delete</button>
+              <button onclick="inspectHistorySession('${s.id}')" class="px-2.5 py-1 rounded-lg bg-[#222222] text-white font-semibold">Inspect</button>
+              <button onclick="loadStoredDriveSession('${s.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Load</button>
+              <button onclick="exportStoredDriveCsv('${s.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">CSV</button>
+              <button onclick="exportStoredDriveJson('${s.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">JSON</button>
+              <button onclick="deleteStoredDrive('${s.id}')" class="px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold hover:bg-[#FECACA] ml-auto">Delete</button>
             </div>
           </div>
         `;
@@ -6762,17 +7033,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
       if (card) {
         card.className = isFail
-          ? 'cursor-pointer acro-card hover:border-[#D92B2B]/50 rounded-2xl p-3 flex items-center gap-3 transition'
+          ? 'cursor-pointer acro-card hover:border-[#D92B2B]/50 rounded-xl p-3 flex items-center gap-3 transition'
           : (isAttn
-              ? 'cursor-pointer acro-card hover:border-[#F59E0B]/50 rounded-2xl p-3 flex items-center gap-3 transition'
-              : 'cursor-pointer acro-card hover:border-[#047857]/40 rounded-2xl p-3 flex items-center gap-3 transition');
+              ? 'cursor-pointer acro-card hover:border-[#F59E0B]/50 rounded-xl p-3 flex items-center gap-3 transition'
+              : 'cursor-pointer acro-card hover:border-[#047857]/40 rounded-xl p-3 flex items-center gap-3 transition');
       }
       if (iconBox) {
         iconBox.className = isFail
-          ? 'w-9 h-9 rounded-xl bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] flex items-center justify-center shrink-0'
+          ? 'w-9 h-9 rounded-lg bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] flex items-center justify-center shrink-0'
           : (isAttn
-              ? 'w-9 h-9 rounded-xl bg-[#FFF4ED] border border-[#FED7AA] text-[#B45309] flex items-center justify-center shrink-0'
-              : 'w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0');
+              ? 'w-9 h-9 rounded-lg bg-[#FFF4ED] border border-[#FED7AA] text-[#B45309] flex items-center justify-center shrink-0'
+              : 'w-9 h-9 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] flex items-center justify-center shrink-0');
       }
       if (titleEl) {
         titleEl.textContent = `Service Health · ${evalRes.score}/100`;
@@ -6825,7 +7096,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
                     ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1473E6]'
                     : 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]'));
           return `
-            <div class="acro-well rounded-2xl p-3 flex flex-col justify-between gap-1.5 min-w-0">
+            <div class="acro-well rounded-xl p-3 flex flex-col justify-between gap-1.5 min-w-0">
               <div class="flex items-start justify-between gap-2">
                 <strong class="text-[#222222] leading-snug">${escapeHtml(chk.title)}</strong>
                 <span class="px-2 py-0.5 rounded-full border font-mono-num font-bold text-[10px] shrink-0 ${pillCls}">${escapeHtml(chk.level)}</span>
@@ -6923,7 +7194,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           ? `Last: ${escapeHtml(lastRec.serviceDate || '—')}${lastRec.odometerKm != null ? ' @ ' + formatNumberKm(lastRec.odometerKm) : ''}`
           : 'Not yet logged for this VIN';
         return `
-          <div class="acro-well rounded-2xl p-3 flex flex-col justify-between gap-2 min-w-0">
+          <div class="acro-well rounded-xl p-3 flex flex-col justify-between gap-2 min-w-0">
             <div class="space-y-1">
               <div class="flex items-start justify-between gap-1.5">
                 <strong class="text-[#222222] leading-snug">${escapeHtml(cat.label)}</strong>
@@ -6934,7 +7205,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             </div>
             <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#E6E8EE]">
               <span class="text-[10px] text-[#6B7280] font-mono-num truncate">${cat.intervalKm ? (cat.intervalKm / 1000) + 'k km' : 'Condition'}${cat.intervalMonths ? ' / ' + cat.intervalMonths + 'm' : ''}</span>
-              <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
+              <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
             </div>
           </div>
         `;
@@ -6956,7 +7227,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!listEl) return;
 
       if (!records.length) {
-        listEl.innerHTML = `<div class="acro-well rounded-2xl p-4 text-[#5A5F6A]">No service or inspection entries stored for <strong>${escapeHtml(vin)}</strong> yet. Use the form or tap <strong>Capture Pre-Service OBD Snapshot</strong>.</div>`;
+        listEl.innerHTML = `<div class="acro-well rounded-xl p-4 text-[#5A5F6A]">No service or inspection entries stored for <strong>${escapeHtml(vin)}</strong> yet. Use the form or tap <strong>Capture Pre-Service OBD Snapshot</strong>.</div>`;
         return;
       }
 
@@ -6983,7 +7254,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         ].filter(Boolean).join(' · ');
 
         return `
-          <div class="acro-well rounded-2xl p-3 space-y-1.5">
+          <div class="acro-well rounded-xl p-3 space-y-1.5">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-1.5">
@@ -6993,8 +7264,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <div class="font-bold text-sm text-[#222222] mt-1">${escapeHtml(r.title || catDef.defaultTitle)}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" onclick="editServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-full bg-white border border-[#D4D6DC] text-[#222222] font-semibold text-[11px] hover:bg-[#ECEEF2]">Edit</button>
-                <button type="button" onclick="deleteServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold text-[11px] hover:bg-[#FECACA]">Delete</button>
+                <button type="button" onclick="editServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] font-semibold text-[11px] hover:bg-[#ECEEF2]">Edit</button>
+                <button type="button" onclick="deleteServiceRecord('${escapeHtml(r.id)}')" class="px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold text-[11px] hover:bg-[#FECACA]">Delete</button>
               </div>
             </div>
             ${r.partsSpec ? `<div class="text-[11px] text-[#4A4E57]"><strong>Spec:</strong> ${escapeHtml(r.partsSpec)}</div>` : ''}
@@ -7782,7 +8053,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (unlockBtn) {
         if (isUnlocked) {
           unlockBtn.textContent = 'Resume OBD-II';
-          unlockBtn.className = 'text-xs px-3.5 py-1.5 rounded-full bg-[#059669] hover:bg-[#047857] text-white font-bold transition shadow-sm';
+          unlockBtn.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white font-bold transition shadow-sm';
         } else {
           unlockBtn.textContent = 'Unlock / Release BT';
           unlockBtn.className = 'text-xs px-3.5 py-1.5 acro-pill-secondary';
@@ -7979,7 +8250,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-bold text-[#1473E6]">Windows COM3 Bridge: ${st.port || 'COM3'} (${st.mode || 'coexist'})</span>
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">${comStatus}</span>
             </div>
-            <button onclick="toggleBtUnlock()" class="px-2.5 py-1 rounded-full ${st.manualUnlocked ? 'bg-[#059669] text-white' : 'bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${st.manualUnlocked ? 'Resume COM3' : 'Unlock COM3'}</button>
+            <button onclick="toggleBtUnlock()" class="px-2.5 py-1 rounded-lg ${st.manualUnlocked ? 'bg-[#059669] text-white' : 'bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${st.manualUnlocked ? 'Resume COM3' : 'Unlock COM3'}</button>
           </div>
         `);
       }
@@ -7992,8 +8263,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">ID: ${appState.bleDevice.id || 'paired'} · ${appState.bleCanWriteWithoutResp ? 'WriteWithoutResponse' : 'WriteWithResponse'}</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release BT</button>
-              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Disconnect</button>
+              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release BT</button>
+              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-lg bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Disconnect</button>
             </div>
           </div>
         `);
@@ -8005,8 +8276,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">Yield-safe classic RFCOMM link active</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release COM3</button>
-              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Close</button>
+              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release COM3</button>
+              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-lg bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Close</button>
             </div>
           </div>
         `);
@@ -8018,7 +8289,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-bold text-[#1473E6]">OBD-II Released (${lastLabel}) · Bluetooth Free</span>
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">Pair or connect car audio, calls, or another device safely</span>
             </div>
-            <button onclick="resumeUnlockedObd()" class="px-2.5 py-1 rounded-full bg-[#059669] text-white font-semibold">Resume OBD-II</button>
+            <button onclick="resumeUnlockedObd()" class="px-2.5 py-1 rounded-lg bg-[#059669] text-white font-semibold">Resume OBD-II</button>
           </div>
         `);
       }
@@ -8031,7 +8302,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-bold text-[#222222]">Companion BLE: ${c.name || 'BLE Sensor'}</span>
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">${connected ? 'Connected' : 'Disconnected'}${c.batteryPct !== null && c.batteryPct !== undefined ? ' · Batt ' + c.batteryPct + '%' : ''} · ${c.servicesCount || 0} GATT svcs</span>
             </div>
-            <button onclick="disconnectCompanionBle('${c.id}')" class="px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] font-semibold hover:bg-[#FECACA]">Disconnect</button>
+            <button onclick="disconnectCompanionBle('${c.id}')" class="px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold hover:bg-[#FECACA]">Disconnect</button>
           </div>
         `);
       });
@@ -9184,6 +9455,66 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     })();
 
+    const THEME_STORAGE_KEY = 'pulseobd_theme';
+    const THEME_ICON_SUN = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+    const THEME_ICON_MOON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
+    function getResolvedTheme() {
+      return isDarkThemeActive() ? 'dark' : 'light';
+    }
+
+    function updateThemeToggleUi(theme) {
+      const resolved = theme || getResolvedTheme();
+      const isDark = resolved === 'dark';
+      const iconEl = document.getElementById('theme-toggle-icon');
+      const labelEl = document.getElementById('theme-toggle-label');
+      const btnEl = document.getElementById('btn-theme-toggle');
+      if (iconEl) iconEl.innerHTML = isDark ? THEME_ICON_SUN : THEME_ICON_MOON;
+      if (labelEl) labelEl.textContent = isDark ? 'Light mode' : 'Dark mode';
+      if (btnEl) btnEl.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    }
+
+    function applyTheme(nextTheme, persist) {
+      const resolved = nextTheme === 'dark' ? 'dark' : 'light';
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(resolved);
+      if (persist) {
+        try { localStorage.setItem(THEME_STORAGE_KEY, resolved); } catch (_) {}
+      }
+      updateThemeToggleUi(resolved);
+      try {
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: resolved } }));
+      } catch (_) {
+        renderAllCharts();
+      }
+    }
+
+    function toggleTheme() {
+      applyTheme(getResolvedTheme() === 'dark' ? 'light' : 'dark', true);
+    }
+
+    if (typeof window.matchMedia === 'function') {
+      const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemThemeChange = (ev) => {
+        let saved = null;
+        try { saved = localStorage.getItem(THEME_STORAGE_KEY); } catch (_) {}
+        if (saved !== 'dark' && saved !== 'light') {
+          applyTheme(ev.matches ? 'dark' : 'light', false);
+        }
+      };
+      if (typeof mqDark.addEventListener === 'function') {
+        mqDark.addEventListener('change', handleSystemThemeChange);
+      }
+    }
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey || ev.repeat) return;
+      if (!ev.key || ev.key.toLowerCase() !== 'd') return;
+      const target = ev.target;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      toggleTheme();
+    });
+
     let _lastViewportW = window.innerWidth;
     window.addEventListener('resize', () => {
       if (window.innerWidth !== _lastViewportW) {
@@ -9192,6 +9523,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     });
     window.addEventListener('themechange', renderAllCharts);
+    updateThemeToggleUi();
     refreshPassiveSessionsUi();
     renderStaticInfographics();
     renderAllVariablesTable();
