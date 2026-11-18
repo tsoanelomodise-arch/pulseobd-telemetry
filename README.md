@@ -10,7 +10,8 @@
   - `vehicle_history/<VIN>/sessions/<sessionId>.json` — Full timestamped drive/diagnostic logs (plus `rawDump` frames when captured)
 - **Browser Direct Project Folder Link:** On desktop/Android Chrome or Edge, click **Link Project Folder** in the **History** tab and select your project folder (or `vehicle_history/`) so browser BLE/Serial sessions write individual JSON files directly to disk alongside `PulseOBD_DriveDB` IndexedDB.
 - **Automatic Windows Bridge Persistence & HTTP API:** [`bridge/start_obd_web_bridge.ps1`](bridge/start_obd_web_bridge.ps1) automatically queries `0902`/`0904`/`0906`/`090A`/`22F187..F1A3` at startup, writes into `vehicle_history/<VIN>/`, and exposes CORS-enabled endpoints:
-  - `GET /api/live` & `GET /api/snapshot` — Live telemetry stream with active vehicle metadata
+  - `GET /api/live` & `GET /api/snapshot` — Live telemetry stream with active vehicle & Bluetooth coexistence metadata (`btCoexist`)
+  - `POST /api/bt-yield` & `POST /api/bt-unlock` & `POST /api/bt-resume` & `POST /api/bt-config` — Cooperative BT RF yield (default 20s), manual COM3 release (`Unlock`), instant resume, and live profile switching (`coexist`, `audio_priority`, `shared_release`, `performance`)
   - `GET /api/vehicles` — Master `vehicles_index.json`
   - `GET /api/vehicle-history?vin=<VIN>[&session=<ID>]` — Per-VIN profile, latest snapshot, or full session frames
   - `POST /api/save-history` — Persist browser-recorded sessions straight into `vehicle_history/<VIN>/`
@@ -21,17 +22,23 @@
 - **Authentic Stopped & Engine-Off Telemetry:** Static captures and stopped/engine-off states stay frozen without fake sine motion and clearly separate active sensors (`ATRV` Pin 16 battery voltage, barometric/resting MAP, fuel tank level, thermal sensors, KOEO pedal, BT/Cloud) from stopped engine subsystems (`0 RPM`, `0 km/h`, `0.00 L/h` fuel flow, alternator off, closed-loop O2 off).
 - **Optional VIN-Based Cloud Sync (Firebase / ntfy / Supabase / Webhook):** Project folder storage works 100% locally without any cloud configuration. Whenever desired, apply or paste a Firebase RTDB URL once (stored privately in browser `localStorage` or untracked `bridge/firebase.local.json`) to auto-sync `/vehicles/<VIN>/latest.json` and `/history/`.
 - **Keep Mobile Screen Active While Running:** Automatically acquires the Screen Wake Lock API on startup, re-arms on return from background/tab switch or first touch, provides a 1-tap `SCREEN ON` pill in the header and `Bluetooth` tab, and falls back to a silent zero-audio loop (`disableRemotePlayback`) on browsers/WebViews without native Wake Lock without interrupting car Bluetooth audio.
-- **Bluetooth RF Coexistence & Multi-Device Support:** Uses `writeValueWithoutResponse`, cooperative inter-PID gaps (`Coexist` / `Audio Priority`), and a 15-second **Pairing Yield** button so your phone stays connected to car stereo audio (A2DP), hands-free calls (HFP), earbuds, smartwatch, or extra BLE sensors alongside OBD-II.
+- **Bluetooth Multi-Device Coexistence & Port Unlock (Android / iOS / Windows):** Uses a serialized GATT command FIFO (`writeValueWithoutResponse`), bounded `gatt.connect()` cancellation timeouts, pre-scan RF settle pauses before opening device pickers, true post-poll RF idle rest windows (`550ms`–`2200ms`), `Unlock / Release BT` + `Yield 20s` buttons (releasing both browser GATT/Serial and Windows `COM3` via `/api/bt-unlock` / `/api/bt-yield`), and **Shared BT Unlock (`shared_release` / `-ReleaseBetweenPolls`)** so car stereo audio (A2DP), hands-free calls (HFP), earbuds, smartwatches, and extra BLE sensors never get blocked.
 - **Synchronized Multi-View Deployment:** Run `./sync_all_views.sh` to validate JS, audit zero private URLs, rebuild offline standalone `PulseOBD_Studio.html` & `index.html`, mirror `vehicle_history/` + HTML + bridge files to Google Drive, and deploy to GitHub Pages.
 
 ## Usage Examples for `start_obd_web_bridge.ps1`
 ```powershell
-# 1. Default Project Folder Archive + Auto Mode (discovers VIN dynamically and saves to vehicle_history/<VIN>/)
+# 1. Default Project Folder Archive + Balanced BT Coexistence (750ms RF rest after fast 8-PID sweep)
 .\bridge\start_obd_web_bridge.ps1
 
-# 2. Explicit VIN Firebase Realtime Database Stream (/vehicles/<VIN>/latest.json + /history/)
+# 2. Shared BT Unlock Mode (opens COM3 per fast burst, closes COM3 between polls so Windows BT pairs any 2nd Classic device freely)
+.\bridge\start_obd_web_bridge.ps1 -BtCoexistMode shared_release -ReleaseBetweenPolls $true
+
+# 3. Audio / Multi-BT Priority Profile (48ms inter-PID gap + 1100ms true idle rest)
+.\bridge\start_obd_web_bridge.ps1 -BtCoexistMode audio_priority
+
+# 4. Explicit VIN Firebase Realtime Database Stream (/vehicles/<VIN>/latest.json + /history/)
 .\bridge\start_obd_web_bridge.ps1 -CloudProvider firebase -CloudUrl "https://your-project-default-rtdb.firebaseio.com" -CloudChannel "AAVZZZ6RZHU112564"
 
-# 3. Supabase Table Stream
+# 5. Supabase Table Stream
 .\bridge\start_obd_web_bridge.ps1 -CloudProvider supabase -CloudUrl "https://your-ref.supabase.co" -SupabaseTable "pulseobd_telemetry" -CloudApiKey "<SUPABASE_ANON_KEY>" -CloudChannel "AAVZZZ6RZHU112564"
 ```

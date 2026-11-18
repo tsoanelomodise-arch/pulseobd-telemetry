@@ -30,12 +30,27 @@ param(
     [string]$CloudUrl = '',
     [string]$SupabaseTable = 'pulseobd_telemetry',
     [string]$CloudApiKey = '',
-    [int]$PollIntervalMs = 900,
+    [int]$PollIntervalMs = 750,
     [int]$CloudIntervalMs = 3000,
-    [int]$CoexistGapMs = 15,
+    [int]$CoexistGapMs = 28,
+    [ValidateSet('coexist','audio_priority','shared_release','performance')]
+    [string]$BtCoexistMode = 'coexist',
+    [bool]$ReleaseBetweenPolls = $false,
+    [int]$ReleaseRestMs = 2200,
     [bool]$SaveLocalJson = $true,
     [bool]$SaveCloudHistory = $true
 )
+
+if ($BtCoexistMode -eq 'shared_release') {
+    $ReleaseBetweenPolls = $true
+} elseif ($BtCoexistMode -eq 'audio_priority') {
+    if ($PollIntervalMs -lt 1100) { $PollIntervalMs = 1100 }
+    if ($CoexistGapMs -lt 45) { $CoexistGapMs = 45 }
+} elseif ($BtCoexistMode -eq 'performance') {
+    $ReleaseBetweenPolls = $false
+    $PollIntervalMs = [Math]::Min($PollIntervalMs, 200)
+    $CoexistGapMs = [Math]::Min($CoexistGapMs, 8)
+}
 
 $ErrorActionPreference = 'Stop'
 try {
@@ -183,6 +198,53 @@ function Test-ReadOnlyCommand {
     return ($mode -in @('01','02','03','05','06','07','09','0A','22'))
 }
 
+function Open-ObdComPort {
+    param(
+        [System.IO.Ports.SerialPort]$Port,
+        [switch]$FastReopen
+    )
+    if ($Port.IsOpen) { return $true }
+    $maxTries = if ($FastReopen) { 2 } else { 3 }
+    for ($attempt = 1; $attempt -le $maxTries; $attempt++) {
+        try {
+            if (-not $FastReopen -and $attempt -gt 1) {
+                Refresh-ObdRfcomm
+                Start-Sleep -Milliseconds 700
+            } elseif ($FastReopen -and $attempt -gt 1) {
+                Start-Sleep -Milliseconds 350
+            }
+            $Port.Open()
+            Start-Sleep -Milliseconds 120
+            return $true
+        } catch {
+            if ($attempt -eq $maxTries) {
+                throw "Could not open $($Port.PortName) after $maxTries attempts: $($_.Exception.Message)"
+            }
+        }
+    }
+    return $false
+}
+
+function Close-ObdComPort {
+    param(
+        [System.IO.Ports.SerialPort]$Port
+    )
+    if ($null -eq $Port -or -not $Port.IsOpen) { return }
+    try { $Port.DiscardInBuffer() } catch {}
+    try { $Port.DiscardOutBuffer() } catch {}
+    try { $Port.Close() } catch {}
+}
+
+function Invoke-FastElmInit {
+    param([System.IO.Ports.SerialPort]$Port)
+    $gap = [Math]::Min(20, [Math]::Max(8, $script:CoexistGapMs))
+    foreach ($cmd in @('ATE0','ATL0','ATS1','ATH1','ATSP6','ATST32')) {
+        if ($script:BtManualUnlocked -or ([DateTime]::UtcNow -lt $script:BtYieldUntilUtc) -or -not $Port.IsOpen) { return }
+        $null = Send-ElmReadOnly $Port $cmd 1500
+        if ($gap -gt 0) { Start-Sleep -Milliseconds $gap }
+    }
+}
+
 function Send-ElmReadOnly {
     param(
         [System.IO.Ports.SerialPort]$Port,
@@ -192,11 +254,15 @@ function Send-ElmReadOnly {
     if (-not (Test-ReadOnlyCommand -Cmd $Cmd)) {
         throw "STRICTLY READ-ONLY FIREWALL BLOCKED COMMAND: $Cmd"
     }
+    if ($null -eq $Port -or -not $Port.IsOpen) {
+        throw "COM port is temporarily yielded/released for Bluetooth coexistence."
+    }
     $null = $Port.ReadExisting()
     $Port.Write("$Cmd`r")
     $sb = New-Object System.Text.StringBuilder
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     while ($sw.ElapsedMilliseconds -lt $TimeoutMs) {
+        if (-not $Port.IsOpen) { break }
         if ($Port.BytesToRead -gt 0) {
             $null = $sb.Append($Port.ReadExisting())
             if ($sb.ToString().Contains('>')) { break }
@@ -646,25 +712,105 @@ function Save-BridgeFrameToProjectFolder {
     }
 }
 
+$script:CachedRawMap = [ordered]@{}
+$script:CachedBytesMap = @{}
+$script:CachedAtrv = ''
+$script:CachedM03 = ''
+$script:CachedM07 = ''
+$script:PollCycleIndex = 0
+$script:FastMode01Pids = @('010C','010D','0104','010B','0123','0111','0149','0142')
+$script:ExtMode01Pids  = @(
+    '0101','0103','0105','0106','0107','010E','010F','0113','0114','0115','011C','011F',
+    '0121','012E','012F','0130','0131','0133','013C','0141','0143','0144','0145','0146',
+    '0147','014A','014C','0151','0156'
+)
+
+$script:BtYieldUntilUtc = [DateTime]::MinValue
+$script:BtYieldReleasePort = $false
+$script:BtManualUnlocked = $false
+
+function Get-BtCoexistStatus {
+    param([System.IO.Ports.SerialPort]$Port, [string]$PortName = 'COM3')
+    if (-not $PortName) { $PortName = if ($script:ComPort) { $script:ComPort } else { 'COM3' } }
+    $nowUtc = [DateTime]::UtcNow
+    $remMs = 0
+    if ($script:BtYieldUntilUtc -gt $nowUtc) {
+        $remMs = [int][Math]::Ceiling(($script:BtYieldUntilUtc - $nowUtc).TotalMilliseconds)
+    }
+    $isOpen = ($null -ne $Port -and $Port.IsOpen)
+    $stateStr = if ($script:BtManualUnlocked) {
+        'unlocked'
+    } elseif ($remMs -gt 0) {
+        'yielding'
+    } elseif ($script:ReleaseBetweenPolls -and -not $isOpen) {
+        'shared_idle'
+    } elseif ($isOpen) {
+        'connected'
+    } else {
+        'standby'
+    }
+    return [ordered]@{
+        mode             = $script:BtCoexistMode
+        state            = $stateStr
+        port             = $PortName
+        portOpen         = $isOpen
+        yielding         = ($remMs -gt 0)
+        yieldRemainingMs = $remMs
+        manualUnlocked   = [bool]$script:BtManualUnlocked
+        releaseBetween   = [bool]$script:ReleaseBetweenPolls
+        pollRestMs       = $script:PollIntervalMs
+        gapMs            = $script:CoexistGapMs
+    }
+}
+
 function Read-AllLiveTelemetry {
     param(
         [System.IO.Ports.SerialPort]$Port,
         [string[]]$PidList,
         [hashtable]$StaticSession,
         $VehicleInfo,
-        [int]$GapMs = 15
+        [int]$GapMs = 28,
+        [switch]$FullSweep
     )
-    $rawMap = [ordered]@{}
-    $bytesMap = @{}
-    foreach ($p in $PidList) {
+    $script:PollCycleIndex++
+    if ($FullSweep -or $script:CachedBytesMap.Count -eq 0) {
+        $pidsToQuery = $PidList
+        $queryAtrv = $true
+        $queryDtc = $true
+    } else {
+        $extCount = $script:ExtMode01Pids.Count
+        $extSlice = @(
+            $script:ExtMode01Pids[(($script:PollCycleIndex * 2) % $extCount)],
+            $script:ExtMode01Pids[(($script:PollCycleIndex * 2 + 1) % $extCount)]
+        )
+        $pidsToQuery = $script:FastMode01Pids + $extSlice
+        $queryAtrv = (($script:PollCycleIndex % 3) -eq 0)
+        $queryDtc  = (($script:PollCycleIndex % 6) -eq 0)
+    }
+
+    foreach ($p in $pidsToQuery) {
+        if ($script:BtManualUnlocked -or ([DateTime]::UtcNow -lt $script:BtYieldUntilUtc)) { break }
         $r = Send-ElmReadOnly $Port $p 1500
-        $rawMap[$p] = $r
-        $bytesMap[$p] = Parse-CanDataBytes $r
+        $script:CachedRawMap[$p] = $r
+        $script:CachedBytesMap[$p] = Parse-CanDataBytes $r
         if ($GapMs -gt 0) { Start-Sleep -Milliseconds $GapMs }
     }
-    $atrv = Send-ElmReadOnly $Port 'ATRV' 1500
-    $m03  = Send-ElmReadOnly $Port '03' 1500
-    $m07  = Send-ElmReadOnly $Port '07' 1500
+    if (-not $script:BtManualUnlocked -and ([DateTime]::UtcNow -ge $script:BtYieldUntilUtc)) {
+        if ($queryAtrv -or -not $script:CachedAtrv) {
+            $script:CachedAtrv = Send-ElmReadOnly $Port 'ATRV' 1500
+            if ($GapMs -gt 0) { Start-Sleep -Milliseconds $GapMs }
+        }
+        if ($queryDtc -or -not $script:CachedM03) {
+            $script:CachedM03 = Send-ElmReadOnly $Port '03' 1500
+            $script:CachedM07 = Send-ElmReadOnly $Port '07' 1500
+        }
+    }
+
+    $rawMap = $script:CachedRawMap
+    $bytesMap = $script:CachedBytesMap
+    $atrv = $script:CachedAtrv
+    $m03  = $script:CachedM03
+    $m07  = $script:CachedM07
 
     $b01 = $bytesMap['0101']; $b04 = $bytesMap['0104']
     $b05 = $bytesMap['0105']; $b06 = $bytesMap['0106']; $b07 = $bytesMap['0107']
@@ -678,14 +824,14 @@ function Read-AllLiveTelemetry {
     $b46 = $bytesMap['0146']; $b47 = $bytesMap['0147']; $b49 = $bytesMap['0149']
     $b4A = $bytesMap['014A']; $b4C = $bytesMap['014C']; $b56 = $bytesMap['0156']
 
-    $rpmVal = if ($b0C.Count -ge 2) { [Math]::Round((256 * $b0C[0] + $b0C[1]) / 4.0, 1) } else { 0 }
-    $ecuAwake = ($b0C.Count -ge 2 -or $b42.Count -ge 2 -or $b05.Count -ge 1)
+    $rpmVal = if ($b0C -and $b0C.Count -ge 2) { [Math]::Round((256 * $b0C[0] + $b0C[1]) / 4.0, 1) } else { 0 }
+    $ecuAwake = (($b0C -and $b0C.Count -ge 2) -or ($b42 -and $b42.Count -ge 2) -or ($b05 -and $b05.Count -ge 1))
     $engineRunning = ($rpmVal -ge 50)
     $atrvVolt = 0.0
     if ($atrv -match '(\d+(?:\.\d+)?)\s*V') {
         try { $atrvVolt = [double]$Matches[1] } catch { $atrvVolt = 0.0 }
     }
-    $voltVal = if ($b42.Count -ge 2) { [Math]::Round((256 * $b42[0] + $b42[1]) / 1000.0, 3) } else { [Math]::Round($atrvVolt, 3) }
+    $voltVal = if ($b42 -and $b42.Count -ge 2) { [Math]::Round((256 * $b42[0] + $b42[1]) / 1000.0, 3) } else { [Math]::Round($atrvVolt, 3) }
     $fuelSysLabel = if ($engineRunning) { 'Closed loop (using O2 sensor)' } elseif ($ecuAwake) { 'Open loop — Engine Off' } else { 'Open loop — Engine/ECU Off' }
 
     $vinVal = if ($VehicleInfo -and $VehicleInfo.vin) { [string]$VehicleInfo.vin } else { 'AAVZZZ6RZHU112564' }
@@ -698,44 +844,45 @@ function Read-AllLiveTelemetry {
         engineRunning = $engineRunning
         fuelSys1      = $fuelSysLabel
         atrv          = $atrv
-        milOn      = if ($b01.Count -ge 1) { ($b01[0] -band 0x80) -ne 0 } else { $false }
-        dtcCount   = if ($b01.Count -ge 1) { ($b01[0] -band 0x7F) } else { 0 }
-        load       = if ($b04.Count -ge 1) { [Math]::Round($b04[0] * 100.0 / 255.0, 1) } else { 0 }
-        coolant    = if ($b05.Count -ge 1) { $b05[0] - 40 } else { 0 }
-        stft       = if ($b06.Count -ge 1) { [Math]::Round(($b06[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
-        ltft       = if ($b07.Count -ge 1) { [Math]::Round(($b07[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
-        map        = if ($b0B.Count -ge 1) { $b0B[0] } else { 0 }
+        milOn      = if ($b01 -and $b01.Count -ge 1) { ($b01[0] -band 0x80) -ne 0 } else { $false }
+        dtcCount   = if ($b01 -and $b01.Count -ge 1) { ($b01[0] -band 0x7F) } else { 0 }
+        load       = if ($b04 -and $b04.Count -ge 1) { [Math]::Round($b04[0] * 100.0 / 255.0, 1) } else { 0 }
+        coolant    = if ($b05 -and $b05.Count -ge 1) { $b05[0] - 40 } else { 0 }
+        stft       = if ($b06 -and $b06.Count -ge 1) { [Math]::Round(($b06[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
+        ltft       = if ($b07 -and $b07.Count -ge 1) { [Math]::Round(($b07[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
+        map        = if ($b0B -and $b0B.Count -ge 1) { $b0B[0] } else { 0 }
         rpm        = $rpmVal
-        spd        = if ($b0D.Count -ge 1) { $b0D[0] } else { 0 }
-        timing     = if ($b0E.Count -ge 1) { [Math]::Round($b0E[0] / 2.0 - 64.0, 1) } else { 0 }
-        iat        = if ($b0F.Count -ge 1) { $b0F[0] - 40 } else { 0 }
-        thr        = if ($b11.Count -ge 1) { [Math]::Round($b11[0] * 100.0 / 255.0, 1) } else { 0 }
-        o2s1       = if ($b14.Count -ge 1) { [Math]::Round($b14[0] / 200.0, 3) } else { 0 }
-        o2s1Trim   = if ($b14.Count -ge 2 -and $b14[1] -ne 255) { [Math]::Round(($b14[1] - 128) * 100.0 / 128.0, 2) } else { 0 }
-        o2s2       = if ($b15.Count -ge 1) { [Math]::Round($b15[0] / 200.0, 3) } else { 0 }
-        runtime    = if ($b1F.Count -ge 2) { 256 * $b1F[0] + $b1F[1] } else { 0 }
-        distMilOn  = if ($b21.Count -ge 2) { 256 * $b21[0] + $b21[1] } else { 0 }
-        rail       = if ($b23.Count -ge 2) { [Math]::Round((10.0 * (256 * $b23[0] + $b23[1])) / 1000.0, 2) } else { 0 }
-        evap       = if ($b2E.Count -ge 1) { [Math]::Round($b2E[0] * 100.0 / 255.0, 1) } else { 0 }
-        fuel       = if ($b2F.Count -ge 1) { [Math]::Round($b2F[0] * 100.0 / 255.0, 1) } else { 0 }
-        warmups    = if ($b30.Count -ge 1) { $b30[0] } else { 0 }
-        distClear  = if ($b31.Count -ge 2) { 256 * $b31[0] + $b31[1] } else { 0 }
-        baro       = if ($b33.Count -ge 1) { $b33[0] } else { 83 }
-        cat        = if ($b3C.Count -ge 2) { [Math]::Round((256 * $b3C[0] + $b3C[1]) / 10.0 - 40.0, 1) } else { 0 }
+        spd        = if ($b0D -and $b0D.Count -ge 1) { $b0D[0] } else { 0 }
+        timing     = if ($b0E -and $b0E.Count -ge 1) { [Math]::Round($b0E[0] / 2.0 - 64.0, 1) } else { 0 }
+        iat        = if ($b0F -and $b0F.Count -ge 1) { $b0F[0] - 40 } else { 0 }
+        thr        = if ($b11 -and $b11.Count -ge 1) { [Math]::Round($b11[0] * 100.0 / 255.0, 1) } else { 0 }
+        o2s1       = if ($b14 -and $b14.Count -ge 1) { [Math]::Round($b14[0] / 200.0, 3) } else { 0 }
+        o2s1Trim   = if ($b14 -and $b14.Count -ge 2 -and $b14[1] -ne 255) { [Math]::Round(($b14[1] - 128) * 100.0 / 128.0, 2) } else { 0 }
+        o2s2       = if ($b15 -and $b15.Count -ge 1) { [Math]::Round($b15[0] / 200.0, 3) } else { 0 }
+        runtime    = if ($b1F -and $b1F.Count -ge 2) { 256 * $b1F[0] + $b1F[1] } else { 0 }
+        distMilOn  = if ($b21 -and $b21.Count -ge 2) { 256 * $b21[0] + $b21[1] } else { 0 }
+        rail       = if ($b23 -and $b23.Count -ge 2) { [Math]::Round((10.0 * (256 * $b23[0] + $b23[1])) / 1000.0, 2) } else { 0 }
+        evap       = if ($b2E -and $b2E.Count -ge 1) { [Math]::Round($b2E[0] * 100.0 / 255.0, 1) } else { 0 }
+        fuel       = if ($b2F -and $b2F.Count -ge 1) { [Math]::Round($b2F[0] * 100.0 / 255.0, 1) } else { 0 }
+        warmups    = if ($b30 -and $b30.Count -ge 1) { $b30[0] } else { 0 }
+        distClear  = if ($b31 -and $b31.Count -ge 2) { 256 * $b31[0] + $b31[1] } else { 0 }
+        baro       = if ($b33 -and $b33.Count -ge 1) { $b33[0] } else { 83 }
+        cat        = if ($b3C -and $b3C.Count -ge 2) { [Math]::Round((256 * $b3C[0] + $b3C[1]) / 10.0 - 40.0, 1) } else { 0 }
         volt       = $voltVal
-        absLoad    = if ($b43.Count -ge 2) { [Math]::Round((256 * $b43[0] + $b43[1]) * 100.0 / 255.0, 1) } else { 0 }
-        lambda     = if ($b44.Count -ge 2) { [Math]::Round(2.0 / 65536.0 * (256 * $b44[0] + $b44[1]), 4) } else { 1.0 }
-        relThr     = if ($b45.Count -ge 1) { [Math]::Round($b45[0] * 100.0 / 255.0, 1) } else { 0 }
-        amb        = if ($b46.Count -ge 1) { $b46[0] - 40 } else { 0 }
-        thrB       = if ($b47.Count -ge 1) { [Math]::Round($b47[0] * 100.0 / 255.0, 1) } else { 0 }
-        pedalD     = if ($b49.Count -ge 1) { [Math]::Round($b49[0] * 100.0 / 255.0, 1) } else { 0 }
-        pedalE     = if ($b4A.Count -ge 1) { [Math]::Round($b4A[0] * 100.0 / 255.0, 1) } else { 0 }
-        actThr     = if ($b4C.Count -ge 1) { [Math]::Round($b4C[0] * 100.0 / 255.0, 1) } else { 0 }
-        secO2Trim  = if ($b56.Count -ge 1) { [Math]::Round(($b56[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
+        absLoad    = if ($b43 -and $b43.Count -ge 2) { [Math]::Round((256 * $b43[0] + $b43[1]) * 100.0 / 255.0, 1) } else { 0 }
+        lambda     = if ($b44 -and $b44.Count -ge 2) { [Math]::Round(2.0 / 65536.0 * (256 * $b44[0] + $b44[1]), 4) } else { 1.0 }
+        relThr     = if ($b45 -and $b45.Count -ge 1) { [Math]::Round($b45[0] * 100.0 / 255.0, 1) } else { 0 }
+        amb        = if ($b46 -and $b46.Count -ge 1) { $b46[0] - 40 } else { 0 }
+        thrB       = if ($b47 -and $b47.Count -ge 1) { [Math]::Round($b47[0] * 100.0 / 255.0, 1) } else { 0 }
+        pedalD     = if ($b49 -and $b49.Count -ge 1) { [Math]::Round($b49[0] * 100.0 / 255.0, 1) } else { 0 }
+        pedalE     = if ($b4A -and $b4A.Count -ge 1) { [Math]::Round($b4A[0] * 100.0 / 255.0, 1) } else { 0 }
+        actThr     = if ($b4C -and $b4C.Count -ge 1) { [Math]::Round($b4C[0] * 100.0 / 255.0, 1) } else { 0 }
+        secO2Trim  = if ($b56 -and $b56.Count -ge 1) { [Math]::Round(($b56[0] - 128) * 100.0 / 128.0, 2) } else { 0 }
         mode03Raw  = $m03
         mode07Raw  = $m07
         mode01Raw  = $rawMap
         staticDump = $StaticSession
+        btCoexist  = (Get-BtCoexistStatus -Port $Port -PortName $script:ComPort)
     }
     return $payload
 }
@@ -801,19 +948,8 @@ $sessionStartedAt = (Get-Date).ToUniversalTime().ToString('o')
 $sessionFrameCount = 0
 
 try {
-    Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only + BT Coexistence Gap ${CoexistGapMs}ms)..." -ForegroundColor Cyan
-    $opened = $false
-    for ($attempt = 1; $attempt -le 3; $attempt++) {
-        try {
-            if ($attempt -gt 1) { Refresh-ObdRfcomm; Start-Sleep -Milliseconds 800 }
-            $port.Open()
-            $opened = $true
-            break
-        } catch {
-            Write-Warning "Attempt $attempt to open $ComPort failed: $($_.Exception.Message)"
-        }
-    }
-    if (-not $opened) { throw "Could not open $ComPort after 3 attempts." }
+    Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only + BT Coexistence [$BtCoexistMode] Gap ${CoexistGapMs}ms / Rest ${PollIntervalMs}ms)..." -ForegroundColor Cyan
+    $null = Open-ObdComPort -Port $port
 
     $null  = Send-ElmReadOnly $port 'ATZ' 4000
     $null  = Send-ElmReadOnly $port 'ATE0'
@@ -844,11 +980,14 @@ try {
         Mode09      = [ordered]@{}
         Uds7E0      = [ordered]@{}
     }
+    $initGapMs = [Math]::Min(20, [Math]::Max(8, $CoexistGapMs))
     foreach ($m6 in @('0600','0620','0640','0660','0680','06A0','0601','0602','0621','0635','063D','0641','0642','06A2','06A3','06A4','06A5')) {
         $staticSession.Mode06[$m6] = Send-ElmReadOnly $port $m6 2500
+        if ($initGapMs -gt 0) { Start-Sleep -Milliseconds $initGapMs }
     }
     foreach ($m9 in @('0900','0902','0904','0906','0908','090A')) {
         $staticSession.Mode09[$m9] = Send-ElmReadOnly $port $m9 3000
+        if ($initGapMs -gt 0) { Start-Sleep -Milliseconds $initGapMs }
     }
     $null = Send-ElmReadOnly $port 'ATSH 7E0'
     $null = Send-ElmReadOnly $port 'ATCRA 7E8'
@@ -857,22 +996,24 @@ try {
     $null = Send-ElmReadOnly $port 'ATFCSM 1'
     foreach ($did in @('F187','F189','F190','F191','F197','F19E','F1A2','F1A3','F400','1002','2001')) {
         $staticSession.Uds7E0[$did] = Send-ElmReadOnly $port ("22" + $did) 2000
+        if ($initGapMs -gt 0) { Start-Sleep -Milliseconds $initGapMs }
     }
     $null = Send-ElmReadOnly $port 'ATFCSM 0'
     $null = Send-ElmReadOnly $port 'ATD'
-    $null = Send-ElmReadOnly $port 'ATE0'
-    $null = Send-ElmReadOnly $port 'ATL0'
-    $null = Send-ElmReadOnly $port 'ATS1'
-    $null = Send-ElmReadOnly $port 'ATH1'
-    $null = Send-ElmReadOnly $port 'ATSP6'
-    $null = Send-ElmReadOnly $port 'ATST32'
+    Invoke-FastElmInit -Port $port
 
     $ActiveVehicle = Resolve-VehicleIdentity -StaticSession $staticSession
     Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
     Write-Host "Identified Vehicle VIN: $($ActiveVehicle.vin) | $($ActiveVehicle.label) | Archive -> $VehicleHistoryRoot\$($ActiveVehicle.vin)" -ForegroundColor Cyan
 
-    # Initial live sample + immediate project-folder record creation
-    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+    # Initial live full sweep + immediate project-folder record creation
+    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs -FullSweep
+    if ($ReleaseBetweenPolls) {
+        Close-ObdComPort -Port $port
+        Write-Host "Shared Release Mode active: $ComPort unlocked between bursts so other Bluetooth devices connect freely." -ForegroundColor Yellow
+    }
+    $lastPollSw.Restart()
+
     try {
         Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -Payload $latestPayload -ForceJsonFlush
     } catch {
@@ -881,6 +1022,7 @@ try {
 
     $listener.Start()
     Write-Host "PulseOBD Bridge listening on http://localhost:$HttpPort/api/live" -ForegroundColor Green
+    Write-Host "BT Coexistence API -> /api/bt-yield | /api/bt-unlock | /api/bt-resume | /api/bt-config" -ForegroundColor Green
     Write-Host "Project Folder Archive API -> http://localhost:$HttpPort/api/vehicles" -ForegroundColor Green
     if ($EnableCloudStream -and $ResolvedCloudUrl) {
         Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
@@ -920,12 +1062,123 @@ try {
             if ($req.HttpMethod -eq 'OPTIONS') {
                 $res.StatusCode = 204
             } elseif ($reqPath -eq '/api/live' -or $reqPath -eq '/api/snapshot') {
-                if (-not $latestPayload) {
-                    $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                if (-not $latestPayload -and $port.IsOpen -and -not $script:BtManualUnlocked -and ([DateTime]::UtcNow -ge $script:BtYieldUntilUtc)) {
+                    try {
+                        $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                    } catch {}
                 }
-                $jsonBytes = $Utf8NoBom.GetBytes(($latestPayload | ConvertTo-Json -Depth 6))
+                if ($latestPayload) {
+                    $latestPayload['btCoexist'] = (Get-BtCoexistStatus -Port $port -PortName $ComPort)
+                }
+                $liveObj = if ($latestPayload) { $latestPayload } else { [ordered]@{ btCoexist = (Get-BtCoexistStatus -Port $port -PortName $ComPort) } }
+                $jsonBytes = $Utf8NoBom.GetBytes(($liveObj | ConvertTo-Json -Depth 6))
                 $res.ContentType = 'application/json; charset=utf-8'
                 $res.OutputStream.Write($jsonBytes, 0, $jsonBytes.Length)
+            } elseif ($reqPath -eq '/api/bt-yield') {
+                $durMs = 20000
+                $doRelease = $true
+                if ($queryMap['ms']) { try { $durMs = [Math]::Max(2000, [Math]::Min(180000, [int]$queryMap['ms'])) } catch {} }
+                if ($queryMap['release'] -eq '0' -or $queryMap['release'] -eq 'false') { $doRelease = $false }
+                if ($req.HttpMethod -eq 'POST') {
+                    try {
+                        $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                        $rawB = $sr.ReadToEnd()
+                        $sr.Close()
+                        if ($rawB) {
+                            $bObj = $rawB | ConvertFrom-Json
+                            if ($bObj.durationMs) { $durMs = [Math]::Max(2000, [Math]::Min(180000, [int]$bObj.durationMs)) }
+                            if ($null -ne $bObj.releasePort) { $doRelease = [bool]$bObj.releasePort }
+                        }
+                    } catch {}
+                }
+                $script:BtManualUnlocked = $false
+                $script:BtYieldReleasePort = $doRelease
+                $script:BtYieldUntilUtc = [DateTime]::UtcNow.AddMilliseconds($durMs)
+                if ($doRelease -and $port.IsOpen) {
+                    Close-ObdComPort -Port $port
+                    Write-Host "[BT COEXIST] Yielding RF & released $ComPort for $([Math]::Round($durMs/1000,1))s — pair/connect other BT devices now." -ForegroundColor Yellow
+                } else {
+                    Write-Host "[BT COEXIST] Paused $ComPort polling for $([Math]::Round($durMs/1000,1))s for BT coexistence." -ForegroundColor Yellow
+                }
+                $btStatus = (Get-BtCoexistStatus -Port $port -PortName $ComPort) | ConvertTo-Json
+                $bBytes = $Utf8NoBom.GetBytes($btStatus)
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($bBytes, 0, $bBytes.Length)
+            } elseif ($reqPath -eq '/api/bt-unlock') {
+                $script:BtManualUnlocked = $true
+                $script:BtYieldUntilUtc = [DateTime]::MinValue
+                Close-ObdComPort -Port $port
+                Write-Host "[BT COEXIST] $ComPort manually unlocked/released for external Bluetooth devices. Call /api/bt-resume when ready." -ForegroundColor Yellow
+                $btStatus = (Get-BtCoexistStatus -Port $port -PortName $ComPort) | ConvertTo-Json
+                $bBytes = $Utf8NoBom.GetBytes($btStatus)
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($bBytes, 0, $bBytes.Length)
+            } elseif ($reqPath -eq '/api/bt-resume') {
+                $script:BtManualUnlocked = $false
+                $script:BtYieldUntilUtc = [DateTime]::MinValue
+                $script:BtYieldReleasePort = $false
+                if (-not $ReleaseBetweenPolls -and -not $port.IsOpen) {
+                    try {
+                        $null = Open-ObdComPort -Port $port -FastReopen
+                        Invoke-FastElmInit -Port $port
+                        Write-Host "[BT COEXIST] Reopened $ComPort cleanly — OBD polling resumed." -ForegroundColor Green
+                    } catch {
+                        Write-Warning "Resume $ComPort note: $($_.Exception.Message)"
+                    }
+                } else {
+                    Write-Host "[BT COEXIST] OBD polling resumed immediately." -ForegroundColor Green
+                }
+                $lastPollSw.Restart()
+                $btStatus = (Get-BtCoexistStatus -Port $port -PortName $ComPort) | ConvertTo-Json
+                $bBytes = $Utf8NoBom.GetBytes($btStatus)
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($bBytes, 0, $bBytes.Length)
+            } elseif ($reqPath -eq '/api/bt-config') {
+                if ($req.HttpMethod -eq 'POST') {
+                    try {
+                        $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                        $rawB = $sr.ReadToEnd()
+                        $sr.Close()
+                        if ($rawB) {
+                            $cfgObj = $rawB | ConvertFrom-Json
+                            if ($cfgObj.mode -and $cfgObj.mode -in @('coexist','audio_priority','shared_release','performance')) {
+                                $script:BtCoexistMode = [string]$cfgObj.mode
+                                switch ($script:BtCoexistMode) {
+                                    'shared_release' {
+                                        $script:ReleaseBetweenPolls = $true
+                                        $script:CoexistGapMs = 30
+                                        $script:PollIntervalMs = 2200
+                                    }
+                                    'audio_priority' {
+                                        $script:ReleaseBetweenPolls = $false
+                                        $script:CoexistGapMs = 48
+                                        $script:PollIntervalMs = 1100
+                                    }
+                                    'performance' {
+                                        $script:ReleaseBetweenPolls = $false
+                                        $script:CoexistGapMs = 8
+                                        $script:PollIntervalMs = 180
+                                    }
+                                    default {
+                                        $script:ReleaseBetweenPolls = $false
+                                        $script:CoexistGapMs = 28
+                                        $script:PollIntervalMs = 750
+                                    }
+                                }
+                                if ($script:ReleaseBetweenPolls -and $port.IsOpen) {
+                                    Close-ObdComPort -Port $port
+                                } elseif (-not $script:ReleaseBetweenPolls -and -not $script:BtManualUnlocked -and -not $port.IsOpen) {
+                                    try { $null = Open-ObdComPort -Port $port -FastReopen; Invoke-FastElmInit -Port $port } catch {}
+                                }
+                                Write-Host "[BT COEXIST] Profile switched to $BtCoexistMode (Gap ${CoexistGapMs}ms / Rest ${PollIntervalMs}ms / ReleaseBetween=$ReleaseBetweenPolls)" -ForegroundColor Cyan
+                            }
+                        }
+                    } catch {}
+                }
+                $btStatus = (Get-BtCoexistStatus -Port $port -PortName $ComPort) | ConvertTo-Json
+                $bBytes = $Utf8NoBom.GetBytes($btStatus)
+                $res.ContentType = 'application/json; charset=utf-8'
+                $res.OutputStream.Write($bBytes, 0, $bBytes.Length)
             } elseif ($reqPath -eq '/api/vehicles') {
                 $idxFile = Join-Path $VehicleHistoryRoot 'vehicles_index.json'
                 $outTxt = if (Test-Path $idxFile) { [System.IO.File]::ReadAllText($idxFile, $Utf8NoBom) } else { '{"version":1,"vehicles":[]}' }
@@ -1003,6 +1256,7 @@ try {
                     saveHistory  = $SaveCloudHistory
                     configured   = [bool]$ResolvedCloudUrl
                     archiveRoot  = $VehicleHistoryRoot
+                    btCoexist    = (Get-BtCoexistStatus -Port $port -PortName $ComPort)
                 } | ConvertTo-Json
                 $sBytes = $Utf8NoBom.GetBytes($statusJson)
                 $res.ContentType = 'application/json; charset=utf-8'
@@ -1027,12 +1281,37 @@ try {
             $res.Close()
         }
 
-        # 2. Periodic autonomous COM3 poll + local JSON snapshot + per-VIN Project Folder Archive + Auto Cloud TX
-        if ($lastPollSw.ElapsedMilliseconds -ge $PollIntervalMs) {
-            $lastPollSw.Restart()
-            $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+        # 2. Periodic autonomous COM3 poll + guaranteed RF idle rest + per-VIN Project Folder Archive + Auto Cloud TX
+        $nowUtc = [DateTime]::UtcNow
+        $inYield = ($nowUtc -lt $script:BtYieldUntilUtc)
+        if (-not $inYield -and $script:BtYieldUntilUtc -ne [DateTime]::MinValue) {
+            $script:BtYieldUntilUtc = [DateTime]::MinValue
+            $script:BtYieldReleasePort = $false
+            Write-Host "[BT COEXIST] Yield window ended — resuming $ComPort telemetry seamlessly." -ForegroundColor Green
+        }
+        $effectiveRestMs = if ($ReleaseBetweenPolls) { [Math]::Max(800, $ReleaseRestMs) } else { $PollIntervalMs }
 
-            if ($SaveLocalJson) {
+        if (-not $script:BtManualUnlocked -and -not $inYield -and ($lastPollSw.ElapsedMilliseconds -ge $effectiveRestMs)) {
+            $polledOk = $false
+            try {
+                if (-not $port.IsOpen) {
+                    $null = Open-ObdComPort -Port $port -FastReopen
+                    Invoke-FastElmInit -Port $port
+                }
+                $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                $polledOk = $true
+            } catch {
+                Write-Warning "COM3 transient BT coexistence note: $($_.Exception.Message)"
+                Close-ObdComPort -Port $port
+            } finally {
+                if ($ReleaseBetweenPolls -and $port.IsOpen) {
+                    Close-ObdComPort -Port $port
+                }
+                # Restart rest timer AFTER poll completes so Windows Bluetooth always gets true idle airtime!
+                $lastPollSw.Restart()
+            }
+
+            if ($polledOk -and $SaveLocalJson -and $latestPayload) {
                 try {
                     $diagDir = Join-Path $ProjectRoot 'diagnostics'
                     if (-not (Test-Path $diagDir)) { $diagDir = $PSScriptRoot }
@@ -1044,7 +1323,7 @@ try {
                 } catch {}
             }
 
-            if ($EnableCloudStream -and $ResolvedCloudUrl -and $lastCloudSw.ElapsedMilliseconds -ge $CloudIntervalMs) {
+            if ($polledOk -and $latestPayload -and $EnableCloudStream -and $ResolvedCloudUrl -and $lastCloudSw.ElapsedMilliseconds -ge $CloudIntervalMs) {
                 $lastCloudSw.Restart()
                 $sessionFrameCount++
                 $metricsObj = [ordered]@{

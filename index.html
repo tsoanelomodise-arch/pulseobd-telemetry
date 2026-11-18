@@ -1476,10 +1476,11 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <span id="bt-coexist-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold">COEXISTENCE ACTIVE</span>
               </div>
               <h3 class="text-sm font-bold text-[#222222] mt-0.5">Connect Other Bluetooth Devices While Connected to OBD-II</h3>
-              <p class="text-xs text-[#5A5F6A]">Uses <span class="font-mono-num text-[#222222]">writeValueWithoutResponse</span> + cooperative RF idle slots so your phone stays connected to car stereo audio (A2DP), calls (HFP), earbuds, smartwatch, or extra BLE sensors without dropouts.</p>
+              <p class="text-xs text-[#5A5F6A]">Uses idle RF airtime scheduling, serialized GATT writes (<span class="font-mono-num text-[#222222]">WriteWithoutResponse</span>), bounded auto-reconnect, and optional <span class="font-mono-num text-[#222222]">Unlock / Release</span> so your car stereo (A2DP), calls (HFP), earbuds, watch, or extra BLE sensors connect without being blocked.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button id="btn-yield-pairing" onclick="yieldObdForPairing(15000)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Yield 15s to Pair Phone Device</button>
+              <button id="btn-yield-pairing" onclick="yieldObdForPairing(20000)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Yield 20s to Pair Device</button>
+              <button id="btn-unlock-bt" onclick="toggleBtUnlock()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Unlock / Release BT</button>
               <button onclick="connectCompanionBleDevice()" class="text-xs px-3.5 py-1.5 acro-pill-primary">+ Add Extra BLE Device</button>
               <button onclick="refreshPermittedBleDevices()" class="text-xs px-3 py-1.5 acro-pill-secondary">Saved BT</button>
             </div>
@@ -1489,25 +1490,26 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <div class="acro-well rounded-2xl p-3">
               <label class="text-[#5A5F6A] block mb-1 font-semibold">RF Radio Coexistence Profile</label>
               <select id="ble-coexist-mode" onchange="saveBtPrefs()" class="w-full bg-white border border-[#D4D6DC] rounded-xl px-2.5 py-1.5 font-semibold text-[#222222] focus:outline-none">
-                <option value="coexist" selected>Balanced Coexistence (240ms + Audio Safe)</option>
-                <option value="audio_priority">Audio / Call Priority (450ms Quiet Link)</option>
-                <option value="performance">High-Speed Telemetry (80ms Max Rate)</option>
+                <option value="coexist" selected>Balanced Coexistence (550ms · ~70% Free BT)</option>
+                <option value="audio_priority">Audio / Multi-BT Priority (950ms · ~86% Free BT)</option>
+                <option value="shared_release">Shared BT Unlock (Poll &amp; Release Port)</option>
+                <option value="performance">High-Speed Telemetry (120ms Burst Rate)</option>
               </select>
             </div>
             <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
-              <span class="text-[#5A5F6A] font-semibold block">ATT GATT Write Strategy</span>
+              <span class="text-[#5A5F6A] font-semibold block">ATT GATT &amp; Radio Strategy</span>
               <div class="flex items-center justify-between mt-1">
                 <strong id="bt-write-mode-lbl" class="font-mono-num text-[#1473E6]">WriteWithoutResponse Ready</strong>
-                <span class="text-[11px] text-[#047857] font-semibold">Low Airtime</span>
+                <span class="text-[11px] text-[#047857] font-semibold">Serialized</span>
               </div>
               <label class="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#222222] cursor-pointer select-none">
                 <input id="ble-yield-on-scan" type="checkbox" checked onchange="saveBtPrefs()" class="w-3.5 h-3.5 accent-[#222222] rounded" />
-                <span>Auto-pause OBD TX while scanning BT devices</span>
+                <span>Auto-pause &amp; settle OBD while connecting other BT</span>
               </label>
             </div>
             <div class="acro-well rounded-2xl p-3 flex flex-col justify-between">
-              <span class="text-[#5A5F6A] font-semibold block">Phone Multipoint Tip</span>
-              <p class="text-[11px] text-[#4A4E57] mt-1 leading-snug">Car stereo, headphones &amp; watch connect natively alongside BLE OBD. Use <strong class="text-[#222222]">Yield 15s</strong> when pairing a brand-new accessory in Phone Bluetooth Settings.</p>
+              <span class="text-[#5A5F6A] font-semibold block">Strict OS / Single-Radio BT Tip</span>
+              <p class="text-[11px] text-[#4A4E57] mt-1 leading-snug">If your phone or Windows BT adapter refuses a 2nd Classic device, tap <strong class="text-[#222222]">Yield 20s</strong> or <strong class="text-[#222222]">Unlock / Release BT</strong> (or pick <strong class="text-[#222222]">Shared BT Unlock</strong>) to free COM3/GATT cleanly, then resume with 1 tap.</p>
             </div>
           </div>
 
@@ -1876,16 +1878,24 @@ Check your Browserslist config to be sure that your targets are set up correctly
       phoneFrame: false,
       t: 0,
       serialPort: null,
+      lastSerialPort: null,
       serialReader: null,
       serialWriter: null,
+      serialCmdInFlight: false,
       bleDevice: null,
+      lastBleDevice: null,
       bleServer: null,
       bleWriteChar: null,
+      bleNotifyChar: null,
       bleCanWriteWithoutResp: false,
       blePollingActive: false,
+      bleCmdInFlight: false,
       bleCoexistMode: 'coexist',
+      bleManualUnlock: false,
       bleYieldUntil: 0,
       bleYieldTimer: null,
+      lastBtTransport: '',
+      bridgeBtState: null,
       companionBleDevices: [],
       serialPollingActive: false,
       wifiPollTimer: null,
@@ -3243,6 +3253,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (src !== 'live_obd' && appState.wifiPollTimer) {
         clearInterval(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
+        appState.bridgeBtState = null;
+        appState.bridgeAutoSync = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
+        updateBtCoexistUi();
+        renderConnectedBtDevicesUi();
       }
       appState.source = src;
       const sel = document.getElementById('source-select');
@@ -4018,18 +4032,26 @@ Check your Browserslist config to be sure that your targets are set up correctly
       return bytes.slice(skipCount).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('');
     }
 
-    async function discoverLiveVehicleIdentity(sendElmFn, transportLabel) {
+    async function discoverLiveVehicleIdentity(sendElmFn, transportLabel, gapMs = 20) {
       if (typeof sendElmFn !== 'function') return appState.activeVehicle;
+      const shouldAbort = () => Boolean(appState.bleManualUnlock || Date.now() < (appState.bleYieldUntil || 0) || passiveState.bleUserDisconnected);
       const tryCmd = async (cmd, ms = 1200) => {
-        try { return await sendElmFn(cmd, ms); } catch (_) { return ''; }
+        if (shouldAbort()) return '';
+        let res = '';
+        try { res = await sendElmFn(cmd, ms); } catch (_) { res = ''; }
+        if (gapMs > 0 && !shouldAbort()) {
+          await new Promise(r => setTimeout(r, gapMs));
+        }
+        return res;
       };
       try {
         const r0902 = await tryCmd('0902', 1600);
+        if (shouldAbort()) return appState.activeVehicle;
         const r0904 = await tryCmd('0904', 1400);
         const r0906 = await tryCmd('0906', 1200);
         const r090A = await tryCmd('090A', 1400);
         let vin = decodeElmAscii(r0902, 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
-        if (vin.length < 6) {
+        if (vin.length < 6 && !shouldAbort()) {
           const rF190 = await tryCmd('22F190', 1400);
           vin = decodeElmAscii(rF190, 3).replace(/[^A-Z0-9]/gi, '').toUpperCase();
         }
@@ -4164,6 +4186,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       lastWakeToggleMs: 0,
       bleUserDisconnected: false,
       bleReconnecting: false,
+      bleAbortReconnect: false,
+      bleReconnectTimer: null,
+      bleReconnectResolve: null,
       bleListenerAttached: new WeakSet()
     };
 
@@ -5776,45 +5801,147 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }
     }
 
-    const FAST_POLL_PIDS = ['010C', '010D', '0104', '010B', '0123', '0111', '0149', '0106', '0144'];
+    const FAST_POLL_PIDS = ['010C', '010D', '0104', '010B', '0123', '0111', '0149'];
     const EXTENDED_POLL_PIDS = ALL_MODE01_POLL_LIST.filter(p => !FAST_POLL_PIDS.includes(p)).concat(['ATRV']);
 
+    let serialCmdQueue = Promise.resolve();
     async function sendSerialElm(cmd, timeoutMs = 1500) {
       const check = isCommandReadOnlySafe(cmd);
       if (!check.ok) throw new Error(check.reason);
-      if (!appState.serialWriter || !appState.serialReader) throw new Error('Serial port not open');
-      const enc = new TextEncoder();
-      const dec = new TextDecoder();
-      await appState.serialWriter.write(enc.encode(check.clean + '\r'));
-      let buf = '';
-      const start = Date.now();
-      while (Date.now() - start < timeoutMs) {
-        const res = await Promise.race([
-          appState.serialReader.read(),
-          new Promise(r => setTimeout(() => r({ timeout: true }), 250))
-        ]);
-        if (res.timeout) continue;
-        if (res.done) break;
-        if (res.value) {
-          buf += dec.decode(res.value);
-          if (buf.includes('>')) break;
+      const run = serialCmdQueue.then(async () => {
+        if (!appState.serialWriter || !appState.serialReader) throw new Error('Serial port not open');
+        appState.serialCmdInFlight = true;
+        try {
+          const enc = new TextEncoder();
+          const dec = new TextDecoder();
+          await appState.serialWriter.write(enc.encode(check.clean + '\r'));
+          let buf = '';
+          const start = Date.now();
+          while (Date.now() - start < timeoutMs) {
+            if (!appState.serialReader) break;
+            const res = await Promise.race([
+              appState.serialReader.read(),
+              new Promise(r => setTimeout(() => r({ timeout: true }), 200))
+            ]);
+            if (res.timeout) continue;
+            if (res.done) break;
+            if (res.value) {
+              buf += dec.decode(res.value);
+              if (buf.includes('>')) break;
+            }
+          }
+          return buf.replace(/>/g, '').trim();
+        } finally {
+          appState.serialCmdInFlight = false;
         }
+      });
+      serialCmdQueue = run.catch(() => {});
+      return run;
+    }
+
+    async function waitForBleCmdIdle(maxMs = 1200) {
+      const deadline = Date.now() + maxMs;
+      while (appState.bleCmdInFlight && Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 30));
       }
-      return buf.replace(/>/g, '').trim();
+    }
+
+    async function waitForSerialCmdIdle(maxMs = 1200) {
+      const deadline = Date.now() + maxMs;
+      while (appState.serialCmdInFlight && Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 30));
+      }
+    }
+
+    function cancelPendingBleReconnect() {
+      passiveState.bleAbortReconnect = true;
+      passiveState.bleReconnecting = false;
+      if (passiveState.bleReconnectTimer) {
+        clearTimeout(passiveState.bleReconnectTimer);
+        passiveState.bleReconnectTimer = null;
+      }
+      if (typeof passiveState.bleReconnectResolve === 'function') {
+        const res = passiveState.bleReconnectResolve;
+        passiveState.bleReconnectResolve = null;
+        try { res(); } catch (_) {}
+      }
+    }
+
+    async function cancellableReconnectSleep(ms) {
+      return await new Promise((resolve) => {
+        passiveState.bleReconnectResolve = resolve;
+        passiveState.bleReconnectTimer = setTimeout(() => {
+          passiveState.bleReconnectTimer = null;
+          passiveState.bleReconnectResolve = null;
+          resolve();
+        }, ms);
+      });
+    }
+
+    async function gattConnectWithTimeout(dev, timeoutMs = 6500) {
+      if (!dev || !dev.gatt) throw new Error('BLE GATT unavailable on selected device');
+      if (dev.gatt.connected) return dev.gatt;
+      let timer = null;
+      try {
+        return await Promise.race([
+          dev.gatt.connect(),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => {
+              try { dev.gatt.disconnect(); } catch (_) {}
+              reject(new Error(`GATT connect timed out after ${timeoutMs}ms (canceled OS scan cleanly)`));
+            }, timeoutMs);
+          })
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
     }
 
     // =========================================================================
     // 10C. BLUETOOTH RF COEXISTENCE & MULTI-DEVICE COMPANION ENGINE
     // =========================================================================
+    function isBridgeCoexistCapable() {
+      return Boolean(appState.wifiPollTimer || appState.bridgeAutoSync || appState.bridgeBtState);
+    }
+
     function getBtPacingConfig() {
       const mode = document.getElementById('ble-coexist-mode')?.value || appState.bleCoexistMode || 'coexist';
       if (mode === 'audio_priority') {
-        return { mode, gapMs: 36, framePauseMs: 450, useWithoutResp: true };
+        return { mode, gapMs: 42, framePauseMs: 950, useWithoutResp: true, releaseBetweenPolls: false };
+      }
+      if (mode === 'shared_release') {
+        return { mode, gapMs: 30, framePauseMs: 2200, useWithoutResp: true, releaseBetweenPolls: true };
       }
       if (mode === 'performance') {
-        return { mode, gapMs: 4, framePauseMs: 80, useWithoutResp: false };
+        return { mode, gapMs: 8, framePauseMs: 120, useWithoutResp: false, releaseBetweenPolls: false };
       }
-      return { mode: 'coexist', gapMs: 18, framePauseMs: 240, useWithoutResp: true };
+      return { mode: 'coexist', gapMs: 24, framePauseMs: 550, useWithoutResp: true, releaseBetweenPolls: false };
+    }
+
+    async function notifyBridgeBtEndpoint(path, bodyObj) {
+      if (!isBridgeCoexistCapable()) return null;
+      try {
+        const baseUrl = getBridgeBaseUrl();
+        const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const tId = ctrl ? setTimeout(() => ctrl.abort(), 1400) : null;
+        const res = await fetch(baseUrl + path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyObj ? JSON.stringify(bodyObj) : '{}',
+          signal: ctrl ? ctrl.signal : undefined
+        });
+        if (tId) clearTimeout(tId);
+        if (!res.ok) return null;
+        const st = await res.json();
+        if (st && st.mode) {
+          appState.bridgeBtState = st;
+          updateBtCoexistUi();
+          renderConnectedBtDevicesUi();
+        }
+        return st;
+      } catch (_) {
+        return null;
+      }
     }
 
     function saveBtPrefs() {
@@ -5825,7 +5952,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
         localStorage.setItem(BT_PREFS_KEY, JSON.stringify({ mode, yieldOnScan }));
       } catch (_) {}
       updateBtCoexistUi();
-      logTerminal(`[BT COEXIST] Profile set to "${mode}" (Audio / Calls / Smartwatch coexistence safe).`, 'text-[#1473E6]');
+      renderConnectedBtDevicesUi();
+      notifyBridgeBtEndpoint('/api/bt-config', { mode });
+      logTerminal(`[BT COEXIST] Profile set to "${mode}" (Audio / Calls / Smartwatch / Multi-Device safe).`, 'text-[#1473E6]');
     }
 
     function loadBtPrefs() {
@@ -5849,20 +5978,30 @@ Check your Browserslist config to be sure that your targets are set up correctly
       const badge = document.getElementById('bt-coexist-badge');
       const writeLbl = document.getElementById('bt-write-mode-lbl');
       const yieldBtn = document.getElementById('btn-yield-pairing');
+      const unlockBtn = document.getElementById('btn-unlock-bt');
       const now = Date.now();
       const remainingMs = Math.max(0, (appState.bleYieldUntil || 0) - now);
+      const bridgeUnlocked = Boolean(appState.bridgeBtState?.manualUnlocked);
+      const bridgeYieldMs = appState.bridgeBtState?.yielding ? Number(appState.bridgeBtState?.yieldRemainingMs || 0) : 0;
+      const isUnlocked = Boolean(appState.bleManualUnlock || bridgeUnlocked);
       const pacing = getBtPacingConfig();
 
       if (badge) {
-        if (remainingMs > 0) {
-          const secs = Math.ceil(remainingMs / 1000);
+        if (isUnlocked) {
+          badge.textContent = 'BT UNLOCKED · PAIR OTHER';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#93C5FD] text-[#1473E6] font-mono-num font-bold';
+        } else if (remainingMs > 0 || bridgeYieldMs > 0) {
+          const secs = Math.ceil(Math.max(remainingMs, bridgeYieldMs) / 1000);
           badge.textContent = `PAIRING YIELD · ${secs}s`;
           badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold';
         } else if (pacing.mode === 'audio_priority') {
-          badge.textContent = 'AUDIO PRIORITY (450ms)';
+          badge.textContent = 'AUDIO PRIORITY (950ms)';
           badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold';
+        } else if (pacing.mode === 'shared_release') {
+          badge.textContent = appState.bridgeBtState?.state === 'shared_idle' ? 'SHARED BT IDLE (COM3 FREE)' : 'SHARED BT UNLOCK (2.2s)';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold';
         } else if (pacing.mode === 'performance') {
-          badge.textContent = 'HIGH-SPEED (80ms)';
+          badge.textContent = 'HIGH-SPEED (120ms)';
           badge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-[#FDF2F8] border border-[#FBCFE8] text-[#BE185D] font-mono-num font-bold';
         } else {
           badge.textContent = 'COEXISTENCE ACTIVE';
@@ -5873,44 +6012,66 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (yieldBtn) {
         yieldBtn.textContent = remainingMs > 0
           ? `Resume OBD Polling (${Math.ceil(remainingMs / 1000)}s)`
-          : 'Yield 15s to Pair Phone Device';
+          : 'Yield 20s to Pair Device';
+      }
+
+      if (unlockBtn) {
+        if (isUnlocked) {
+          unlockBtn.textContent = 'Resume OBD-II';
+          unlockBtn.className = 'text-xs px-3.5 py-1.5 rounded-full bg-[#059669] hover:bg-[#047857] text-white font-bold transition shadow-sm';
+        } else {
+          unlockBtn.textContent = 'Unlock / Release BT';
+          unlockBtn.className = 'text-xs px-3.5 py-1.5 acro-pill-secondary';
+        }
       }
 
       if (writeLbl) {
-        if (appState.bleWriteChar) {
-          if (pacing.useWithoutResp && appState.bleCanWriteWithoutResp) {
-            writeLbl.textContent = 'WriteWithoutResponse Active';
-          } else {
-            writeLbl.textContent = 'WriteWithResponse Active';
-          }
+        if (isUnlocked) {
+          writeLbl.textContent = 'BT Port / GATT Released';
+        } else if (appState.bleWriteChar) {
+          writeLbl.textContent = (pacing.useWithoutResp && appState.bleCanWriteWithoutResp)
+            ? 'WriteWithoutResponse Active'
+            : 'WriteWithResponse Active';
+        } else if (appState.serialPort) {
+          writeLbl.textContent = 'Serial COM3 Coexist Active';
+        } else if (appState.bridgeBtState) {
+          writeLbl.textContent = appState.bridgeBtState.portOpen ? 'Bridge COM3 Open (Paced)' : 'Bridge COM3 Free Between Polls';
         } else {
           writeLbl.textContent = pacing.useWithoutResp ? 'WriteWithoutResponse Ready' : 'WriteWithResponse Mode';
         }
       }
     }
 
-    function yieldObdForPairing(durationMs = 15000, quiet) {
+    function yieldObdForPairing(durationMs = 20000, quiet) {
       const now = Date.now();
+      cancelPendingBleReconnect();
+      appState.bleManualUnlock = false;
       if (appState.bleYieldTimer) {
         clearInterval(appState.bleYieldTimer);
         appState.bleYieldTimer = null;
       }
       if (!quiet && appState.bleYieldUntil > now) {
         appState.bleYieldUntil = 0;
+        notifyBridgeBtEndpoint('/api/bt-resume', {});
         updateBtCoexistUi();
+        renderConnectedBtDevicesUi();
         logTerminal('[BT COEXIST] Resumed OBD-II polling immediately.', 'text-[#047857] font-semibold');
         return;
       }
       appState.bleYieldUntil = now + durationMs;
+      notifyBridgeBtEndpoint('/api/bt-yield', { durationMs, releasePort: true });
       updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
       if (!quiet) {
-        logTerminal(`[BT COEXIST] Yielding RF radio airtime for ${(durationMs / 1000).toFixed(0)}s while keeping OBD GATT paired — pair your car stereo, earbuds, or watch now.`, 'text-[#1473E6] font-semibold');
+        logTerminal(`[BT COEXIST] Yielding RF radio & releasing COM3 lock for ${(durationMs / 1000).toFixed(0)}s — connect your car stereo, calls, earbuds, or other BT devices now.`, 'text-[#1473E6] font-semibold');
       }
       appState.bleYieldTimer = setInterval(() => {
         if (Date.now() >= appState.bleYieldUntil) {
           appState.bleYieldUntil = 0;
           clearInterval(appState.bleYieldTimer);
           appState.bleYieldTimer = null;
+          notifyBridgeBtEndpoint('/api/bt-resume', {});
+          renderConnectedBtDevicesUi();
           if (!quiet) {
             logTerminal('[BT COEXIST] Pairing yield complete — resumed OBD-II telemetry seamlessly.', 'text-[#047857]');
           }
@@ -5919,10 +6080,117 @@ Check your Browserslist config to be sure that your targets are set up correctly
       }, 500);
     }
 
+    async function unlockBluetoothForOtherDevices() {
+      cancelPendingBleReconnect();
+      if (appState.bleYieldTimer) {
+        clearInterval(appState.bleYieldTimer);
+        appState.bleYieldTimer = null;
+      }
+      appState.bleYieldUntil = 0;
+      appState.bleManualUnlock = true;
+      appState.blePollingActive = false;
+      appState.serialPollingActive = false;
+
+      if (bleWaiter) {
+        try { bleWaiter(); } catch (_) { bleWaiter = null; }
+      }
+      await waitForBleCmdIdle(1200);
+      await waitForSerialCmdIdle(1200);
+
+      if (appState.bleDevice) {
+        appState.lastBleDevice = appState.bleDevice;
+        appState.lastBtTransport = 'ble';
+        try {
+          if (appState.bleDevice.gatt) appState.bleDevice.gatt.disconnect();
+        } catch (_) {}
+        appState.bleWriteChar = null;
+        appState.bleNotifyChar = null;
+        appState.bleServer = null;
+      }
+      if (appState.serialPort) {
+        appState.lastSerialPort = appState.serialPort;
+        if (!appState.lastBtTransport) appState.lastBtTransport = 'serial';
+        try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
+        try { if (appState.serialWriter) { appState.serialWriter.releaseLock(); appState.serialWriter = null; } } catch (_) {}
+        try { await appState.serialPort.close(); } catch (_) {}
+        appState.serialPort = null;
+      }
+      if (isBridgeCoexistCapable()) {
+        if (!appState.lastBtTransport) appState.lastBtTransport = 'bridge';
+        await notifyBridgeBtEndpoint('/api/bt-unlock', { releasePort: true });
+      }
+      await new Promise(r => setTimeout(r, 180));
+      updatePassiveStatusUi('UNLOCKED (BT FREE)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#93C5FD] text-[#1473E6] font-mono-num font-bold');
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+      logTerminal('[BT UNLOCKED] Released active OBD-II GATT / COM3 radio lock so other Bluetooth devices can pair or connect freely. Tap "Resume OBD-II" when ready.', 'text-[#1473E6] font-semibold');
+    }
+
+    async function resumeUnlockedObd() {
+      appState.bleManualUnlock = false;
+      appState.bleYieldUntil = 0;
+      passiveState.bleUserDisconnected = false;
+      passiveState.bleAbortReconnect = false;
+      if (appState.bleYieldTimer) {
+        clearInterval(appState.bleYieldTimer);
+        appState.bleYieldTimer = null;
+      }
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+
+      if (isBridgeCoexistCapable()) {
+        await notifyBridgeBtEndpoint('/api/bt-resume', {});
+      }
+      if (appState.lastBtTransport === 'ble' && appState.lastBleDevice) {
+        try {
+          logTerminal(`[BT RESUME] Reconnecting ${appState.lastBleDevice.name || 'OBD-II BLE'} cleanly...`, 'text-[#047857] font-semibold');
+          await connectBleGattDevice(appState.lastBleDevice);
+          return;
+        } catch (err) {
+          logTerminal(`[BT RESUME] Reconnect note: ${err.message}`, 'text-[#B45309]');
+        }
+      } else if (appState.lastBtTransport === 'serial' && appState.lastSerialPort) {
+        try {
+          const port = appState.lastSerialPort;
+          await port.open({ baudRate: 38400, dataBits: 8, stopBits: 1, parity: 'none' });
+          appState.serialPort = port;
+          appState.serialReader = port.readable.getReader();
+          appState.serialWriter = port.writable.getWriter();
+          appState.serialPollingActive = true;
+          changeDataSource('live_obd');
+          document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (Passive Recording)';
+          updateBtCoexistUi();
+          renderConnectedBtDevicesUi();
+          logTerminal('[BT RESUME] Reopened COM3 SPP cleanly (coexistence safe).', 'text-[#047857] font-semibold');
+          runSerialPollingLoop().catch(err => logTerminal(`[SERIAL LOOP] Stopped: ${err.message}`, 'text-[#B45309]'));
+          return;
+        } catch (err) {
+          logTerminal(`[BT RESUME] Serial reopen note: ${err.message}`, 'text-[#B45309]');
+        }
+      } else if (isBridgeCoexistCapable()) {
+        logTerminal('[BT RESUME] Windows Bridge COM3 resumed cleanly.', 'text-[#047857] font-semibold');
+      } else {
+        logTerminal('[BT RESUME] Coexistence lock cleared — ready for OBD-II connection.', 'text-[#047857]');
+      }
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+    }
+
+    async function toggleBtUnlock() {
+      const isUnlocked = Boolean(appState.bleManualUnlock || appState.bridgeBtState?.manualUnlocked);
+      if (isUnlocked) {
+        await resumeUnlockedObd();
+      } else {
+        await unlockBluetoothForOtherDevices();
+      }
+    }
+
     function renderConnectedBtDevicesUi(savedDevicesList) {
       const box = document.getElementById('bt-connected-devices-list');
       if (!box) return;
       const rows = [];
+      const isUnlocked = Boolean(appState.bleManualUnlock || appState.bridgeBtState?.manualUnlocked);
+      const isYielding = Boolean((appState.bleYieldUntil || 0) > Date.now() || appState.bridgeBtState?.yielding);
 
       rows.push(`
         <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] rounded-xl px-3 py-2">
@@ -5930,9 +6198,27 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <span class="font-bold text-[#222222]">Phone Audio / Calls / Smartwatch (OS Multipoint)</span>
             <span class="block text-[11px] text-[#5A5F6A]">A2DP Car Stereo, HFP Calls &amp; Wearables share BLE RF safely alongside OBD-II</span>
           </div>
-          <span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">COEXIST READY</span>
+          <span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">${isUnlocked ? 'BT FREE' : (isYielding ? 'YIELD WINDOW' : 'COEXIST READY')}</span>
         </div>
       `);
+
+      if (appState.bridgeBtState || appState.wifiPollTimer) {
+        const st = appState.bridgeBtState || { port: 'COM3', mode: getBtPacingConfig().mode, portOpen: true, state: 'connected' };
+        const comStatus = st.manualUnlocked
+          ? 'Unlocked (COM3 Released)'
+          : (st.yielding
+            ? `Yielding RF (${Math.ceil((st.yieldRemainingMs || 0) / 1000)}s)`
+            : (st.portOpen ? `${st.port || 'COM3'} Open (Coexist)` : `${st.port || 'COM3'} Released Between Polls`));
+        rows.push(`
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#BFDBFE] rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <span class="font-bold text-[#1473E6]">Windows COM3 Bridge: ${st.port || 'COM3'} (${st.mode || 'coexist'})</span>
+              <span class="block text-[11px] text-[#5A5F6A] font-mono-num">${comStatus}</span>
+            </div>
+            <button onclick="toggleBtUnlock()" class="px-2.5 py-1 rounded-full ${st.manualUnlocked ? 'bg-[#059669] text-white' : 'bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] hover:bg-[#ECEEF2]'} font-semibold">${st.manualUnlocked ? 'Resume COM3' : 'Unlock COM3'}</button>
+          </div>
+        `);
+      }
 
       if (appState.bleDevice && appState.bleDevice.gatt?.connected) {
         rows.push(`
@@ -5941,7 +6227,10 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-bold text-[#1473E6]">Primary OBD-II GATT: ${appState.bleDevice.name || 'ELM327 BLE'}</span>
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">ID: ${appState.bleDevice.id || 'paired'} · ${appState.bleCanWriteWithoutResp ? 'WriteWithoutResponse' : 'WriteWithResponse'}</span>
             </div>
-            <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Disconnect OBD</button>
+            <div class="flex items-center gap-1.5">
+              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release BT</button>
+              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Disconnect</button>
+            </div>
           </div>
         `);
       } else if (appState.serialPort) {
@@ -5951,7 +6240,21 @@ Check your Browserslist config to be sure that your targets are set up correctly
               <span class="font-bold text-[#1473E6]">Primary OBD-II Serial: COM3 SPP (38400 8N1)</span>
               <span class="block text-[11px] text-[#5A5F6A] font-mono-num">Yield-safe classic RFCOMM link active</span>
             </div>
-            <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Close COM3</button>
+            <div class="flex items-center gap-1.5">
+              <button onclick="unlockBluetoothForOtherDevices()" class="px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Release COM3</button>
+              <button onclick="disconnectActivePort()" class="px-2.5 py-1 rounded-full bg-[#F7F8FA] border border-[#D4D6DC] text-[#222222] font-semibold hover:bg-[#ECEEF2]">Close</button>
+            </div>
+          </div>
+        `);
+      } else if (appState.bleManualUnlock && (appState.lastBleDevice || appState.lastSerialPort)) {
+        const lastLabel = appState.lastBleDevice?.name || 'COM3 Serial';
+        rows.push(`
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-[#93C5FD] rounded-xl px-3 py-2">
+            <div class="min-w-0">
+              <span class="font-bold text-[#1473E6]">OBD-II Released (${lastLabel}) · Bluetooth Free</span>
+              <span class="block text-[11px] text-[#5A5F6A] font-mono-num">Pair or connect car audio, calls, or another device safely</span>
+            </div>
+            <button onclick="resumeUnlockedObd()" class="px-2.5 py-1 rounded-full bg-[#059669] text-white font-semibold">Resume OBD-II</button>
           </div>
         `);
       }
@@ -5977,23 +6280,46 @@ Check your Browserslist config to be sure that your targets are set up correctly
       box.innerHTML = rows.join('');
     }
 
+    async function prepareBluetoothRadioForScan() {
+      const yieldCb = document.getElementById('ble-yield-on-scan');
+      const shouldYield = !yieldCb || yieldCb.checked;
+      cancelPendingBleReconnect();
+      if (shouldYield && (isLocalObdActive() || appState.bleDevice?.gatt?.connected || isBridgeCoexistCapable())) {
+        yieldObdForPairing(20000, true);
+        await waitForBleCmdIdle(1200);
+        await waitForSerialCmdIdle(1200);
+        await new Promise(r => setTimeout(r, 180));
+        return true;
+      }
+      return false;
+    }
+
+    function finishBluetoothScanYield(didYield) {
+      if (didYield && appState.bleYieldUntil > 0) {
+        appState.bleYieldUntil = 0;
+        if (appState.bleYieldTimer) {
+          clearInterval(appState.bleYieldTimer);
+          appState.bleYieldTimer = null;
+        }
+        notifyBridgeBtEndpoint('/api/bt-resume', {});
+        updateBtCoexistUi();
+        renderConnectedBtDevicesUi();
+      }
+    }
+
     async function connectCompanionBleDevice() {
       if (!('bluetooth' in navigator)) {
         logTerminal('[BLE COMPANION] Web Bluetooth is unavailable in this browser. Car stereo audio / calls still work normally via Phone Settings.', 'text-[#B45309]');
         return;
       }
-      const yieldCb = document.getElementById('ble-yield-on-scan');
-      const shouldYield = !yieldCb || yieldCb.checked;
-      if (shouldYield && isLocalObdActive()) {
-        yieldObdForPairing(20000, true);
-      }
+      const didYield = await prepareBluetoothRadioForScan();
       try {
-        logTerminal('[BLE COMPANION] Scanning for extra BLE accessory (OBD-II remains paired in background)...', 'text-[#1473E6]');
+        logTerminal('[BLE COMPANION] Scanning for extra BLE accessory (OBD-II settled cleanly in background)...', 'text-[#1473E6]');
         const dev = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: ['battery_service', 'device_information', 'heart_rate', 'generic_access', 0xfff0, 0xffe0, '6e400001-b5a3-f393-e0a9-e50e24dcca9e']
         });
-        const server = await dev.gatt.connect();
+        const server = await gattConnectWithTimeout(dev, 7500);
         let servicesCount = 0;
         let batteryPct = null;
         try {
@@ -6023,14 +6349,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       } catch (err) {
         logTerminal(`[BLE COMPANION] Scan canceled or unavailable: ${err.message}`, 'text-[#B45309]');
       } finally {
-        if (shouldYield && appState.bleYieldUntil > 0) {
-          appState.bleYieldUntil = 0;
-          if (appState.bleYieldTimer) {
-            clearInterval(appState.bleYieldTimer);
-            appState.bleYieldTimer = null;
-          }
-          updateBtCoexistUi();
-        }
+        finishBluetoothScanYield(didYield);
       }
     }
 
@@ -6039,7 +6358,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (idx === -1) return;
       const item = appState.companionBleDevices[idx];
       try {
-        if (item.device?.gatt?.connected) item.device.gatt.disconnect();
+        if (item.device?.gatt) item.device.gatt.disconnect();
       } catch (_) {}
       appState.companionBleDevices.splice(idx, 1);
       logTerminal(`[BLE COMPANION] Disconnected ${item.name} safely.`, 'text-[#5A5F6A]');
@@ -6063,7 +6382,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     async function disconnectAllBluetoothDevices() {
       (appState.companionBleDevices || []).forEach(c => {
-        try { if (c.device?.gatt?.connected) c.device.gatt.disconnect(); } catch (_) {}
+        try { if (c.device?.gatt) c.device.gatt.disconnect(); } catch (_) {}
       });
       appState.companionBleDevices = [];
       await disconnectActivePort();
@@ -6072,37 +6391,47 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     let bleRxBuffer = '';
     let bleWaiter = null;
+    let bleCmdQueue = Promise.resolve();
     async function sendBleElm(cmd, timeoutMs = 1500) {
       const check = isCommandReadOnlySafe(cmd);
       if (!check.ok) throw new Error(check.reason);
-      if (!appState.bleWriteChar) throw new Error('BLE GATT characteristic not ready');
-      bleRxBuffer = '';
-      const bytes = new TextEncoder().encode(check.clean + '\r');
-      const pacing = getBtPacingConfig();
-      const ch = appState.bleWriteChar;
-      if (pacing.useWithoutResp && ch.properties?.writeWithoutResponse && typeof ch.writeValueWithoutResponse === 'function') {
+      const run = bleCmdQueue.then(async () => {
+        if (!appState.bleWriteChar) throw new Error('BLE GATT characteristic not ready');
+        appState.bleCmdInFlight = true;
         try {
-          await ch.writeValueWithoutResponse(bytes);
-        } catch (_) {
-          if (typeof ch.writeValueWithResponse === 'function') await ch.writeValueWithResponse(bytes);
-          else await ch.writeValue(bytes);
+          bleRxBuffer = '';
+          const bytes = new TextEncoder().encode(check.clean + '\r');
+          const pacing = getBtPacingConfig();
+          const ch = appState.bleWriteChar;
+          if (pacing.useWithoutResp && ch.properties?.writeWithoutResponse && typeof ch.writeValueWithoutResponse === 'function') {
+            try {
+              await ch.writeValueWithoutResponse(bytes);
+            } catch (_) {
+              if (typeof ch.writeValueWithResponse === 'function') await ch.writeValueWithResponse(bytes);
+              else await ch.writeValue(bytes);
+            }
+          } else if (typeof ch.writeValueWithResponse === 'function' && ch.properties?.write) {
+            await ch.writeValueWithResponse(bytes);
+          } else {
+            await ch.writeValue(bytes);
+          }
+          return await new Promise((resolve) => {
+            const timer = setTimeout(() => {
+              bleWaiter = null;
+              resolve(bleRxBuffer.replace(/>/g, '').trim());
+            }, timeoutMs);
+            bleWaiter = () => {
+              clearTimeout(timer);
+              bleWaiter = null;
+              resolve(bleRxBuffer.replace(/>/g, '').trim());
+            };
+          });
+        } finally {
+          appState.bleCmdInFlight = false;
         }
-      } else if (typeof ch.writeValueWithResponse === 'function' && ch.properties?.write) {
-        await ch.writeValueWithResponse(bytes);
-      } else {
-        await ch.writeValue(bytes);
-      }
-      return await new Promise((resolve) => {
-        const timer = setTimeout(() => {
-          bleWaiter = null;
-          resolve(bleRxBuffer.replace(/>/g, '').trim());
-        }, timeoutMs);
-        bleWaiter = () => {
-          clearTimeout(timer);
-          bleWaiter = null;
-          resolve(bleRxBuffer.replace(/>/g, '').trim());
-        };
       });
+      bleCmdQueue = run.catch(() => {});
+      return run;
     }
 
     function runFullReadOnlySweepLog() {
@@ -6152,34 +6481,57 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     async function runSerialPollingLoop() {
       let extIdx = 0;
+      const initGap = Math.max(20, getBtPacingConfig().gapMs);
       for (const initCmd of ['ATZ', 'ATE0', 'ATL0', 'ATS1', 'ATH1', 'ATSP0', 'ATST32', 'ATDP']) {
-        if (!appState.serialPollingActive) return;
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
         const r = await sendSerialElm(initCmd, 2500);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
+        if (initGap > 0) await new Promise(w => setTimeout(w, initGap));
       }
-      await discoverLiveVehicleIdentity(sendSerialElm, 'Web Serial COM3');
-      await startPassiveDriveSession('Web Serial COM3');
+      await discoverLiveVehicleIdentity(sendSerialElm, 'Web Serial COM3', initGap);
+      if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+      if (!passiveState.activeSessionId) {
+        await startPassiveDriveSession('Web Serial COM3');
+      } else {
+        requestDriveWakeLock();
+        updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold animate-pulse');
+      }
       maybeAutoStartCloudTx('Web Serial COM3');
-      while (appState.serialPollingActive && appState.serialPort) {
+
+      // Quiet settle window so concurrent OS Bluetooth pairing finishes cleanly
+      for (let s = 0; s < 4; s++) {
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+        await new Promise(r => setTimeout(r, 150));
+      }
+
+      while (appState.serialPollingActive && appState.serialPort && !appState.bleManualUnlock) {
         if (Date.now() < appState.bleYieldUntil) {
           await new Promise(r => setTimeout(r, 250));
           continue;
         }
         const pacing = getBtPacingConfig();
-        for (const pid of FAST_POLL_PIDS) {
-          if (!appState.serialPollingActive || Date.now() < appState.bleYieldUntil) break;
-          const r = await sendSerialElm(pid, 1200);
-          applyElmResponseToState(pid, r);
-          if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
+        try {
+          for (const pid of FAST_POLL_PIDS) {
+            if (!appState.serialPollingActive || appState.bleManualUnlock || Date.now() < appState.bleYieldUntil) break;
+            const r = await sendSerialElm(pid, 1200);
+            applyElmResponseToState(pid, r);
+            if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
+          }
+          const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
+          extIdx++;
+          if (appState.serialPollingActive && !appState.bleManualUnlock && extPid && Date.now() >= appState.bleYieldUntil) {
+            const rExt = await sendSerialElm(extPid, 1200);
+            applyElmResponseToState(extPid, rExt);
+          }
+          commitLiveFrame();
+        } catch (err) {
+          if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+          throw err;
         }
-        const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
-        extIdx++;
-        if (appState.serialPollingActive && extPid && Date.now() >= appState.bleYieldUntil) {
-          const rExt = await sendSerialElm(extPid, 1200);
-          applyElmResponseToState(extPid, rExt);
-        }
-        commitLiveFrame();
-        await new Promise(r => setTimeout(r, pacing.framePauseMs));
+        const effectiveRestMs = (typeof document !== 'undefined' && document.hidden)
+          ? Math.max(pacing.framePauseMs, 1800)
+          : pacing.framePauseMs;
+        await new Promise(r => setTimeout(r, effectiveRestMs));
       }
     }
 
@@ -6188,17 +6540,29 @@ Check your Browserslist config to be sure that your targets are set up correctly
         logTerminal('[INFO] Web Serial API requires Chrome or Edge on Desktop/Android. On iPhone/iOS, use Web Bluetooth (Bluefy), Wi-Fi COM3 Bridge, or Remote Cloud Stream.', 'text-[#B45309]');
         return;
       }
+      appState.bleManualUnlock = false;
+      const didYield = await prepareBluetoothRadioForScan();
       try {
         requestDriveWakeLock({ fromGesture: true, reason: 'serial-connect' });
         logTerminal('[SERIAL] Requesting Bluetooth SPP COM port (select COM3 at 38400 baud)...', 'text-[#1473E6]');
         const port = await navigator.serial.requestPort();
+        if (appState.serialPort && appState.serialPort !== port) {
+          appState.serialPollingActive = false;
+          await waitForSerialCmdIdle(1000);
+          try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
+          try { if (appState.serialWriter) { appState.serialWriter.releaseLock(); appState.serialWriter = null; } } catch (_) {}
+          try { await appState.serialPort.close(); } catch (_) {}
+        }
         await port.open({ baudRate: 38400, dataBits: 8, stopBits: 1, parity: 'none' });
         appState.serialPort = port;
+        appState.lastSerialPort = port;
+        appState.lastBtTransport = 'serial';
         appState.serialReader = port.readable.getReader();
         appState.serialWriter = port.writable.getWriter();
         appState.serialPollingActive = true;
         changeDataSource('live_obd');
         document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (Passive Recording)';
+        updateBtCoexistUi();
         renderConnectedBtDevicesUi();
         logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling & passively storing all Mode 01 PIDs (audio coexistence active)...', 'text-[#047857] font-semibold');
         runSerialPollingLoop().catch(err => {
@@ -6206,22 +6570,33 @@ Check your Browserslist config to be sure that your targets are set up correctly
         });
       } catch (err) {
         logTerminal(`[SERIAL] Connection canceled or unavailable: ${err.message}`, 'text-[#B45309]');
+      } finally {
+        finishBluetoothScanYield(didYield);
       }
     }
 
     async function disconnectActivePort() {
+      cancelPendingBleReconnect();
       passiveState.bleUserDisconnected = true;
+      appState.bleManualUnlock = false;
       appState.serialPollingActive = false;
       appState.blePollingActive = false;
       appState.bleYieldUntil = 0;
+      if (bleWaiter) {
+        try { bleWaiter(); } catch (_) { bleWaiter = null; }
+      }
+      bleRxBuffer = '';
       if (appState.bleYieldTimer) {
         clearInterval(appState.bleYieldTimer);
         appState.bleYieldTimer = null;
       }
+      const hadWifiTimer = Boolean(appState.wifiPollTimer || appState.bridgeBtState);
       if (appState.wifiPollTimer) {
         clearInterval(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
       }
+      appState.bridgeBtState = null;
+      appState.bridgeAutoSync = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
       if (passiveState.activeSession && passiveState.sampleCount > 0) {
         try {
           const sCopy = { ...passiveState.activeSession };
@@ -6236,21 +6611,33 @@ Check your Browserslist config to be sure that your targets are set up correctly
         requestDriveWakeLock({ reason: 'disconnect-keep-on' });
       }
       updatePassiveStatusUi('STOPPED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+
+      let closedAny = false;
+      if (hadWifiTimer) {
+        closedAny = true;
+        logTerminal('[BRIDGE] Disconnected from Windows COM3 Bridge cleanly.', 'text-[#047857] font-semibold');
+      }
       try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
       try { if (appState.serialWriter) { appState.serialWriter.releaseLock(); appState.serialWriter = null; } } catch (_) {}
       if (appState.serialPort) {
         try {
           await appState.serialPort.close();
           appState.serialPort = null;
+          closedAny = true;
           logTerminal('[SERIAL] COM3 closed cleanly. Port unlocked.', 'text-[#047857] font-semibold');
         } catch (e) {
           logTerminal(`[SERIAL] Close note: ${e.message}`, 'text-[#B45309]');
         }
-      } else if (appState.bleDevice && appState.bleDevice.gatt?.connected) {
-        appState.bleDevice.gatt.disconnect();
+      }
+      if (appState.bleDevice && appState.bleDevice.gatt) {
+        try { appState.bleDevice.gatt.disconnect(); } catch (_) {}
         appState.bleWriteChar = null;
+        appState.bleNotifyChar = null;
+        appState.bleServer = null;
+        closedAny = true;
         logTerminal('[BLE] Disconnected BLE OBD-II GATT adapter cleanly.', 'text-[#047857] font-semibold');
-      } else {
+      }
+      if (!closedAny) {
         logTerminal('[SERIAL] Active live polling stopped and ports unlocked.', 'text-[#047857] font-semibold');
       }
       updateBtCoexistUi();
@@ -6259,12 +6646,15 @@ Check your Browserslist config to be sure that your targets are set up correctly
 
     async function runBlePollingLoop() {
       let extIdx = 0;
+      const initGap = Math.max(18, getBtPacingConfig().gapMs);
       for (const initCmd of ['ATZ', 'ATE0', 'ATL0', 'ATS1', 'ATH1', 'ATSP0', 'ATST32']) {
-        if (!appState.blePollingActive) return;
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
         const r = await sendBleElm(initCmd, 2000);
         logTerminal(`> ${initCmd} → ${r || 'OK'}`, 'text-[#5A5F6A]');
+        if (initGap > 0) await new Promise(w => setTimeout(w, initGap));
       }
-      await discoverLiveVehicleIdentity(sendBleElm, `BLE · ${appState.bleDevice?.name || 'OBDII'}`);
+      await discoverLiveVehicleIdentity(sendBleElm, `BLE · ${appState.bleDevice?.name || 'OBDII'}`, initGap);
+      if (!appState.blePollingActive || appState.bleManualUnlock) return;
       if (!passiveState.activeSessionId) {
         await startPassiveDriveSession(`BLE · ${appState.bleDevice?.name || 'OBDII'}`);
       } else {
@@ -6272,33 +6662,59 @@ Check your Browserslist config to be sure that your targets are set up correctly
         updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold animate-pulse');
       }
       maybeAutoStartCloudTx('Bluetooth BLE GATT');
-      while (appState.blePollingActive && appState.bleWriteChar) {
+
+      // Brief settle window so concurrent phone BT audio / pairing finishes cleanly
+      for (let s = 0; s < 4; s++) {
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
+        await new Promise(r => setTimeout(r, 150));
+      }
+
+      while (appState.blePollingActive && appState.bleWriteChar && !appState.bleManualUnlock) {
         if (Date.now() < appState.bleYieldUntil) {
           await new Promise(r => setTimeout(r, 250));
           continue;
         }
         const pacing = getBtPacingConfig();
-        for (const pid of FAST_POLL_PIDS) {
-          if (!appState.blePollingActive || Date.now() < appState.bleYieldUntil) break;
-          const r = await sendBleElm(pid, 1000);
-          applyElmResponseToState(pid, r);
-          if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
+        try {
+          for (const pid of FAST_POLL_PIDS) {
+            if (!appState.blePollingActive || appState.bleManualUnlock || Date.now() < appState.bleYieldUntil) break;
+            const r = await sendBleElm(pid, 1000);
+            applyElmResponseToState(pid, r);
+            if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
+          }
+          const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
+          extIdx++;
+          if (appState.blePollingActive && !appState.bleManualUnlock && extPid && Date.now() >= appState.bleYieldUntil) {
+            const rExt = await sendBleElm(extPid, 1000);
+            applyElmResponseToState(extPid, rExt);
+          }
+          commitLiveFrame();
+        } catch (err) {
+          if (!appState.blePollingActive || appState.bleManualUnlock) return;
+          throw err;
         }
-        const extPid = EXTENDED_POLL_PIDS[extIdx % EXTENDED_POLL_PIDS.length];
-        extIdx++;
-        if (appState.blePollingActive && extPid && Date.now() >= appState.bleYieldUntil) {
-          const rExt = await sendBleElm(extPid, 1000);
-          applyElmResponseToState(extPid, rExt);
-        }
-        commitLiveFrame();
-        await new Promise(r => setTimeout(r, pacing.framePauseMs));
+        const effectiveRestMs = (typeof document !== 'undefined' && document.hidden)
+          ? Math.max(pacing.framePauseMs, 1800)
+          : pacing.framePauseMs;
+        await new Promise(r => setTimeout(r, effectiveRestMs));
       }
     }
 
     async function connectBleGattDevice(dev) {
-      const server = await dev.gatt.connect();
+      const server = await gattConnectWithTimeout(dev, 6500);
+      if (passiveState.bleUserDisconnected || appState.bleManualUnlock) {
+        try { if (dev.gatt) dev.gatt.disconnect(); } catch (_) {}
+        throw new Error('Connection canceled for Bluetooth coexistence');
+      }
+      appState.bleDevice = dev;
+      appState.lastBleDevice = dev;
+      appState.lastBtTransport = 'ble';
       appState.bleServer = server;
       const services = await server.getPrimaryServices();
+      if (passiveState.bleUserDisconnected || appState.bleManualUnlock) {
+        try { if (dev.gatt) dev.gatt.disconnect(); } catch (_) {}
+        throw new Error('Connection canceled for Bluetooth coexistence');
+      }
       let notifyChar = null;
       let writeChar = null;
       for (const svc of services) {
@@ -6306,9 +6722,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
         for (const ch of chars) {
           if (!notifyChar && (ch.properties.notify || ch.properties.indicate)) notifyChar = ch;
           if (!writeChar && (ch.properties.write || ch.properties.writeWithoutResponse)) writeChar = ch;
+          if (notifyChar && writeChar) break;
         }
+        if (notifyChar && writeChar) break;
       }
       if (!writeChar || !notifyChar) {
+        try { if (dev.gatt) dev.gatt.disconnect(); } catch (_) {}
         throw new Error('Selected BLE device does not expose serial notify/write characteristics.');
       }
       await notifyChar.startNotifications();
@@ -6320,6 +6739,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
           if (bleRxBuffer.includes('>') && bleWaiter) bleWaiter();
         });
       }
+      appState.bleNotifyChar = notifyChar;
       appState.bleWriteChar = writeChar;
       appState.bleCanWriteWithoutResp = Boolean(writeChar.properties?.writeWithoutResponse);
       appState.blePollingActive = true;
@@ -6330,22 +6750,31 @@ Check your Browserslist config to be sure that your targets are set up correctly
       updateBtCoexistUi();
       renderConnectedBtDevicesUi();
       logTerminal(`[BLE] Connected to ${dev.name || dev.id}! Running passively with ${appState.bleCanWriteWithoutResp ? 'writeWithoutResponse (audio safe)' : 'writeWithResponse'}.`, 'text-[#047857] font-semibold');
+      await new Promise(r => setTimeout(r, 150));
       runBlePollingLoop().catch(err => logTerminal(`[BLE LOOP] ${err.message}`, 'text-[#B45309]'));
     }
 
     async function attemptBleAutoReconnect() {
       const autoCb = document.getElementById('passive-autoreconnect-cb');
-      if (passiveState.bleUserDisconnected || !appState.bleDevice || (autoCb && !autoCb.checked)) return;
+      if (passiveState.bleUserDisconnected || appState.bleManualUnlock || !appState.bleDevice || (autoCb && !autoCb.checked)) return;
       if (passiveState.bleReconnecting) return;
       passiveState.bleReconnecting = true;
+      passiveState.bleAbortReconnect = false;
       appState.blePollingActive = false;
       const rcLbl = document.getElementById('passive-reconnect-state');
       updatePassiveStatusUi('RECONNECTING...', 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold');
-      for (let attempt = 1; attempt <= 8; attempt++) {
-        if (passiveState.bleUserDisconnected) break;
-        if (rcLbl) rcLbl.textContent = `Retry #${attempt}/8...`;
-        logTerminal(`[BLE RECONNECT] Attempt ${attempt}/8 to restore passive link...`, 'text-[#B45309]');
-        await new Promise(r => setTimeout(r, Math.min(8000, attempt * 1500)));
+      const backoffs = [3500, 5500, 8000, 10500, 13000, 15000];
+      for (let attempt = 1; attempt <= backoffs.length; attempt++) {
+        if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock) break;
+        while (Date.now() < (appState.bleYieldUntil || 0)) {
+          if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock) break;
+          await cancellableReconnectSleep(400);
+        }
+        if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock) break;
+        if (rcLbl) rcLbl.textContent = `Retry #${attempt}/${backoffs.length}...`;
+        logTerminal(`[BLE RECONNECT] Attempt ${attempt}/${backoffs.length} to restore passive link (other BT safe)...`, 'text-[#B45309]');
+        await cancellableReconnectSleep(backoffs[attempt - 1]);
+        if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock) break;
         try {
           await connectBleGattDevice(appState.bleDevice);
           passiveState.bleReconnecting = false;
@@ -6353,6 +6782,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
         } catch (_) {}
       }
       passiveState.bleReconnecting = false;
+      if (appState.bleManualUnlock) return;
       if (rcLbl) rcLbl.textContent = 'Disconnected';
       updatePassiveStatusUi('PAUSED (LINK LOST)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEE2E2] border border-[#FCA5A5] text-[#B91C1C] font-mono-num font-bold');
     }
@@ -6364,20 +6794,34 @@ Check your Browserslist config to be sure that your targets are set up correctly
         return;
       }
       const NORDIC_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+      appState.bleManualUnlock = false;
+      const didYield = await prepareBluetoothRadioForScan();
       try {
         passiveState.bleUserDisconnected = false;
+        passiveState.bleAbortReconnect = false;
         logTerminal('[BLE] Scanning for ELM327 BLE GATT adapters (0xFFF0 / 0xFFE0 / Nordic UART)...', 'text-[#1473E6]');
         const dev = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: [0xfff0, 0xffe0, '0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb', NORDIC_SVC]
         });
+        if (appState.bleDevice && appState.bleDevice !== dev && appState.bleDevice.gatt) {
+          appState.blePollingActive = false;
+          await waitForBleCmdIdle(1000);
+          try { appState.bleDevice.gatt.disconnect(); } catch (_) {}
+          appState.bleWriteChar = null;
+          appState.bleNotifyChar = null;
+          await new Promise(r => setTimeout(r, 180));
+        }
         appState.bleDevice = dev;
+        appState.lastBleDevice = dev;
         if (!passiveState.bleListenerAttached.has(dev)) {
           passiveState.bleListenerAttached.add(dev);
           dev.addEventListener('gattserverdisconnected', () => {
+            appState.blePollingActive = false;
+            appState.bleWriteChar = null;
             renderConnectedBtDevicesUi();
-            if (!passiveState.bleUserDisconnected) {
-              logTerminal('[BLE] Link dropped unexpectedly — initiating passive auto-reconnect...', 'text-[#B45309] font-semibold');
+            if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock) {
+              logTerminal('[BLE] Link dropped unexpectedly — initiating bounded passive auto-reconnect...', 'text-[#B45309] font-semibold');
               attemptBleAutoReconnect();
             }
           });
@@ -6385,6 +6829,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
         await connectBleGattDevice(dev);
       } catch (err) {
         logTerminal(`[BLE] Connection canceled or unavailable: ${err.message}`, 'text-[#B45309]');
+      } finally {
+        finishBluetoothScanYield(didYield);
       }
     }
 
@@ -6393,6 +6839,19 @@ Check your Browserslist config to be sure that your targets are set up correctly
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       appState.bridgeAutoSync = true;
+      if (data && data.btCoexist) {
+        const prevSt = appState.bridgeBtState;
+        appState.bridgeBtState = data.btCoexist;
+        const changed = !prevSt
+          || prevSt.state !== data.btCoexist.state
+          || prevSt.mode !== data.btCoexist.mode
+          || prevSt.portOpen !== data.btCoexist.portOpen
+          || prevSt.manualUnlocked !== data.btCoexist.manualUnlocked;
+        if (changed) {
+          updateBtCoexistUi();
+          renderConnectedBtDevicesUi();
+        }
+      }
       if (data && (data.vehicle || data.vin)) {
         const prevVin = getActiveVin();
         const resolved = registerOrSwitchVehicle({
@@ -6428,6 +6887,9 @@ Check your Browserslist config to be sure that your targets are set up correctly
       try {
         const data = await pollWifiBridgeOnce(baseUrl);
         appState.bridgeAutoSync = true;
+        appState.lastBtTransport = 'bridge';
+        updateBtCoexistUi();
+        renderConnectedBtDevicesUi();
         updateProjectFolderBadge();
         await loadProjectHistoryManifest();
         await startPassiveDriveSession('Wi-Fi COM3 Bridge');
