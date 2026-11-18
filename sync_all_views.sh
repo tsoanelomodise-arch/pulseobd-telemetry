@@ -100,38 +100,229 @@ for (const f of files) {
 console.log("Security check PASSED: 0 private Firebase URLs across " + files.length + " public file(s).");
 '
 
-echo "=== [3/5] Building standalone offline PulseOBD_Studio.html & index.html ==="
+echo "=== [3/5] Precompiling static pure Tailwind CSS for standalone PulseOBD_Studio.html & index.html ==="
 if [[ ! -s "$TAILWIND_CACHE" ]]; then
   echo "Downloading Tailwind standalone runtime to $TAILWIND_CACHE..."
   curl -fsSL "$TAILWIND_URL" -o "$TAILWIND_CACHE"
 fi
 
-node -e '
+CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+if [[ -z "$CHROME_BIN" ]]; then
+  echo "ERROR: Headless Chrome/Chromium is required to precompile static Tailwind CSS." >&2
+  exit 1
+fi
+export CHROME_BIN
+
+node - <<'NODESCRIPT'
 const fs = require("fs");
 const vm = require("vm");
-const srcHtml = fs.readFileSync(process.env.STUDIO_SRC, "utf8");
-const tw = fs.readFileSync(process.env.TAILWIND_CACHE, "utf8").replace(/<\/script/gi, "<\\/script");
-const tag = "<script src=\"https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js\"></script>";
-if (!srcHtml.includes(tag)) {
+const { spawn } = require("child_process");
+
+const studioSrc = process.env.STUDIO_SRC;
+const repoDir = process.env.REPO_DIR;
+const tailwindCache = process.env.TAILWIND_CACHE;
+const chromeBin = process.env.CHROME_BIN;
+
+const srcHtml = fs.readFileSync(studioSrc, "utf8");
+const twJs = fs.readFileSync(tailwindCache, "utf8").replace(/<\/script/gi, "<\\/script");
+const cdnTag = '<script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>';
+
+if (!srcHtml.includes(cdnTag)) {
   console.error("ERROR: Expected Tailwind CDN <script> tag not found in source HTML.");
   process.exit(1);
 }
-const inlined = srcHtml.split(tag).join("<script>\n" + tw + "\n</script>");
-const outFiles = [
-  process.env.REPO_DIR + "/PulseOBD_Studio.html",
-  process.env.REPO_DIR + "/index.html"
-];
-for (const out of outFiles) {
-  fs.writeFileSync(out, inlined, "utf8");
-  const scripts = [...inlined.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
-  scripts.forEach((m, idx) => {
-    const code = m[1].trim();
-    if (!code) return;
-    new vm.Script(code, { filename: out + "#script" + idx });
-  });
-  console.log("Built & verified:", out, "(" + fs.statSync(out).size + " bytes)");
+
+// 1. Collect all static + dynamic Tailwind utility tokens across HTML and JS literals
+const tokenSet = new Set();
+function addTokens(str) {
+  if (!str) return;
+  const cleaned = str.replace(/\$\{[^}]*\}/g, " ");
+  for (const tok of cleaned.split(/\s+/)) {
+    if (tok.length < 2 || tok.length > 90) continue;
+    if (/^(https?:|file:|mailto:|data:)/i.test(tok)) continue;
+    if (/\.(html|json|csv|js|ps1|bat|md|svg|png|txt)$/i.test(tok)) continue;
+    if (!/^[a-zA-Z0-9_:\-/\[\].%#(),!]+$/.test(tok)) continue;
+    const opens = (tok.match(/\[/g) || []).length;
+    const closes = (tok.match(/\]/g) || []).length;
+    if (opens !== closes || tok.includes("[]")) continue;
+    if (!/^(?:2xl:)?(?:[a-z0-9-]+:)*!?-?[a-z][a-z0-9-]*(?:\/[0-9.]+)?(?:\[[^\]]+\])?(?:\/[0-9.]+)?$/.test(tok)) continue;
+    tokenSet.add(tok);
+  }
 }
-'
+
+for (const m of srcHtml.matchAll(/\bclass=["']([^"']+)["']/gi)) {
+  addTokens(m[1]);
+}
+for (const m of srcHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) {
+  const body = m[1];
+  for (const s of body.matchAll(/`([^`]*)`/g)) addTokens(s[1]);
+  for (const s of body.matchAll(/"([^"\n\\]*(?:\\.[^"\n\\]*)*)"/g)) addTokens(s[1]);
+  for (const s of body.matchAll(/'([^'\n\\]*(?:\\.[^'\n\\]*)*)'/g)) addTokens(s[1]);
+}
+
+const safelistClasses = [...tokenSet].join(" ").replace(/"/g, "&quot;");
+const tmpCompileHtml = `/tmp/__tw_compile_${process.pid}.html`;
+const tmpProfileDir = `/tmp/pw_tw_profile_${process.pid}`;
+
+const compileDoc = srcHtml
+  .split(cdnTag).join("<script>\n" + twJs + "\n</script>")
+  .replace("  <style>", () => '  <style id="pulseobd-base-styles">')
+  .replace("</body>", () => `<div id="__tw_safelist" style="display:none" aria-hidden="true" class="${safelistClasses}"></div>\n</body>`);
+
+fs.writeFileSync(tmpCompileHtml, compileDoc, "utf8");
+fs.mkdirSync(tmpProfileDir, { recursive: true });
+
+(async () => {
+  let chrome = null;
+  let ws = null;
+  try {
+    chrome = spawn(chromeBin, [
+      "--headless=new",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--remote-debugging-port=0",
+      "--user-data-dir=" + tmpProfileDir,
+      "about:blank"
+    ], { stdio: ["ignore", "pipe", "pipe"] });
+
+    const wsBrowserUrl = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Headless Chrome startup timeout")), 20000);
+      const onChunk = (buf) => {
+        const m = buf.toString().match(/DevTools listening on (ws:\/\/[^\s]+)/);
+        if (m) {
+          clearTimeout(timer);
+          resolve(m[1]);
+        }
+      };
+      chrome.stderr.on("data", onChunk);
+      chrome.stdout.on("data", onChunk);
+      chrome.on("exit", (code) => {
+        clearTimeout(timer);
+        reject(new Error("Chrome exited early with code " + code));
+      });
+    });
+
+    const port = wsBrowserUrl.match(/:(\d+)\//)[1];
+    const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    const target = pages.find((p) => p.type === "page") || pages[0];
+    if (!target || !target.webSocketDebuggerUrl) {
+      throw new Error("No Chrome page target found for CSS compilation");
+    }
+
+    ws = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => {
+      ws.onopen = resolve;
+      ws.onerror = reject;
+    });
+
+    let seq = 0;
+    const pending = new Map();
+    const listeners = [];
+    ws.onmessage = (ev) => {
+      const msg = JSON.parse(ev.data);
+      if (msg.id && pending.has(msg.id)) {
+        const { resolve, reject } = pending.get(msg.id);
+        pending.delete(msg.id);
+        if (msg.error) reject(new Error(msg.error.message));
+        else resolve(msg.result);
+      } else if (msg.method) {
+        for (const fn of listeners) fn(msg);
+      }
+    };
+    const cdp = (method, params = {}) => new Promise((resolve, reject) => {
+      const id = ++seq;
+      pending.set(id, { resolve, reject });
+      ws.send(JSON.stringify({ id, method, params }));
+    });
+
+    await cdp("Page.enable");
+    await cdp("Runtime.enable");
+    const pageLoaded = new Promise((resolve) => {
+      listeners.push((msg) => {
+        if (msg.method === "Page.loadEventFired") resolve();
+      });
+    });
+    await cdp("Page.navigate", { url: "file://" + tmpCompileHtml });
+    await pageLoaded;
+
+    const evalRes = await cdp("Runtime.evaluate", {
+      awaitPromise: true,
+      returnByValue: true,
+      expression: `(function() {
+        document.documentElement.classList.add("dark");
+        try { if (typeof renderStaticInfographics === "function") renderStaticInfographics(); } catch (e) {}
+        try { if (typeof renderAllVariablesTable === "function") renderAllVariablesTable({ force: true }); } catch (e) {}
+        try { if (typeof refreshServiceTab === "function") refreshServiceTab(); } catch (e) {}
+        try { if (typeof refreshHistoryTab === "function") refreshHistoryTab(); } catch (e) {}
+        try { if (typeof togglePhoneFrame === "function") { togglePhoneFrame(true); togglePhoneFrame(false); } } catch (e) {}
+        return new Promise(function(resolve) {
+          setTimeout(function() {
+            var twStyles = [].slice.call(document.head.querySelectorAll("style")).filter(function(el) {
+              return el.id !== "pulseobd-base-styles" && (el.textContent.indexOf("--tw-") >= 0 || el.textContent.indexOf("tailwindcss") >= 0);
+            });
+            resolve(twStyles.map(function(el) { return el.textContent; }).join("\\n"));
+          }, 500);
+        });
+      })()`
+    });
+
+    if (evalRes.exceptionDetails) {
+      throw new Error("CSS compilation exception: " + JSON.stringify(evalRes.exceptionDetails));
+    }
+    const compiledCss = String((evalRes.result && evalRes.result.value) || "").trim();
+    if (compiledCss.length < 8000) {
+      throw new Error("Compiled Tailwind CSS unexpectedly small (" + compiledCss.length + " bytes)");
+    }
+
+    // 2. Transform source HTML -> pure static CSS offline HTML (preserve pulseobd_theme FOUC IIFE)
+    const strippedConfigRe = /\n\s*window\.tailwind\s*=\s*window\.tailwind\s*\|\|\s*\{\};\s*\n\s*window\.tailwind\.config\s*=\s*\{[\s\S]*?\n\s*\};/;
+    if (!strippedConfigRe.test(srcHtml)) {
+      throw new Error("Could not match window.tailwind.config block in source HTML");
+    }
+    const safeCss = compiledCss.replace(/<\/style>/gi, "<\\/style>");
+    const staticHtml = srcHtml
+      .replace("  " + cdnTag + "\n", () => "")
+      .split(cdnTag).join("")
+      .replace(strippedConfigRe, () => "")
+      .replace("  <style>", () => `  <style id="pulseobd-tailwind-static">\n${safeCss}\n  </style>\n  <style>`);
+
+    if (staticHtml.includes("tailwindcss.min.js") || staticHtml.includes("window.tailwind")) {
+      throw new Error("Tailwind runtime artifacts were not cleanly stripped");
+    }
+    if (!staticHtml.includes("pulseobd_theme") || !staticHtml.includes("pulseobd-tailwind-static")) {
+      throw new Error("Required theme init script or static stylesheet missing after transform");
+    }
+
+    const outFiles = [
+      repoDir + "/PulseOBD_Studio.html",
+      repoDir + "/index.html"
+    ];
+    for (const out of outFiles) {
+      fs.writeFileSync(out, staticHtml, "utf8");
+      const scripts = [...staticHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+      scripts.forEach((m, idx) => {
+        const code = m[1].trim();
+        if (!code) return;
+        new vm.Script(code, { filename: out + "#script" + idx });
+      });
+      console.log(
+        "Built & verified (static CSS " + compiledCss.length + " bytes, " + tokenSet.size + " tokens):",
+        out,
+        "(" + fs.statSync(out).size + " bytes)"
+      );
+    }
+  } finally {
+    if (ws) { try { ws.close(); } catch {} }
+    if (chrome && !chrome.killed) { try { chrome.kill("SIGKILL"); } catch {} }
+    fs.rmSync(tmpCompileHtml, { force: true });
+    fs.rmSync(tmpProfileDir, { recursive: true, force: true });
+  }
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+NODESCRIPT
 
 if [[ "$BUILD_ONLY" -eq 1 ]]; then
   echo "=== Build-only complete (Drive & GitHub sync skipped) ==="

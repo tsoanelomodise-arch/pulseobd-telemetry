@@ -1069,11 +1069,19 @@ try {
                         $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
                     } catch {}
                 }
+                $btStatusNow = (Get-BtCoexistStatus -Port $port -PortName $ComPort)
+                $includeFullDump = ($queryMap['full'] -eq '1')
                 if ($latestPayload) {
-                    $latestPayload['btCoexist'] = (Get-BtCoexistStatus -Port $port -PortName $ComPort)
+                    $liveObj = [ordered]@{}
+                    foreach ($k in $latestPayload.Keys) {
+                        if (-not $includeFullDump -and ($k -eq 'mode01Raw' -or $k -eq 'staticDump')) { continue }
+                        $liveObj[$k] = $latestPayload[$k]
+                    }
+                    $liveObj['btCoexist'] = $btStatusNow
+                } else {
+                    $liveObj = [ordered]@{ btCoexist = $btStatusNow }
                 }
-                $liveObj = if ($latestPayload) { $latestPayload } else { [ordered]@{ btCoexist = (Get-BtCoexistStatus -Port $port -PortName $ComPort) } }
-                $jsonBytes = $Utf8NoBom.GetBytes(($liveObj | ConvertTo-Json -Depth 6))
+                $jsonBytes = $Utf8NoBom.GetBytes(($liveObj | ConvertTo-Json -Depth 6 -Compress))
                 $res.ContentType = 'application/json; charset=utf-8'
                 $res.OutputStream.Write($jsonBytes, 0, $jsonBytes.Length)
             } elseif ($reqPath -eq '/api/bt-yield') {
@@ -1437,8 +1445,12 @@ try {
                     metrics       = $metricsObj
                 }
                 if ($CloudProvider -ne 'ntfy') {
-                    $packetObj['mode01Raw'] = $latestPayload.mode01Raw
-                    $packetObj['staticDump'] = $latestPayload.staticDump
+                    if (($cloudTxCount % 10) -eq 0) {
+                        $packetObj['mode01Raw'] = $latestPayload.mode01Raw
+                    }
+                    if (($cloudTxCount % 60) -eq 0) {
+                        $packetObj['staticDump'] = $latestPayload.staticDump
+                    }
                 }
 
                 $wireObj = if ($CloudProvider -eq 'supabase') {
