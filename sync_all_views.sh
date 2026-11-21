@@ -315,8 +315,8 @@ fs.mkdirSync(tmpProfileDir, { recursive: true });
   } finally {
     if (ws) { try { ws.close(); } catch {} }
     if (chrome && !chrome.killed) { try { chrome.kill("SIGKILL"); } catch {} }
-    fs.rmSync(tmpCompileHtml, { force: true });
-    fs.rmSync(tmpProfileDir, { recursive: true, force: true });
+    try { fs.rmSync(tmpCompileHtml, { force: true }); } catch {}
+    try { fs.rmSync(tmpProfileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 80 }); } catch {}
   }
 })().catch((err) => {
   console.error(err);
