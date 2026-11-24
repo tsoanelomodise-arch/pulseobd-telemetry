@@ -517,7 +517,10 @@
         <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
           <div id="cockpit-stopped-banner" class="flex-1 rounded-xl border border-[#E6E8EE] bg-[#F7F8FA] px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-xs min-w-0">
             <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 min-w-0 flex-1">
-              <span id="stopped-banner-pill" class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 self-start sm:self-auto">STATIC CAPTURE · 0 km/h</span>
+              <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                <span id="stopped-banner-pill" class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0">STATIC CAPTURE · 0 km/h</span>
+                <button type="button" id="cockpit-trip-pill" onclick="onCockpitTripPillClick()" title="Automatic engine trip recorder status" class="hidden cursor-pointer px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-mono-num font-bold shrink-0 whitespace-nowrap">TRIP STANDBY</button>
+              </div>
               <p id="stopped-banner-active" class="text-[#222222] font-medium leading-snug min-w-0 lg:truncate">
                 Active: Idle (774 RPM) · Closed-Loop O2/STFT · 13.74V Charging · Thermal &amp; HPFP
               </p>
@@ -1952,10 +1955,10 @@
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Batched Recorder &amp; Storage</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1473E6]">Auto Trip Recorder &amp; Storage</span>
                 <span id="passive-rec-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold">STANDBY</span>
               </div>
-              <p class="text-xs text-[#5A5F6A] mt-0.5">Records 1 frame/sec with batched 10s IndexedDB writes for zero UI stutter.</p>
+              <p class="text-xs text-[#5A5F6A] mt-0.5">Automatically starts a new trip when the engine runs (RPM &ge; 50) and saves &amp; stops it when the engine shuts off.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button onclick="exportStoredDriveCsv()" class="text-xs px-3.5 py-1.5 acro-pill-primary">Export Stored CSV</button>
@@ -1966,12 +1969,12 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3 text-xs">
             <div class="acro-well rounded-xl p-3">
-              <span class="text-[#5A5F6A] block">Stored Frames (Phone)</span>
+              <span class="text-[#5A5F6A] block">Stored Frames (Trip)</span>
               <strong id="passive-sample-count" class="font-mono-num text-base text-[#222222]">0</strong>
             </div>
             <div class="acro-well rounded-xl p-3">
-              <span class="text-[#5A5F6A] block">Active Drive Session</span>
-              <strong id="passive-session-label" class="font-mono-num text-sm text-[#1473E6] truncate block">Not started</strong>
+              <span class="text-[#5A5F6A] block">Active Trip Status</span>
+              <strong id="passive-session-label" class="font-mono-num text-sm text-[#1473E6] truncate block">Waiting for engine</strong>
             </div>
             <div class="acro-well rounded-xl p-3">
               <span class="text-[#5A5F6A] block">Screen Wake Lock</span>
@@ -1985,8 +1988,8 @@
 
           <div class="flex flex-wrap items-center gap-4 text-xs text-[#222222] mb-3">
             <label class="flex items-center gap-1.5 cursor-pointer select-none">
-              <input id="passive-auto-record" type="checkbox" checked onchange="savePassivePrefs()" class="w-4 h-4 accent-[#222222] rounded" />
-              <span>Auto-record passively once paired</span>
+              <input id="passive-auto-record" type="checkbox" checked onchange="onAutoRecordCheckboxChange(this.checked)" class="w-4 h-4 accent-[#222222] rounded" />
+              <span>Auto-start &amp; stop trips with engine (RPM)</span>
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer select-none">
               <input id="passive-wakelock-cb" type="checkbox" checked onchange="onKeepScreenCheckboxChange(this.checked)" class="w-4 h-4 accent-[#222222] rounded" />
@@ -1999,7 +2002,7 @@
           </div>
 
           <div id="passive-sessions-list" class="acro-well rounded-xl p-3 text-xs space-y-1.5 max-h-36 overflow-y-auto">
-            <div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>
+            <div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth — a trip starts automatically when the engine runs and stops when it shuts off.</div>
           </div>
         </div>
 
@@ -3560,6 +3563,9 @@
               transport: sess.transport || 'OBD-II',
               startedAt: sess.startedAt,
               updatedAt: sess.updatedAt,
+              endedAt: sess.endedAt || null,
+              status: sess.status || 'completed',
+              endReason: sess.endReason || '',
               sampleCount: samples.length,
               maxRpm: sess.maxRpm || 0,
               maxSpd: sess.maxSpd || 0,
@@ -3777,6 +3783,9 @@
         appState.wifiPollTimer = null;
         appState.bridgeBtState = null;
         appState.bridgeAutoSync = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
+        if (!appState.blePollingActive && !appState.serialPollingActive && passiveState.activeSessionId && typeof stopPassiveDriveSession === 'function') {
+          stopPassiveDriveSession('source_switched').catch(() => {});
+        }
         updateBtCoexistUi();
         renderConnectedBtDevicesUi();
       }
@@ -3800,6 +3809,7 @@
       }
       syncSimTimer();
       renderAllCharts();
+      if (typeof updateTripStatusUi === 'function') updateTripStatusUi();
       if (appState.activeTab === 'passport') renderAllVariablesTable();
       if (appState.activeTab === 'service' && typeof updateServiceHealthAndSnapshotUi === 'function') {
         updateServiceHealthAndSnapshotUi(appState.current, true);
@@ -4012,6 +4022,7 @@
           setBadgeState('cockpit-stream-status', 'LIVE STREAM', 'text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold whitespace-nowrap shrink-0');
         }
         if (typeof updateCockpitServiceHealthCard === 'function') updateCockpitServiceHealthCard(d);
+        if (typeof updateTripStatusUi === 'function') updateTripStatusUi();
       }
 
       if (onGraphs) {
@@ -4738,24 +4749,36 @@
       } else {
         const b = parseElmCanBytes(rawResp);
         if (b.length === 0) {
-          if (clean === '010C' && /NO\s*DATA|UNABLE\s*TO\s*CONNECT|STOPPED|BUS\s*INIT|ERROR|7F\s*01/i.test(rawResp || '')) {
-            next.rpm = 0;
-            next.spd = 0;
-            next.load = 0;
-            next.absLoad = 0;
-            next.stft = 0;
-            next.secO2Trim = 0;
-            next.o2s1 = 0;
-            next.o2s2 = 0;
-            next.evap = 0;
-            next.timing = 0;
-            next.runtime = 0;
-            next.fuelSys1 = 'Open loop — Engine/ECU Off';
-            if (!opts.deferDerived) {
-              const derived = computeDerivedMetrics(next);
-              appState.current = { ...next, ...derived };
+          if (clean === '010C') {
+            const rawStr = String(rawResp || '').trim();
+            const isExplicitBusOff = /NO\s*DATA|UNABLE\s*TO\s*CONNECT|STOPPED|BUS\s*INIT|ERROR|7F\s*01|\?/i.test(rawStr);
+            let isSilentEcuOff = false;
+            if (!rawStr) {
+              passiveState.emptyRpmMisses = (passiveState.emptyRpmMisses || 0) + 1;
+              if (passiveState.emptyRpmMisses >= 3) isSilentEcuOff = true;
+            } else {
+              passiveState.emptyRpmMisses = 0;
             }
-            return true;
+            if (isExplicitBusOff || isSilentEcuOff) {
+              passiveState.emptyRpmMisses = 0;
+              next.rpm = 0;
+              next.spd = 0;
+              next.load = 0;
+              next.absLoad = 0;
+              next.stft = 0;
+              next.secO2Trim = 0;
+              next.o2s1 = 0;
+              next.o2s2 = 0;
+              next.evap = 0;
+              next.timing = 0;
+              next.runtime = 0;
+              next.fuelSys1 = 'Open loop — Engine/ECU Off';
+              if (!opts.deferDerived) {
+                const derived = computeDerivedMetrics(next);
+                appState.current = { ...next, ...derived };
+              }
+              return true;
+            }
           }
           return false;
         }
@@ -4767,7 +4790,7 @@
           case '0106': next.stft = ((A - 128) * 100) / 128; break;
           case '0107': next.ltft = ((A - 128) * 100) / 128; break;
           case '010B': next.map = A; break;
-          case '010C': if (b.length >= 2) next.rpm = (256 * A + B) / 4; break;
+          case '010C': if (b.length >= 2) { passiveState.emptyRpmMisses = 0; next.rpm = (256 * A + B) / 4; } break;
           case '010D': next.spd = A; break;
           case '010E': next.timing = (A / 2) - 64; break;
           case '010F': next.iat = A - 40; break;
@@ -4817,8 +4840,19 @@
       db: null,
       activeSessionId: null,
       activeSession: null,
+      lastSessionId: null,
+      currentTransportLabel: '',
       sampleCount: 0,
       lastWriteMs: 0,
+      engineRunning: false,
+      engineStoppedSinceMs: 0,
+      engineOffFrames: 0,
+      lastLiveFrameMs: 0,
+      engineStopConfirmMs: 5000,
+      stoppingSession: false,
+      startingSession: false,
+      lastCompletedTripSummary: null,
+      emptyRpmMisses: 0,
       wakeLock: null,
       noSleepVideo: null,
       noSleepCanvas: null,
@@ -5194,6 +5228,9 @@
                 readOnlyEnforced: true,
                 startedAt: sessionMeta.startedAt,
                 updatedAt: sessionMeta.updatedAt || new Date().toISOString(),
+                endedAt: sessionMeta.endedAt || null,
+                status: sessionMeta.status || 'completed',
+                endReason: sessionMeta.endReason || '',
                 sampleCount: Array.isArray(samples) ? samples.length : (sessionMeta.sampleCount || 0),
                 maxRpm: sessionMeta.maxRpm || 0,
                 maxSpd: sessionMeta.maxSpd || 0,
@@ -5231,6 +5268,9 @@
                 id: s.id,
                 startedAt: s.startedAt,
                 updatedAt: s.updatedAt,
+                endedAt: s.endedAt || null,
+                status: s.status || 'completed',
+                endReason: s.endReason || '',
                 transport: s.transport || 'OBD-II',
                 sampleCount: s.sampleCount || 0,
                 maxRpm: s.maxRpm || 0,
@@ -6138,6 +6178,9 @@
     const PASSIVE_FLUSH_BATCH_SIZE = 20;
     const PASSIVE_LOCAL_FRAME_MS = 15000;
     const PASSIVE_FOLDER_FLUSH_MS = 60000;
+    const ENGINE_RUN_RPM_THRESHOLD = 50;
+    const ENGINE_STOP_CONFIRM_MS = 5000;
+    const LINK_LOST_TRIP_END_MS = 20000;
 
     passiveState.pendingIdbSamples = [];
     passiveState.activeSessionFrames = [];
@@ -6148,6 +6191,110 @@
     passiveState.lastSavedSample = null;
     passiveState._flushingIdb = false;
 
+    function getLiveTransportLabel() {
+      if (passiveState.currentTransportLabel) return passiveState.currentTransportLabel;
+      if (appState.blePollingActive || appState.bleDevice?.gatt?.connected) {
+        return `BLE · ${appState.bleDevice?.name || 'OBDII'}`;
+      }
+      if (appState.serialPollingActive || appState.serialPort) return 'Web Serial COM3';
+      if (appState.wifiPollTimer || appState.bridgeBtState) return 'Wi-Fi COM3 Bridge';
+      return 'Bluetooth OBD-II';
+    }
+
+    function isLiveObdTransportConnected() {
+      return Boolean(
+        appState.blePollingActive ||
+        appState.serialPollingActive ||
+        appState.wifiPollTimer ||
+        (appState.bleDevice && appState.bleDevice.gatt?.connected)
+      );
+    }
+
+    function onCockpitTripPillClick() {
+      if (!passiveState.activeSessionId && passiveState.lastCompletedTripSummary?.id) {
+        openHistoricalDrive(passiveState.lastCompletedTripSummary.id);
+        return;
+      }
+      switchTab('bluetooth');
+    }
+
+    function updateTripStatusUi() {
+      const pill = _getEl('cockpit-trip-pill');
+      if (!pill) return;
+      const autoCb = document.getElementById('passive-auto-record');
+      const autoEnabled = autoCb ? Boolean(autoCb.checked) : true;
+      const liveLinked = isLiveObdTransportConnected() || appState.source === 'live_obd';
+
+      if (passiveState.activeSessionId && passiveState.activeSession) {
+        const startedMs = Date.parse(passiveState.activeSession.startedAt) || Date.now();
+        const elapsedSec = Math.max(0, Math.round((Date.now() - startedMs) / 1000));
+        const durStr = formatDuration(elapsedSec).replace(/^00:/, '');
+        if (passiveState.engineStoppedSinceMs > 0) {
+          const confirmMs = Math.max(0, Number(passiveState.engineStopConfirmMs ?? ENGINE_STOP_CONFIRM_MS));
+          const remSec = Math.max(1, Math.ceil(Math.max(0, confirmMs - (Date.now() - passiveState.engineStoppedSinceMs)) / 1000));
+          setBadgeState(
+            'cockpit-trip-pill',
+            `STOPPING TRIP · ${remSec}s`,
+            'cursor-pointer px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold shrink-0 whitespace-nowrap'
+          );
+        } else {
+          setBadgeState(
+            'cockpit-trip-pill',
+            `● TRIP REC · ${durStr} · ${passiveState.sampleCount}f`,
+            'cursor-pointer px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 whitespace-nowrap'
+          );
+        }
+        return;
+      }
+
+      const lastDone = passiveState.lastCompletedTripSummary;
+      if (lastDone && (liveLinked || (Date.now() - (lastDone.completedAtMs || 0)) < 45000)) {
+        setBadgeState(
+          'cockpit-trip-pill',
+          `TRIP SAVED · ${lastDone.sampleCount}f`,
+          'cursor-pointer px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 whitespace-nowrap'
+        );
+        return;
+      }
+
+      if (liveLinked && autoEnabled) {
+        setBadgeState(
+          'cockpit-trip-pill',
+          'TRIP STANDBY · ENGINE OFF',
+          'cursor-pointer px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-mono-num font-bold shrink-0 whitespace-nowrap'
+        );
+        return;
+      }
+
+      setBadgeState(
+        'cockpit-trip-pill',
+        'TRIP STANDBY',
+        'hidden cursor-pointer px-2 py-0.5 rounded-full bg-[#F3F4F6] border border-[#D4D6DC] text-[#5A5F6A] font-mono-num font-bold shrink-0 whitespace-nowrap'
+      );
+    }
+
+    async function onAutoRecordCheckboxChange(checked) {
+      savePassivePrefs();
+      if (!checked) {
+        if (passiveState.activeSessionId) {
+          await stopPassiveDriveSession('manual_stop');
+        } else {
+          updatePassiveStatusUi('AUTO-TRIP OFF', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Paused by user');
+          updateTripStatusUi();
+        }
+      } else {
+        if (isLiveObdTransportConnected()) {
+          updatePassiveStatusUi('ARMED · ENGINE WATCH', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for engine start (RPM ≥ 50)');
+        } else {
+          updatePassiveStatusUi('STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for engine');
+        }
+        updateTripStatusUi();
+      }
+    }
+
     function updatePassiveStatusUi(statusText, badgeCls) {
       if (statusText) {
         setBadgeState('passive-rec-badge', statusText, badgeCls || 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
@@ -6155,7 +6302,14 @@
       if (appState.activeTab === 'bluetooth' || statusText) {
         _setElText('passive-sample-count', String(passiveState.sampleCount));
         if (passiveState.activeSession) {
-          _setElText('passive-session-label', `${passiveState.activeSession.transport} · ${new Date(passiveState.activeSession.startedAt).toLocaleTimeString()}`);
+          const prefix = passiveState.engineStoppedSinceMs > 0 ? 'Stopping · ' : 'Recording · ';
+          _setElText('passive-session-label', `${prefix}${passiveState.activeSession.transport} · ${new Date(passiveState.activeSession.startedAt).toLocaleTimeString()}`);
+        } else if (passiveState.lastCompletedTripSummary) {
+          _setElText('passive-session-label', `Saved (${passiveState.lastCompletedTripSummary.sampleCount}f) · Engine off`);
+        } else if (isLiveObdTransportConnected()) {
+          _setElText('passive-session-label', 'Engine off · Waiting for RPM ≥ 50');
+        } else {
+          _setElText('passive-session-label', 'Waiting for engine');
         }
       }
     }
@@ -6166,8 +6320,16 @@
         passiveState.lastLocalFrameMs = now;
         try { localStorage.setItem(LAST_FRAME_KEY, JSON.stringify(passiveState.lastSavedSample)); } catch (_) {}
       }
-      if (passiveState._flushingIdb) return;
+      if (passiveState._flushingIdb) {
+        if (!opts.waitIfBusy) return;
+        const deadline = Date.now() + 1200;
+        while (passiveState._flushingIdb && Date.now() < deadline) {
+          await new Promise(r => setTimeout(r, 25));
+        }
+        if (passiveState._flushingIdb) return;
+      }
       const batch = passiveState.pendingIdbSamples;
+      const sessionToPut = opts.sessionOverride || passiveState.activeSession;
       if ((!batch || batch.length === 0) && !opts.forceMeta) return;
 
       const db = await openDriveDb();
@@ -6182,8 +6344,8 @@
             for (let i = 0; i < itemsToWrite.length; i++) {
               sampleStore.add(itemsToWrite[i]);
             }
-            if (passiveState.activeSession) {
-              tx.objectStore('sessions').put(passiveState.activeSession);
+            if (sessionToPut) {
+              tx.objectStore('sessions').put(sessionToPut);
             }
             tx.oncomplete = () => resolve();
             tx.onerror = () => resolve();
@@ -6197,55 +6359,261 @@
       }
     }
 
-    async function startPassiveDriveSession(transportLabel) {
+    async function startPassiveDriveSession(transportLabel, opts = {}) {
       const autoCb = document.getElementById('passive-auto-record');
-      if (autoCb && !autoCb.checked) return;
-      try { sessionStorage.removeItem('pulseobd_cleared_local'); } catch (_) {}
-      await flushPendingPassiveSamples({ includeStorage: true, forceMeta: true });
-      requestDriveWakeLock();
-      const db = await openDriveDb();
-      const activeVin = getActiveVin();
-      const nowIso = new Date().toISOString();
-      const session = {
-        id: 'drive-' + Date.now(),
-        startedAt: nowIso,
-        updatedAt: nowIso,
-        transport: transportLabel,
-        vin: activeVin,
-        sampleCount: 0,
-        maxRpm: 0,
-        maxSpd: 0,
-        maxCoolant: 0,
-        syncedToCloud: false,
-        projectFolderSaved: false
-      };
-      passiveState.activeSessionId = session.id;
-      passiveState.activeSession = session;
-      passiveState.sampleCount = 0;
-      passiveState.activeSessionFrames = [];
-      passiveState.lastIdbFlushMs = Date.now();
-      passiveState.lastFolderFlushMs = Date.now();
-      if (db) {
-        try {
-          const tx = db.transaction('sessions', 'readwrite');
-          tx.objectStore('sessions').put(session);
-        } catch (_) {}
+      if (autoCb && !autoCb.checked) return null;
+      if (passiveState.startingSession) return passiveState.activeSession;
+      if (passiveState.activeSessionId && !opts.forceNew) return passiveState.activeSession;
+
+      passiveState.startingSession = true;
+      try {
+        try { sessionStorage.removeItem('pulseobd_cleared_local'); } catch (_) {}
+        await flushPendingPassiveSamples({ includeStorage: true, forceMeta: true, waitIfBusy: true });
+        requestDriveWakeLock({ reason: 'trip-start' });
+        const db = await openDriveDb();
+        const activeVin = getActiveVin();
+        const nowMs = Date.now();
+        const nowIso = new Date(nowMs).toISOString();
+        let newId = 'drive-' + nowMs;
+        if (passiveState.lastSessionId && newId === passiveState.lastSessionId) {
+          newId = `drive-${nowMs + 1}-${Math.floor(Math.random() * 1000)}`;
+        }
+        passiveState.lastSessionId = newId;
+        const resolvedTransport = transportLabel || passiveState.currentTransportLabel || getLiveTransportLabel();
+        const session = {
+          id: newId,
+          startedAt: nowIso,
+          updatedAt: nowIso,
+          endedAt: null,
+          status: 'recording',
+          endReason: '',
+          autoTrip: true,
+          transport: resolvedTransport,
+          vin: activeVin,
+          sampleCount: 0,
+          maxRpm: 0,
+          maxSpd: 0,
+          maxCoolant: 0,
+          syncedToCloud: false,
+          projectFolderSaved: false
+        };
+        passiveState.activeSessionId = session.id;
+        passiveState.activeSession = session;
+        passiveState.sampleCount = 0;
+        passiveState.activeSessionFrames = [];
+        passiveState.engineStoppedSinceMs = 0;
+        passiveState.engineOffFrames = 0;
+        passiveState.lastCompletedTripSummary = null;
+        passiveState.lastIdbFlushMs = nowMs;
+        passiveState.lastFolderFlushMs = nowMs;
+        if (db) {
+          try {
+            await new Promise((resolve) => {
+              const tx = db.transaction('sessions', 'readwrite');
+              tx.objectStore('sessions').put(session);
+              tx.oncomplete = () => resolve();
+              tx.onerror = () => resolve();
+            });
+          } catch (_) {}
+        }
+        updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+        updateTripStatusUi();
+        const rpmHint = opts.startRpm ? ` (${Math.round(opts.startRpm)} RPM)` : '';
+        logTerminal(`[AUTO-TRIP] Engine running${rpmHint} — started trip ${session.id} for VIN ${activeVin} via ${resolvedTransport}.`, 'text-[#047857] font-semibold');
+        if (appState.activeTab === 'bluetooth') refreshPassiveSessionsUi();
+        else if (appState.activeTab === 'history') refreshHistoryTab();
+        return session;
+      } finally {
+        passiveState.startingSession = false;
       }
-      updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
-      logTerminal(`[PASSIVE] Started drive recording (${session.id}) for VIN ${activeVin} via ${transportLabel}.`, 'text-[#1473E6] font-semibold');
-      if (appState.activeTab === 'bluetooth') refreshPassiveSessionsUi();
     }
 
-    async function recordPassiveSample(d) {
+    async function stopPassiveDriveSession(reason = 'engine_off') {
+      if (!passiveState.activeSessionId && !passiveState.activeSession) {
+        passiveState.engineStoppedSinceMs = 0;
+        passiveState.engineOffFrames = 0;
+        updateTripStatusUi();
+        return null;
+      }
+      if (passiveState.stoppingSession) return null;
+      passiveState.stoppingSession = true;
+
+      const sessionId = passiveState.activeSessionId;
+      const session = passiveState.activeSession ? { ...passiveState.activeSession } : null;
+      const framesCopy = (passiveState.activeSessionFrames || []).slice();
+      const pendingForSession = (passiveState.pendingIdbSamples || []).filter(s => s.sessionId === sessionId);
+      const savedCount = Math.max(passiveState.sampleCount || 0, framesCopy.length, pendingForSession.length);
+      const nowIso = new Date().toISOString();
+
+      try {
+        if (savedCount === 0) {
+          // Avoid polluting history with 0-frame empty placeholder trips
+          const db = await openDriveDb();
+          if (db && sessionId) {
+            await new Promise((resolve) => {
+              try {
+                const tx = db.transaction('sessions', 'readwrite');
+                tx.objectStore('sessions').delete(sessionId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+              } catch (_) { resolve(); }
+            });
+          }
+        } else {
+          if (session) {
+            session.endedAt = nowIso;
+            session.updatedAt = nowIso;
+            session.status = 'completed';
+            session.endReason = reason;
+            session.sampleCount = savedCount;
+            passiveState.activeSession = session;
+          }
+          await flushPendingPassiveSamples({
+            includeStorage: true,
+            forceMeta: true,
+            waitIfBusy: true,
+            sessionOverride: session
+          });
+
+          if (session && (appState.projectFolderHandle || appState.bridgeAutoSync)) {
+            try {
+              const allFrames = framesCopy.length > 0 ? framesCopy : await getSessionSamples(sessionId);
+              if (allFrames.length > 0) {
+                const veh = appState.vehicleRegistry[session.vin] || appState.activeVehicle;
+                await persistSessionToProjectFolder(veh, { ...session }, allFrames, null, { quiet: true });
+              }
+            } catch (_) {}
+          }
+
+          passiveState.lastCompletedTripSummary = {
+            id: sessionId,
+            vin: session?.vin || getActiveVin(),
+            sampleCount: savedCount,
+            startedAt: session?.startedAt || nowIso,
+            endedAt: nowIso,
+            maxSpd: session?.maxSpd || 0,
+            maxRpm: session?.maxRpm || 0,
+            endReason: reason,
+            completedAtMs: Date.now()
+          };
+        }
+
+        passiveState.activeSessionId = null;
+        passiveState.activeSession = null;
+        passiveState.sampleCount = 0;
+        passiveState.activeSessionFrames = [];
+        passiveState.engineStoppedSinceMs = 0;
+        passiveState.engineOffFrames = 0;
+        passiveState.lastWriteMs = 0;
+
+        const isManual = (reason === 'manual_disconnect' || reason === 'manual_stop' || reason === 'source_switched');
+        if (isManual) {
+          updatePassiveStatusUi(
+            savedCount > 0 ? 'TRIP SAVED · STOPPED' : 'STOPPED',
+            'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold'
+          );
+        } else {
+          updatePassiveStatusUi(
+            savedCount > 0 ? 'TRIP SAVED · ENGINE OFF' : 'ENGINE OFF · STANDBY',
+            'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold'
+          );
+        }
+        updateTripStatusUi();
+
+        if (savedCount > 0) {
+          const reasonLabel = reason === 'engine_off'
+            ? 'Engine stopped'
+            : (reason === 'link_lost' ? 'OBD link lost (ignition off)' : reason);
+          logTerminal(
+            `[AUTO-TRIP] ${reasonLabel} — saved trip ${sessionId} (${savedCount} frame${savedCount === 1 ? '' : 's'}, peak ${Math.round(session?.maxSpd || 0)} km/h, ${Math.round(session?.maxRpm || 0)} RPM). Ready for next start.`,
+            'text-[#1473E6] font-semibold'
+          );
+          const cfg = typeof getCloudEndpointConfig === 'function' ? getCloudEndpointConfig() : null;
+          if (cfg && cfg.autoOnBt && cfg.saveHistory && cfg.prov === 'firebase' && updateNetworkBadgeUi() && isCloudEndpointConfigured(cfg)) {
+            syncPendingDrivesToFirebase(false).catch(() => {});
+          }
+        }
+        refreshPassiveSessionsUi();
+        if (appState.activeTab === 'history') refreshHistoryTab();
+        return session;
+      } finally {
+        passiveState.stoppingSession = false;
+      }
+    }
+
+    async function recordPassiveSample(d, opts = {}) {
       const autoCb = document.getElementById('passive-auto-record');
       if (autoCb && !autoCb.checked) return;
-      const now = Date.now();
-      if (now - passiveState.lastWriteMs < PASSIVE_SAMPLE_MS) return;
-      passiveState.lastWriteMs = now;
+      if (!d || typeof d !== 'object') return;
 
-      if (!passiveState.activeSessionId) {
-        await startPassiveDriveSession('Bluetooth OBD-II');
+      const now = Date.now();
+      const rpmVal = Number(d.rpm) || 0;
+      const engineOn = rpmVal >= ENGINE_RUN_RPM_THRESHOLD;
+      passiveState.lastLiveFrameMs = now;
+      passiveState.engineRunning = engineOn;
+
+      // Engine OFF: never start an empty trip; confirm & auto-stop any active trip
+      if (!engineOn) {
+        if (!passiveState.activeSessionId) {
+          passiveState.engineStoppedSinceMs = 0;
+          passiveState.engineOffFrames = 0;
+          if (!passiveState.stoppingSession) {
+            updatePassiveStatusUi(
+              passiveState.lastCompletedTripSummary ? 'TRIP SAVED · ENGINE OFF' : 'ENGINE OFF · STANDBY',
+              'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold'
+            );
+            updateTripStatusUi();
+          }
+          return;
+        }
+
+        if (!passiveState.engineStoppedSinceMs) {
+          passiveState.engineStoppedSinceMs = now;
+          passiveState.engineOffFrames = 1;
+          const waitSec = Math.max(1, Math.round((passiveState.engineStopConfirmMs ?? ENGINE_STOP_CONFIRM_MS) / 1000));
+          logTerminal(`[AUTO-TRIP] Engine stopped (${Math.round(rpmVal)} RPM) — confirming trip end in ${waitSec}s...`, 'text-[#B45309]');
+        } else {
+          passiveState.engineOffFrames = (passiveState.engineOffFrames || 0) + 1;
+        }
+
+        const elapsedOffMs = now - passiveState.engineStoppedSinceMs;
+        const confirmMs = Math.max(0, Number(passiveState.engineStopConfirmMs ?? ENGINE_STOP_CONFIRM_MS));
+        if (elapsedOffMs >= confirmMs) {
+          await stopPassiveDriveSession('engine_off');
+        } else {
+          const remSec = Math.max(1, Math.ceil((confirmMs - elapsedOffMs) / 1000));
+          updatePassiveStatusUi(
+            `STOPPING TRIP (${remSec}s)...`,
+            'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] font-mono-num font-bold'
+          );
+          updateTripStatusUi();
+        }
+        return;
       }
+
+      // Engine RUNNING (RPM >= 50): cancel any pending engine-off timer
+      if (passiveState.engineStoppedSinceMs > 0) {
+        passiveState.engineStoppedSinceMs = 0;
+        passiveState.engineOffFrames = 0;
+        updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+        logTerminal(`[AUTO-TRIP] Engine running again (${Math.round(rpmVal)} RPM) — continuing active trip.`, 'text-[#047857]');
+      }
+
+      // Auto-start a fresh trip immediately on the first running frame
+      let justStarted = false;
+      if (!passiveState.activeSessionId) {
+        if (passiveState.startingSession || passiveState.stoppingSession) return;
+        const label = opts.transportLabel || passiveState.currentTransportLabel || getLiveTransportLabel();
+        await startPassiveDriveSession(label, { startRpm: rpmVal });
+        if (!passiveState.activeSessionId) return;
+        justStarted = true;
+      }
+
+      if (!justStarted && (now - passiveState.lastWriteMs) < PASSIVE_SAMPLE_MS) {
+        updateTripStatusUi();
+        return;
+      }
+      passiveState.lastWriteMs = now;
 
       const sample = makeCompactHistoryPoint(d);
       sample.sessionId = passiveState.activeSessionId;
@@ -6278,6 +6646,7 @@
       }
 
       updatePassiveStatusUi();
+      updateTripStatusUi();
 
       if (appState.projectFolderHandle && passiveState.activeSession && (now - passiveState.lastFolderFlushMs) >= PASSIVE_FOLDER_FLUSH_MS) {
         passiveState.lastFolderFlushMs = now;
@@ -6430,7 +6799,7 @@
       if (!box) return;
       const sessions = await getAllStoredSessions();
       if (!sessions.length) {
-        box.innerHTML = '<div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth to start passive recording.</div>';
+        box.innerHTML = '<div class="text-[#5A5F6A]">No recorded drives stored on this device yet. Pair Bluetooth — a trip starts automatically when the engine runs and stops when it shuts off.</div>';
         return;
       }
       box.innerHTML = sessions.slice(0, 12).map(s => {
@@ -6439,9 +6808,16 @@
         const safeTransport = escapeHtml(s.transport || 'OBD-II');
         const vinTag = `<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold">${safeVin}</span>`;
         const pills = [];
+        if (s.id === passiveState.activeSessionId) {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold">● LIVE TRIP</span>');
+        } else if (s.endReason === 'engine_off') {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Auto-Trip</span>');
+        }
         if (s.projectFolderSaved) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Project Folder</span>');
         if (s.syncedToCloud) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>');
-        if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        if (!s.projectFolderSaved && !s.syncedToCloud && s.id !== passiveState.activeSessionId) {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        }
         const syncPill = pills.join(' ');
         return `
         <div role="button" tabindex="0" data-passive-session-id="${safeId}" onclick="openHistoricalDrive('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHistoricalDrive('${safeId}');}" class="cursor-pointer flex flex-wrap items-center justify-between gap-2 bg-white border border-[#E6E8EE] hover:border-[#9CA3AF] hover:bg-[#F7F8FA] rounded-xl px-3 py-2 transition">
@@ -6564,6 +6940,9 @@
       passiveState.pendingIdbSamples = [];
       passiveState.activeSessionFrames = [];
       passiveState.lastSavedSample = null;
+      passiveState.engineStoppedSinceMs = 0;
+      passiveState.engineOffFrames = 0;
+      passiveState.lastCompletedTripSummary = null;
       historyInspectSamples = [];
       historyInspectSessionId = null;
       historyInspectMeta = null;
@@ -6571,6 +6950,7 @@
       historyShowAllFrames = false;
       try { localStorage.removeItem(LAST_FRAME_KEY); } catch (_) {}
       updatePassiveStatusUi('STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+      updateTripStatusUi();
       updateCloudBadges();
       refreshPassiveSessionsUi();
       refreshHistoryTab();
@@ -6848,14 +7228,21 @@
         const vehLabel = escapeHtml(vehObj?.label ? `${vehObj.label} (${vin})` : vin);
         const safeTransport = escapeHtml(s.transport || 'OBD-II');
         const startMs = s.startedAt ? Date.parse(s.startedAt) : NaN;
-        const endMs = s.updatedAt ? Date.parse(s.updatedAt) : NaN;
+        const endMs = (s.endedAt || s.updatedAt) ? Date.parse(s.endedAt || s.updatedAt) : NaN;
         const durBadge = (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs)
           ? formatDriveDuration(endMs - startMs)
           : `${s.sampleCount || 0}f`;
         const pills = [];
+        if (s.id === passiveState.activeSessionId) {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold">● LIVE TRIP</span>');
+        } else if (s.endReason === 'engine_off') {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-semibold">Auto-Trip</span>');
+        }
         if (s.projectFolderSaved) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Project Folder</span>');
         if (s.syncedToCloud) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-semibold">Firebase Synced</span>');
-        if (!pills.length) pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        if (!s.projectFolderSaved && !s.syncedToCloud && s.id !== passiveState.activeSessionId) {
+          pills.push('<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-semibold">Local Buffered</span>');
+        }
         const syncPill = pills.join(' ');
         return `
           <div role="button" tabindex="0" aria-pressed="${isSel ? 'true' : 'false'}" data-session-id="${safeId}" onclick="inspectHistorySession('${safeId}', { scrollToInspector: true })" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();inspectHistorySession('${safeId}',{scrollToInspector:true});}" class="cursor-pointer border ${cardCls} rounded-xl p-3 space-y-2 transition">
@@ -9834,12 +10221,15 @@
           if (!appState.serialPollingActive || appState.bleManualUnlock) return;
           try { await sendSerialElm(compactCmd, 900); } catch (_) {}
         }
-        if (!passiveState.activeSessionId) {
-          await startPassiveDriveSession('Web Serial COM3');
+        passiveState.currentTransportLabel = 'Web Serial COM3';
+        requestDriveWakeLock({ reason: 'serial-loop' });
+        if (passiveState.activeSessionId) {
+          updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
         } else {
-          requestDriveWakeLock();
-          updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+          updatePassiveStatusUi('ARMED · ENGINE WATCH', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for engine start (RPM ≥ 50)');
         }
+        updateTripStatusUi();
         maybeAutoStartCloudTx('Web Serial COM3');
 
         for (let s = 0; s < 3; s++) {
@@ -9955,10 +10345,10 @@
         appState.serialWriter = port.writable.getWriter();
         appState.serialPollingActive = true;
         changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 (Passive Recording)';
+        document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 · Auto-Trip Armed';
         updateBtCoexistUi();
         renderConnectedBtDevicesUi();
-        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Polling & passively storing all Mode 01 PIDs (audio coexistence active)...', 'text-[#047857] font-semibold');
+        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Auto-trip armed — recording starts automatically when the engine runs.', 'text-[#047857] font-semibold');
         runSerialPollingLoop().catch(err => {
           logTerminal(`[SERIAL LOOP] Stopped: ${err.message}`, 'text-[#B45309]');
         });
@@ -9999,23 +10389,14 @@
       appState.wifiPollInFlight = false;
       appState.bridgeBtState = null;
       appState.bridgeAutoSync = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
-      await flushPendingPassiveSamples({ includeStorage: true, forceMeta: true });
-      if (passiveState.activeSession && passiveState.sampleCount > 0) {
-        try {
-          const sCopy = { ...passiveState.activeSession };
-          const allFrames = (passiveState.activeSessionFrames && passiveState.activeSessionFrames.length > 0)
-            ? passiveState.activeSessionFrames.slice()
-            : await getSessionSamples(sCopy.id);
-          const veh = appState.vehicleRegistry[sCopy.vin] || appState.activeVehicle;
-          await persistSessionToProjectFolder(veh, sCopy, allFrames, null, { quiet: false });
-        } catch (_) {}
-      }
+      await stopPassiveDriveSession('manual_disconnect');
+      passiveState.currentTransportLabel = '';
       if (!isKeepScreenEnabled()) {
         await releaseDriveWakeLock();
       } else {
         requestDriveWakeLock({ reason: 'disconnect-keep-on' });
       }
-      updatePassiveStatusUi('STOPPED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-mono-num font-bold');
+      updateTripStatusUi();
 
       let closedAny = false;
       if (hadWifiTimer) {
@@ -10227,12 +10608,15 @@
             try { await sendBleElm(compactCmd, 800); } catch (_) {}
           }
         }
-        if (!passiveState.activeSessionId) {
-          await startPassiveDriveSession(`BLE · ${appState.bleDevice?.name || 'OBDII'}`);
+        passiveState.currentTransportLabel = `BLE · ${appState.bleDevice?.name || 'OBDII'}`;
+        requestDriveWakeLock({ reason: 'ble-loop-resume' });
+        if (passiveState.activeSessionId) {
+          updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
         } else {
-          requestDriveWakeLock({ reason: 'ble-loop-resume' });
-          updatePassiveStatusUi('PASSIVELY RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+          updatePassiveStatusUi('ARMED · ENGINE WATCH', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for engine start (RPM ≥ 50)');
         }
+        updateTripStatusUi();
         maybeAutoStartCloudTx('Bluetooth BLE GATT');
 
         for (let s = 0; s < 2; s++) {
@@ -10641,6 +11025,7 @@
       }
       logTerminal(`[BRIDGE] Connecting to Windows COM3 read-only bridge at ${baseUrl}/api/live ...`, 'text-[#047857]');
       try {
+        passiveState.currentTransportLabel = 'Wi-Fi COM3 Bridge';
         const data = await pollWifiBridgeOnce(baseUrl);
         appState.bridgeAutoSync = true;
         appState.lastBtTransport = 'bridge';
@@ -10648,10 +11033,13 @@
         renderConnectedBtDevicesUi();
         updateProjectFolderBadge();
         await loadProjectHistoryManifest();
-        await startPassiveDriveSession('Wi-Fi COM3 Bridge');
         changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = `LIVE · Bridge (${getActiveVin()}) · REC`;
-        logTerminal(`[BRIDGE] Connected! VIN ${getActiveVin()} · Non-overlapping 1.5s poll (3.5s parked/hidden) from COM3 (RPM=${data?.rpm ?? 0}, Coolant=${data?.coolant ?? 0}°C)`, 'text-[#047857] font-semibold');
+        const engineOnNow = (Number(data?.rpm) || 0) >= ENGINE_RUN_RPM_THRESHOLD;
+        document.getElementById('conn-badge').textContent = engineOnNow
+          ? `LIVE · Bridge (${getActiveVin()}) · TRIP REC`
+          : `LIVE · Bridge (${getActiveVin()}) · ENGINE OFF`;
+        updateTripStatusUi();
+        logTerminal(`[BRIDGE] Connected! VIN ${getActiveVin()} · Auto-trip ${engineOnNow ? 'RECORDING' : 'STANDBY (engine off)'} · Non-overlapping 1.5s poll (RPM=${data?.rpm ?? 0}, Coolant=${data?.coolant ?? 0}°C)`, 'text-[#047857] font-semibold');
         scheduleNextWifiBridgePoll(baseUrl, true);
         maybeAutoStartCloudTx('Wi-Fi COM3 Bridge');
       } catch (err) {
@@ -11274,8 +11662,19 @@
       })
       .catch(() => {});
 
-    // Lightweight 5s Dual-Layer Screen Keep-Awake & Stay-Paired BLE Watchdog
+    // Lightweight 5s Auto-Trip, Dual-Layer Screen Keep-Awake & Stay-Paired BLE Watchdog
     setInterval(() => {
+      const nowMs = Date.now();
+      if (passiveState.activeSessionId && !passiveState.stoppingSession) {
+        const confirmMs = Math.max(0, Number(passiveState.engineStopConfirmMs ?? ENGINE_STOP_CONFIRM_MS));
+        if (passiveState.engineStoppedSinceMs > 0 && (nowMs - passiveState.engineStoppedSinceMs) >= confirmMs) {
+          stopPassiveDriveSession('engine_off').catch(() => {});
+        } else if (!isLiveObdTransportConnected() && passiveState.lastLiveFrameMs > 0 && (nowMs - passiveState.lastLiveFrameMs) >= LINK_LOST_TRIP_END_MS) {
+          stopPassiveDriveSession('link_lost').catch(() => {});
+        } else if (document.visibilityState === 'visible') {
+          updateTripStatusUi();
+        }
+      }
       if (document.visibilityState !== 'visible') return;
       if (isKeepScreenEnabled()) {
         const needsNative = ('wakeLock' in navigator) && navigator.wakeLock && !isNativeWakeLockActive();
@@ -11284,12 +11683,12 @@
           requestDriveWakeLock({ reason: 'watchdog' });
         }
       }
-      if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled() && !appState.blePollingActive && !passiveState.bleReconnecting && Date.now() >= (appState.bleYieldUntil || 0)) {
+      if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled() && !appState.blePollingActive && !passiveState.bleReconnecting && nowMs >= (appState.bleYieldUntil || 0)) {
         if (appState.bleDevice && !appState.bleDevice.gatt?.connected) {
           attemptBleAutoReconnect();
         } else if (!appState.bleDevice) {
           const saved = loadPairedBleRecord();
-          if (saved && saved.keepPaired && Date.now() - (passiveState.lastAutoRestoreMs || 0) >= 30000) {
+          if (saved && saved.keepPaired && nowMs - (passiveState.lastAutoRestoreMs || 0) >= 30000) {
             autoRestorePairedBleDevice({ reason: 'watchdog' }).catch(() => {});
           }
         }

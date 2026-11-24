@@ -99,7 +99,13 @@ if ($CloudProvider -eq 'auto') {
     }
 }
 
-$TripSessionId = 'drive-' + (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')
+$script:TripSessionId = ''
+$script:TripActive = $false
+$script:TripSessionSeq = 0
+$script:EngineStopConfirmMs = 5000
+$script:EngineStoppedSw = New-Object System.Diagnostics.Stopwatch
+$script:SessionStartedAt = ''
+$script:SessionFrameCount = 0
 $ResolvedCloudMethod = 'POST'
 $ResolvedCloudUrl = ''
 $FirebaseLatestUrl = ''
@@ -146,8 +152,13 @@ function Initialize-CloudEndpointUrls {
                 $prefix = "$fbBase/vehicles/$safeCh"
             }
             $script:FirebaseLatestUrl = Add-FirebaseAuthQuery -Url "$prefix/latest.json" -Auth $script:CloudApiKey
-            $script:FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/frames.json" -Auth $script:CloudApiKey
-            $script:FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/meta.json" -Auth $script:CloudApiKey
+            if ($script:TripSessionId) {
+                $script:FirebaseHistoryFramesUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/frames.json" -Auth $script:CloudApiKey
+                $script:FirebaseHistoryMetaUrl = Add-FirebaseAuthQuery -Url "$prefix/history/$($script:TripSessionId)/meta.json" -Auth $script:CloudApiKey
+            } else {
+                $script:FirebaseHistoryFramesUrl = ''
+                $script:FirebaseHistoryMetaUrl = ''
+            }
             $script:ResolvedCloudUrl = $script:FirebaseLatestUrl
             $script:ResolvedCloudMethod = 'PUT'
         }
@@ -510,7 +521,10 @@ function Upsert-ProjectVehicleFiles {
         $FramesArray,
         $LatestMetrics,
         $StaticDump,
-        [string]$SourceTag = 'com3_bridge'
+        [string]$SourceTag = 'com3_bridge',
+        [string]$SessionEndedAt = '',
+        [string]$TripStatus = 'recording',
+        [string]$EndReason = ''
     )
     if (-not $HistoryRoot) { return $null }
     $safeVin = Get-SafeVinName -RawVin ([string]$VehicleInfo.vin) -FallbackPart ([string]$VehicleInfo.partNumber)
@@ -548,20 +562,23 @@ function Upsert-ProjectVehicleFiles {
     $sessFileRel = "sessions/$SessionId.json"
     if ($SessionId) {
         $sessionObj = [ordered]@{
-            id              = $SessionId
-            vin             = $safeVin
-            vehicleLabel    = $VehicleInfo.label
-            engine          = $VehicleInfo.engine
-            partNumber      = $VehicleInfo.partNumber
-            transport       = $TransportLabel
+            id               = $SessionId
+            vin              = $safeVin
+            vehicleLabel     = $VehicleInfo.label
+            engine           = $VehicleInfo.engine
+            partNumber       = $VehicleInfo.partNumber
+            transport        = $TransportLabel
             readOnlyEnforced = $true
-            startedAt       = $SessionStartedAt
-            updatedAt       = $nowIso
-            sampleCount     = $framesList.Count
-            maxRpm          = $maxRpm
-            maxSpd          = $maxSpd
-            maxCoolant      = $maxCool
-            frames          = $framesList
+            startedAt        = $SessionStartedAt
+            updatedAt        = $nowIso
+            endedAt          = if ($SessionEndedAt) { $SessionEndedAt } else { $null }
+            status           = $TripStatus
+            endReason        = $EndReason
+            sampleCount      = $framesList.Count
+            maxRpm           = $maxRpm
+            maxSpd           = $maxSpd
+            maxCoolant       = $maxCool
+            frames           = $framesList
         }
         if ($StaticDump) { $sessionObj['staticDump'] = $StaticDump }
         Write-JsonFileNoBom -FilePath (Join-Path $sessDir "$SessionId.json") -DataObj $sessionObj -Depth 8
@@ -581,6 +598,9 @@ function Upsert-ProjectVehicleFiles {
             id          = $SessionId
             startedAt   = $SessionStartedAt
             updatedAt   = $nowIso
+            endedAt     = if ($SessionEndedAt) { $SessionEndedAt } else { $null }
+            status      = $TripStatus
+            endReason   = $EndReason
             transport   = $TransportLabel
             sampleCount = $framesList.Count
             maxRpm      = $maxRpm
@@ -755,7 +775,85 @@ function Save-BridgeFrameToProjectFolder {
 
     if ($ForceJsonFlush -or $script:SessionFrames.Count -eq 1 -or ($script:SessionFrames.Count % 15 -eq 0)) {
         $staticArg = if ($script:SessionFrames.Count -le 1) { $Payload.staticDump } else { $null }
-        $null = Upsert-ProjectVehicleFiles -HistoryRoot $HistoryRoot -VehicleInfo $VehicleInfo -SessionId $SessionId -SessionStartedAt $SessionStartedAt -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $frameObj -StaticDump $staticArg -SourceTag 'com3_bridge'
+        $null = Upsert-ProjectVehicleFiles -HistoryRoot $HistoryRoot -VehicleInfo $VehicleInfo -SessionId $SessionId -SessionStartedAt $SessionStartedAt -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $frameObj -StaticDump $staticArg -SourceTag 'com3_bridge' -TripStatus 'recording'
+    }
+}
+
+function Start-BridgeAutoTrip {
+    param(
+        $VehicleInfo,
+        [double]$StartRpm = 0
+    )
+    $script:TripSessionSeq++
+    $utcStamp = (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')
+    $newId = "drive-${utcStamp}-t$($script:TripSessionSeq)"
+    $script:TripSessionId = $newId
+    $script:SessionStartedAt = (Get-Date).ToUniversalTime().ToString('o')
+    $script:SessionFrameCount = 0
+    $script:SessionFrames.Clear()
+    $script:SessionCsvWrittenHeader = $false
+    $script:TripActive = $true
+    $script:EngineStoppedSw.Reset()
+    if ($VehicleInfo -and $VehicleInfo.vin) {
+        Initialize-CloudEndpointUrls -ActiveVin ([string]$VehicleInfo.vin)
+    }
+    Write-Host "[AUTO-TRIP] Engine running ($([Math]::Round($StartRpm)) RPM) -> started trip $($script:TripSessionId)" -ForegroundColor Green
+}
+
+function Stop-BridgeAutoTrip {
+    param(
+        [string]$HistoryRoot,
+        $VehicleInfo,
+        [string]$Reason = 'engine_off',
+        $HttpClient = $null,
+        $StaticDump = $null
+    )
+    if (-not $script:TripActive) {
+        $script:EngineStoppedSw.Reset()
+        return
+    }
+    $finId = $script:TripSessionId
+    $finStart = $script:SessionStartedAt
+    $finCount = $script:SessionFrames.Count
+    $endedIso = (Get-Date).ToUniversalTime().ToString('o')
+    $metaUrlSnapshot = $script:FirebaseHistoryMetaUrl
+
+    if ($finId -and $finCount -gt 0 -and $HistoryRoot -and $VehicleInfo) {
+        try {
+            $lastFr = $script:SessionFrames[$script:SessionFrames.Count - 1]
+            $null = Upsert-ProjectVehicleFiles -HistoryRoot $HistoryRoot -VehicleInfo $VehicleInfo -SessionId $finId -SessionStartedAt $finStart -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $lastFr -StaticDump $StaticDump -SourceTag 'com3_bridge' -SessionEndedAt $endedIso -TripStatus 'completed' -EndReason $Reason
+        } catch {
+            Write-Warning "Auto-trip finalize archive note: $($_.Exception.Message)"
+        }
+    }
+
+    if ($finId -and $finCount -gt 0 -and $script:CloudProvider -eq 'firebase' -and $script:SaveCloudHistory -and $metaUrlSnapshot -and $null -ne $HttpClient) {
+        try {
+            $finMetaBody = ([ordered]@{
+                id          = $finId
+                vin         = if ($VehicleInfo) { [string]$VehicleInfo.vin } else { '' }
+                transport   = 'com3_bridge'
+                startedAt   = $finStart
+                updatedAt   = $endedIso
+                endedAt     = $endedIso
+                status      = 'completed'
+                endReason   = $Reason
+                sampleCount = $finCount
+            } | ConvertTo-Json -Compress)
+            $null = Invoke-CloudRequest -Client $HttpClient -Method 'PATCH' -Url $metaUrlSnapshot -JsonBody $finMetaBody -Provider $script:CloudProvider -ApiKey $script:CloudApiKey
+        } catch {}
+    }
+
+    Write-Host "[AUTO-TRIP] Engine stopped ($Reason) -> finalized trip $finId ($finCount frame(s)). Ready for next engine start." -ForegroundColor Yellow
+    $script:TripActive = $false
+    $script:TripSessionId = ''
+    $script:SessionStartedAt = ''
+    $script:SessionFrameCount = 0
+    $script:SessionFrames.Clear()
+    $script:SessionCsvWrittenHeader = $false
+    $script:EngineStoppedSw.Reset()
+    if ($VehicleInfo -and $VehicleInfo.vin) {
+        Initialize-CloudEndpointUrls -ActiveVin ([string]$VehicleInfo.vin)
     }
 }
 
@@ -1056,8 +1154,6 @@ $lastLocalDiskSw = [System.Diagnostics.Stopwatch]::StartNew()
 $script:DynamicRestMs = $PollIntervalMs
 $latestPayload = $null
 $cloudTxCount = 0
-$sessionStartedAt = (Get-Date).ToUniversalTime().ToString('o')
-$sessionFrameCount = 0
 
 try {
     Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only + Low-Duty BT Coexistence [$BtCoexistMode] Gap ${CoexistGapMs}ms / Rest ${PollIntervalMs}ms)..." -ForegroundColor Cyan
@@ -1188,7 +1284,14 @@ try {
     $lastPollSw.Restart()
 
     try {
-        Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -Payload $latestPayload -ForceJsonFlush
+        $startupEngineOn = ($latestPayload -and ($latestPayload.engineRunning -eq $true -or [double]$latestPayload.rpm -ge 50))
+        if ($startupEngineOn) {
+            Start-BridgeAutoTrip -VehicleInfo $ActiveVehicle -StartRpm ([double]$latestPayload.rpm)
+            Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $script:TripSessionId -SessionStartedAt $script:SessionStartedAt -Payload $latestPayload -ForceJsonFlush
+        } elseif ($latestPayload) {
+            $null = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId '' -SessionStartedAt '' -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray @() -LatestMetrics $latestPayload -StaticDump $latestPayload.staticDump -SourceTag 'com3_bridge'
+            Write-Host "[AUTO-TRIP] Engine OFF at startup (RPM=$($latestPayload.rpm)) -> standing by until engine runs (RPM >= 50)." -ForegroundColor Yellow
+        }
     } catch {
         Write-Warning "Project folder archive note: $($_.Exception.Message)"
     }
@@ -1201,7 +1304,7 @@ try {
     if ($EnableCloudStream -and $ResolvedCloudUrl) {
         Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
         if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
-            Write-Host "Firebase Trip History Archive -> $FirebaseHistoryFramesUrl" -ForegroundColor Cyan
+            Write-Host "Firebase Auto-Trip History Archive -> Armed (starts/stops automatically with engine RPM)" -ForegroundColor Cyan
         }
         Write-Host "Remote Watch URL -> PulseOBD_Studio.html?cloud=watch&provider=$CloudProvider&channel=$CloudChannel" -ForegroundColor Cyan
     }
@@ -1250,8 +1353,10 @@ try {
                         $liveObj[$k] = $latestPayload[$k]
                     }
                     $liveObj['btCoexist'] = $btStatusNow
+                    $liveObj['tripActive'] = $script:TripActive
+                    $liveObj['tripSessionId'] = $script:TripSessionId
                 } else {
-                    $liveObj = [ordered]@{ btCoexist = $btStatusNow }
+                    $liveObj = [ordered]@{ btCoexist = $btStatusNow; tripActive = $script:TripActive; tripSessionId = $script:TripSessionId }
                 }
                 $jsonBytes = $Utf8NoBom.GetBytes(($liveObj | ConvertTo-Json -Depth 6 -Compress))
                 $res.ContentType = 'application/json; charset=utf-8'
@@ -1491,7 +1596,8 @@ try {
                     channel      = $CloudChannel
                     vin          = $ActiveVehicle.vin
                     vehicleLabel = $ActiveVehicle.label
-                    sessionId    = $TripSessionId
+                    sessionId    = $script:TripSessionId
+                    tripActive   = $script:TripActive
                     txCount      = $cloudTxCount
                     queuedCount  = $cloudOfflineQueue.Count
                     saveHistory  = $SaveCloudHistory
@@ -1575,6 +1681,28 @@ try {
                 $lastPollSw.Restart()
             }
 
+            if ($polledOk -and $latestPayload) {
+                $isEngineRunningNow = ($latestPayload.engineRunning -eq $true -or [double]$latestPayload.rpm -ge 50)
+                if ($isEngineRunningNow) {
+                    if ($script:EngineStoppedSw.IsRunning) {
+                        $script:EngineStoppedSw.Reset()
+                        Write-Host "[AUTO-TRIP] Engine resumed ($([Math]::Round([double]$latestPayload.rpm)) RPM) -> continuing trip $($script:TripSessionId)" -ForegroundColor Green
+                    }
+                    if (-not $script:TripActive) {
+                        Start-BridgeAutoTrip -VehicleInfo $ActiveVehicle -StartRpm ([double]$latestPayload.rpm)
+                    }
+                } else {
+                    if ($script:TripActive) {
+                        if (-not $script:EngineStoppedSw.IsRunning) {
+                            $script:EngineStoppedSw.Restart()
+                            Write-Host "[AUTO-TRIP] Engine stopped (RPM=$($latestPayload.rpm)) -> confirming trip end in $([Math]::Round($script:EngineStopConfirmMs / 1000.0))s..." -ForegroundColor Yellow
+                        } elseif ($script:EngineStoppedSw.ElapsedMilliseconds -ge $script:EngineStopConfirmMs) {
+                            Stop-BridgeAutoTrip -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -Reason 'engine_off' -HttpClient $httpClient -StaticDump $staticSession
+                        }
+                    }
+                }
+            }
+
             if ($polledOk -and $SaveLocalJson -and $latestPayload) {
                 if ($lastLocalDiskSw.ElapsedMilliseconds -ge 5000) {
                     $lastLocalDiskSw.Restart()
@@ -1590,14 +1718,16 @@ try {
                         [System.IO.File]::WriteAllText($outJsonPath, ($leanDiskObj | ConvertTo-Json -Depth 6 -Compress), $Utf8NoBom)
                     } catch {}
                 }
-                try {
-                    Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -Payload $latestPayload
-                } catch {}
+                if ($script:TripActive -and $script:TripSessionId) {
+                    try {
+                        Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $script:TripSessionId -SessionStartedAt $script:SessionStartedAt -Payload $latestPayload
+                    } catch {}
+                }
             }
 
             if ($polledOk -and $latestPayload -and $EnableCloudStream -and $ResolvedCloudUrl -and $lastCloudSw.ElapsedMilliseconds -ge $CloudIntervalMs) {
                 $lastCloudSw.Restart()
-                $sessionFrameCount++
+                if ($script:TripActive) { $script:SessionFrameCount++ }
                 $metricsObj = [ordered]@{
                     rpm        = $latestPayload.rpm
                     spd        = $latestPayload.spd
@@ -1642,7 +1772,8 @@ try {
                 $packetObj = [ordered]@{
                     v             = 3
                     ts            = $latestPayload.timestamp
-                    sessionId     = $TripSessionId
+                    sessionId     = $script:TripSessionId
+                    tripActive    = $script:TripActive
                     vin           = $ActiveVehicle.vin
                     vehicle       = $ActiveVehicle
                     src           = 'com3_bridge'
@@ -1669,8 +1800,9 @@ try {
                 }
 
                 $cloudPacket = ($wireObj | ConvertTo-Json -Depth 7 -Compress)
+                $shouldArchiveCloudTrip = ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $script:TripActive -and $script:TripSessionId -and $script:FirebaseHistoryFramesUrl)
                 $historyJson = ''
-                if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
+                if ($shouldArchiveCloudTrip) {
                     $historyJson = ([ordered]@{
                         ts        = $latestPayload.timestamp
                         src       = 'com3_bridge'
@@ -1704,25 +1836,26 @@ try {
 
                     $okLive = Invoke-CloudRequest -Client $httpClient -Method $ResolvedCloudMethod -Url $ResolvedCloudUrl -JsonBody $cloudPacket -Provider $CloudProvider -ApiKey $CloudApiKey
                     if ($okLive) {
-                        if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
-                            $okHist = Invoke-CloudRequest -Client $httpClient -Method 'POST' -Url $FirebaseHistoryFramesUrl -JsonBody $historyJson -Provider $CloudProvider -ApiKey $CloudApiKey
+                        if ($shouldArchiveCloudTrip) {
+                            $okHist = Invoke-CloudRequest -Client $httpClient -Method 'POST' -Url $script:FirebaseHistoryFramesUrl -JsonBody $historyJson -Provider $CloudProvider -ApiKey $CloudApiKey
                             if (-not $okHist -and $cloudOfflineQueue.Count -lt 250) {
-                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $script:FirebaseHistoryFramesUrl; Body = $historyJson })
                             }
-                            if ($lastMetaSw.ElapsedMilliseconds -ge 12000 -and $FirebaseHistoryMetaUrl) {
+                            if ($lastMetaSw.ElapsedMilliseconds -ge 12000 -and $script:FirebaseHistoryMetaUrl) {
                                 $lastMetaSw.Restart()
                                 $metaBody = ([ordered]@{
-                                    id          = $TripSessionId
+                                    id          = $script:TripSessionId
                                     vin         = $ActiveVehicle.vin
                                     transport   = 'com3_bridge'
-                                    startedAt   = $sessionStartedAt
+                                    startedAt   = $script:SessionStartedAt
                                     updatedAt   = $latestPayload.timestamp
-                                    sampleCount = $sessionFrameCount
+                                    status      = 'recording'
+                                    sampleCount = $script:SessionFrameCount
                                     lastRpm     = $latestPayload.rpm
                                     lastSpd     = $latestPayload.spd
                                     lastCoolant = $latestPayload.coolant
                                 } | ConvertTo-Json -Compress)
-                                $null = Invoke-CloudRequest -Client $httpClient -Method 'PATCH' -Url $FirebaseHistoryMetaUrl -JsonBody $metaBody -Provider $CloudProvider -ApiKey $CloudApiKey
+                                $null = Invoke-CloudRequest -Client $httpClient -Method 'PATCH' -Url $script:FirebaseHistoryMetaUrl -JsonBody $metaBody -Provider $CloudProvider -ApiKey $CloudApiKey
                             }
                         }
                         $cloudTxCount++
@@ -1730,8 +1863,8 @@ try {
                     } else {
                         if ($cloudOfflineQueue.Count -lt 250) {
                             $cloudOfflineQueue.Enqueue(@{ Method = $ResolvedCloudMethod; Url = $ResolvedCloudUrl; Body = $cloudPacket })
-                            if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
-                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                            if ($shouldArchiveCloudTrip) {
+                                $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $script:FirebaseHistoryFramesUrl; Body = $historyJson })
                             }
                         }
                         Write-Warning "Cloud TX queued offline ($($cloudOfflineQueue.Count) buffered)"
@@ -1739,8 +1872,8 @@ try {
                 } catch {
                     if ($cloudOfflineQueue.Count -lt 250) {
                         $cloudOfflineQueue.Enqueue(@{ Method = $ResolvedCloudMethod; Url = $ResolvedCloudUrl; Body = $cloudPacket })
-                        if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory -and $FirebaseHistoryFramesUrl) {
-                            $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $FirebaseHistoryFramesUrl; Body = $historyJson })
+                        if ($shouldArchiveCloudTrip) {
+                            $cloudOfflineQueue.Enqueue(@{ Method = 'POST'; Url = $script:FirebaseHistoryFramesUrl; Body = $historyJson })
                         }
                     }
                     Write-Host "[CLOUD QUEUE] Offline dead-zone ($($cloudOfflineQueue.Count) buffered)" -ForegroundColor DarkYellow
@@ -1751,11 +1884,9 @@ try {
         Start-Sleep -Milliseconds 35
     }
 } finally {
-    if ($SaveLocalJson -and $ActiveVehicle -and $script:SessionFrames.Count -gt 0) {
+    if ($SaveLocalJson -and $ActiveVehicle -and $script:TripActive -and $script:SessionFrames.Count -gt 0) {
         try {
-            $lastFr = $script:SessionFrames[$script:SessionFrames.Count - 1]
-            $null = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $TripSessionId -SessionStartedAt $sessionStartedAt -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray $script:SessionFrames.ToArray() -LatestMetrics $lastFr -StaticDump $staticSession -SourceTag 'com3_bridge'
-            Write-Host "Saved $($script:SessionFrames.Count) frame(s) to $VehicleHistoryRoot\$($ActiveVehicle.vin)\sessions\$TripSessionId.json" -ForegroundColor Green
+            Stop-BridgeAutoTrip -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -Reason 'bridge_shutdown' -HttpClient $httpClient -StaticDump $staticSession
         } catch {}
     }
     if ($null -ne $httpClient) { $httpClient.Dispose() }
