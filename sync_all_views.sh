@@ -3,7 +3,13 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARTIFACT_DIR="/home/antigravity/.gemini/jetski/brain/v1/default/jetski_remote_agents_3p/da11f8e9-2af2-4cb6-bd05-445122ca51c7"
-STUDIO_SRC="${STUDIO_SRC:-$ARTIFACT_DIR/obd_drive_studio.html}"
+if [[ -z "${STUDIO_SRC:-}" ]]; then
+  if [[ -f "$ARTIFACT_DIR/obd_drive_studio.html" ]]; then
+    STUDIO_SRC="$ARTIFACT_DIR/obd_drive_studio.html"
+  else
+    STUDIO_SRC="$REPO_DIR/PulseOBD_Studio.html"
+  fi
+fi
 WIDGET_SRC="${WIDGET_SRC:-$ARTIFACT_DIR/obd_live_cockpit_widget.html}"
 TAILWIND_CACHE="/tmp/tailwind.min.js"
 TAILWIND_URL="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"
@@ -100,18 +106,19 @@ for (const f of files) {
 console.log("Security check PASSED: 0 private Firebase URLs across " + files.length + " public file(s).");
 '
 
-echo "=== [3/5] Precompiling static pure Tailwind CSS for standalone PulseOBD_Studio.html & index.html ==="
-if [[ ! -s "$TAILWIND_CACHE" ]]; then
-  echo "Downloading Tailwind standalone runtime to $TAILWIND_CACHE..."
-  curl -fsSL "$TAILWIND_URL" -o "$TAILWIND_CACHE"
+echo "=== [3/5] Precompiling / syncing standalone PulseOBD_Studio.html & index.html ==="
+if grep -q 'tailwindcss\.min\.js' "$STUDIO_SRC"; then
+  if [[ ! -s "$TAILWIND_CACHE" ]]; then
+    echo "Downloading Tailwind standalone runtime to $TAILWIND_CACHE..."
+    curl -fsSL "$TAILWIND_URL" -o "$TAILWIND_CACHE"
+  fi
+  CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+  if [[ -z "$CHROME_BIN" ]]; then
+    echo "ERROR: Headless Chrome/Chromium is required to precompile static Tailwind CSS." >&2
+    exit 1
+  fi
+  export CHROME_BIN
 fi
-
-CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-if [[ -z "$CHROME_BIN" ]]; then
-  echo "ERROR: Headless Chrome/Chromium is required to precompile static Tailwind CSS." >&2
-  exit 1
-fi
-export CHROME_BIN
 
 node - <<'NODESCRIPT'
 const fs = require("fs");
@@ -121,16 +128,36 @@ const { spawn } = require("child_process");
 const studioSrc = process.env.STUDIO_SRC;
 const repoDir = process.env.REPO_DIR;
 const tailwindCache = process.env.TAILWIND_CACHE;
-const chromeBin = process.env.CHROME_BIN;
+const chromeBin = process.env.CHROME_BIN || "";
 
 const srcHtml = fs.readFileSync(studioSrc, "utf8");
-const twJs = fs.readFileSync(tailwindCache, "utf8").replace(/<\/script/gi, "<\\/script");
 const cdnTag = '<script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>';
 
 if (!srcHtml.includes(cdnTag)) {
-  console.error("ERROR: Expected Tailwind CDN <script> tag not found in source HTML.");
-  process.exit(1);
+  if (!srcHtml.includes("pulseobd_theme") || !srcHtml.includes("pulseobd-tailwind-static")) {
+    console.error("ERROR: Source HTML is neither a Tailwind CDN template nor a precompiled PulseOBD standalone HTML.");
+    process.exit(1);
+  }
+  const outFiles = [
+    repoDir + "/PulseOBD_Studio.html",
+    repoDir + "/index.html"
+  ];
+  for (const out of outFiles) {
+    if (fs.realpathSync(studioSrc) !== (fs.existsSync(out) ? fs.realpathSync(out) : "")) {
+      fs.writeFileSync(out, srcHtml, "utf8");
+    }
+    const scripts = [...srcHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+    scripts.forEach((m, idx) => {
+      const code = m[1].trim();
+      if (!code) return;
+      new vm.Script(code, { filename: out + "#script" + idx });
+    });
+    console.log("Synced & verified precompiled standalone HTML:", out, "(" + fs.statSync(out).size + " bytes)");
+  }
+  process.exit(0);
 }
+
+const twJs = fs.readFileSync(tailwindCache, "utf8").replace(/<\/script/gi, "<\\/script");
 
 // 1. Collect all static + dynamic Tailwind utility tokens across HTML and JS literals
 const tokenSet = new Set();
@@ -373,10 +400,14 @@ function ensureDriveFolder(parentId, name) {
 }
 
 function getMimeType(filePath) {
-  if (filePath.endsWith(".json")) return "application/json";
-  if (filePath.endsWith(".csv")) return "text/csv";
-  if (filePath.endsWith(".html")) return "text/html";
-  if (filePath.endsWith(".md")) return "text/markdown";
+  const lower = filePath.toLowerCase();
+  if (lower.endsWith(".json")) return "application/json";
+  if (lower.endsWith(".csv")) return "text/csv";
+  if (lower.endsWith(".html")) return "text/html";
+  if (lower.endsWith(".md")) return "text/markdown";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
   return "text/plain";
 }
 

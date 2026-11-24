@@ -411,6 +411,212 @@
       color: var(--primary-foreground) !important;
     }
     html.dark .hover\:text-\[\#222222\]:hover { color: var(--foreground) !important; }
+    /* Service Record Image Upload, Camera Capture & Lightbox Preview */
+    .svc-photo-dropzone {
+      background-color: var(--background);
+      border: 1.5px dashed var(--input);
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    html.dark .svc-photo-dropzone {
+      background-color: rgba(255, 255, 255, 0.025);
+    }
+    .svc-photo-dropzone.is-dragover {
+      border-color: #1473E6;
+      background-color: rgba(20, 115, 230, 0.07);
+    }
+    html.dark .svc-photo-dropzone.is-dragover {
+      border-color: #60A5FA;
+      background-color: rgba(59, 130, 246, 0.14);
+    }
+    .svc-photo-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-top: 0.25rem;
+    }
+    .svc-form-thumb {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background-color: var(--muted);
+      flex-shrink: 0;
+    }
+    .svc-form-thumb-btn {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .svc-form-thumb img,
+    .svc-rec-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .svc-thumb-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(15, 23, 42, 0.84);
+      color: #FFFFFF;
+      font-size: 13px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .svc-thumb-remove:hover {
+      background: #DC2626;
+    }
+    .svc-thumb-tag {
+      position: absolute;
+      left: 4px;
+      bottom: 4px;
+      padding: 1px 5px;
+      border-radius: 0.25rem;
+      background: rgba(15, 23, 42, 0.78);
+      color: #F8FAFC;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+    .svc-record-photos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-top: 0.375rem;
+    }
+    .svc-rec-thumb {
+      position: relative;
+      width: 84px;
+      height: 66px;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background-color: var(--card);
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .svc-rec-thumb:hover {
+      border-color: #1473E6;
+      box-shadow: 0 0 0 2px rgba(20, 115, 230, 0.18);
+    }
+    html.dark .svc-rec-thumb:hover {
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.22);
+    }
+    .svc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background-color: rgba(9, 9, 11, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+    }
+    .svc-modal-backdrop.hidden {
+      display: none !important;
+    }
+    .svc-lightbox-dialog {
+      width: 100%;
+      max-width: 880px;
+      max-height: 92vh;
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.875rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.48);
+    }
+    .svc-lightbox-stage {
+      position: relative;
+      background-color: #09090B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+      max-height: 68vh;
+      overflow: hidden;
+    }
+    .svc-lightbox-img {
+      max-width: 100%;
+      max-height: 68vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .svc-lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(15, 23, 42, 0.76);
+      color: #FFFFFF;
+      font-size: 20px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .svc-lightbox-nav:hover {
+      background: rgba(15, 23, 42, 0.94);
+    }
+    .svc-lightbox-nav-prev { left: 10px; }
+    .svc-lightbox-nav-next { right: 10px; }
+    .svc-camera-dialog {
+      width: 100%;
+      max-width: 560px;
+      max-height: 92vh;
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.875rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.48);
+    }
+    .svc-camera-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      max-height: 58vh;
+      background-color: #09090B;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .svc-camera-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(128, 128, 136, 0.28); border-radius: 9999px; }
@@ -1455,6 +1661,29 @@
                 <textarea id="svc-notes" rows="2" placeholder="Observations, tread depth (mm), wiper condition, battery test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
               </div>
 
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <label class="block font-semibold text-[#4A4E57]">Photos / Receipts (Optional)</label>
+                  <span id="svc-photo-count-hint" class="text-[11px] font-mono-num text-[#5A5F6A]">0 / 4 attached</span>
+                </div>
+                <div id="svc-photo-dropzone" class="svc-photo-dropzone rounded-xl p-2.5 space-y-2">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" id="svc-btn-upload-photo" onclick="triggerServicePhotoUpload()" class="flex-1 px-3 py-2 acro-pill-secondary text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                      <span>Upload Image</span>
+                    </button>
+                    <button type="button" id="svc-btn-camera-photo" onclick="openServiceCameraCapture()" class="flex-1 px-3 py-2 acro-pill-secondary text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      <span>Take Photo</span>
+                    </button>
+                  </div>
+                  <input id="svc-photo-upload-input" type="file" accept="image/*" multiple class="hidden" onchange="handleServicePhotoInputChange(this, 'upload')" />
+                  <input id="svc-photo-camera-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleServicePhotoInputChange(this, 'camera')" />
+                  <div id="svc-photo-status" class="text-[11px] text-[#5A5F6A]">Attach receipts, odometer cluster, tyre tread, or parts photos (drag &amp; drop or camera · auto-compressed JPEG, max 4).</div>
+                  <div id="svc-form-photo-previews" class="svc-photo-grid hidden"></div>
+                </div>
+              </div>
+
               <div id="svc-snapshot-preview" class="acro-well rounded-xl p-2.5 text-[11px] font-mono-num text-[#4A4E57] leading-relaxed">
                 OBD Snapshot to attach: 0 DTCs · MIL OFF · Coolant 98°C · 13.74V · Fuel 8.2% · Health 91/100
               </div>
@@ -2068,6 +2297,60 @@
       </div>
     </nav>
 
+  </div>
+
+  <!-- Service Record Image Preview Lightbox Modal -->
+  <div id="svc-lightbox-modal" class="svc-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="svc-lightbox-title" onclick="if(event.target===this) closeServiceLightbox()">
+    <div class="svc-lightbox-dialog">
+      <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#ECEEF2]">
+        <div class="min-w-0">
+          <h4 id="svc-lightbox-title" class="text-sm font-bold text-[#222222] truncate">Service Photo Preview</h4>
+          <p id="svc-lightbox-subtitle" class="text-[11px] text-[#5A5F6A] truncate"></p>
+        </div>
+        <button type="button" onclick="closeServiceLightbox()" aria-label="Close photo preview" class="px-2.5 py-1 rounded-lg acro-pill-secondary text-xs font-semibold shrink-0">Close ✕</button>
+      </div>
+      <div class="svc-lightbox-stage">
+        <button type="button" id="svc-lightbox-prev" onclick="stepServiceLightbox(-1)" aria-label="Previous photo" class="svc-lightbox-nav svc-lightbox-nav-prev hidden">&#8249;</button>
+        <img id="svc-lightbox-img" src="" alt="Service record attachment preview" class="svc-lightbox-img" />
+        <button type="button" id="svc-lightbox-next" onclick="stepServiceLightbox(1)" aria-label="Next photo" class="svc-lightbox-nav svc-lightbox-nav-next hidden">&#8250;</button>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t border-[#ECEEF2] text-xs">
+        <div class="flex flex-wrap items-center gap-2 min-w-0">
+          <span id="svc-lightbox-counter" class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold text-[11px] shrink-0">1 / 1</span>
+          <span id="svc-lightbox-meta" class="text-[11px] font-mono-num text-[#5A5F6A] truncate"></span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" id="svc-lightbox-download" onclick="downloadServiceLightboxPhoto()" class="px-3 py-1.5 acro-pill-primary text-xs whitespace-nowrap">Download Image</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Record Live Camera Capture Modal -->
+  <div id="svc-camera-modal" class="svc-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="svc-camera-title" onclick="if(event.target===this) closeServiceCameraModal()">
+    <div class="svc-camera-dialog">
+      <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#ECEEF2]">
+        <div class="flex items-center gap-2 min-w-0">
+          <h4 id="svc-camera-title" class="text-sm font-bold text-[#222222] truncate">Take Service Photo</h4>
+          <span id="svc-camera-pill" class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num text-[10px] font-bold shrink-0">STARTING</span>
+        </div>
+        <button type="button" onclick="closeServiceCameraModal()" aria-label="Close camera" class="px-2.5 py-1 rounded-lg acro-pill-secondary text-xs font-semibold shrink-0">Cancel ✕</button>
+      </div>
+      <div class="svc-camera-stage">
+        <video id="svc-camera-video" autoplay playsinline muted class="svc-camera-video"></video>
+        <div id="svc-camera-error" class="hidden p-4 text-center space-y-2.5 max-w-lg">
+          <p id="svc-camera-error-msg" class="text-xs text-white leading-relaxed">Camera preview unavailable in this browser context.</p>
+          <button type="button" onclick="fallbackToDeviceCameraInput()" class="px-3.5 py-2 rounded-lg bg-[#1473E6] text-white text-xs font-semibold">Open Device Camera / File Picker</button>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-[#ECEEF2] text-xs">
+        <div class="flex items-center gap-2">
+          <button type="button" id="svc-camera-flip-btn" onclick="switchServiceCameraFacing()" class="px-3 py-1.5 acro-pill-secondary text-xs font-semibold whitespace-nowrap">Flip Camera</button>
+          <button type="button" onclick="fallbackToDeviceCameraInput()" class="px-3 py-1.5 acro-pill-secondary text-xs font-semibold whitespace-nowrap">Use File Picker</button>
+        </div>
+        <button type="button" id="svc-camera-capture-btn" onclick="captureServiceCameraFrame()" class="px-4 py-2 acro-pill-primary text-xs font-semibold whitespace-nowrap">Capture &amp; Attach</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -3720,6 +4003,9 @@
     function switchTab(tabId, opts = {}) {
       if (tabId !== 'history' && typeof stopHistoryPlayback === 'function') {
         stopHistoryPlayback();
+      }
+      if (tabId !== 'service' && typeof closeServiceCameraModal === 'function') {
+        closeServiceCameraModal();
       }
       appState.activeTab = tabId;
       ['cockpit', 'graphs', 'history', 'infographics', 'service', 'passport', 'cloud', 'bluetooth'].forEach(id => {
@@ -7772,11 +8058,563 @@
       }
     ];
 
+    const SVC_MAX_ATTACHMENTS = 4;
+    const SVC_IMAGE_MAX_DIM = 1280;
+    const SVC_IMAGE_QUALITY = 0.78;
+
     const serviceState = {
       selectedVin: '',
       lastHealthRenderMs: 0,
-      lastCockpitSummaryKey: ''
+      lastCockpitSummaryKey: '',
+      pendingAttachments: [],
+      renderedRecordsById: new Map(),
+      lightbox: {
+        items: [],
+        index: 0,
+        title: '',
+        subtitle: ''
+      },
+      camera: {
+        stream: null,
+        facingMode: 'environment'
+      },
+      photoUiInitialized: false
     };
+
+    function formatAttachmentBytes(bytes) {
+      const n = Number(bytes || 0);
+      if (!n || Number.isNaN(n)) return '';
+      if (n < 1024) return `${Math.round(n)} B`;
+      if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+      return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function isSafeServiceImageSrc(src) {
+      if (typeof src !== 'string') return false;
+      const s = src.trim();
+      if (!s) return false;
+      if (/^data:image\/(jpeg|jpg|png|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(s)) return true;
+      if (/^(https?:\/\/|\.\/|vehicle_history\/)/i.test(s)) return true;
+      return false;
+    }
+
+    function normalizeServiceAttachments(rawList) {
+      if (!Array.isArray(rawList)) return [];
+      const out = [];
+      for (const item of rawList) {
+        if (!item || typeof item !== 'object') continue;
+        const src = String(item.dataUrl || item.url || '').trim();
+        if (!isSafeServiceImageSrc(src)) continue;
+        out.push({
+          id: String(item.id || ('att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6))),
+          name: String(item.name || 'service_photo.jpg').slice(0, 120),
+          mimeType: String(item.mimeType || 'image/jpeg'),
+          width: item.width ? Math.round(Number(item.width)) : null,
+          height: item.height ? Math.round(Number(item.height)) : null,
+          sizeBytes: item.sizeBytes ? Math.round(Number(item.sizeBytes)) : Math.round((src.length * 3) / 4),
+          capturedVia: item.capturedVia === 'camera' ? 'camera' : 'upload',
+          createdAt: String(item.createdAt || new Date().toISOString()),
+          dataUrl: src
+        });
+      }
+      return out;
+    }
+
+    function setServicePhotoStatusText(msg, toneCls) {
+      const el = document.getElementById('svc-photo-status');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'text-[11px] ' + (toneCls || 'text-[#5A5F6A]');
+    }
+
+    function renderFormPhotoPreviewsUi() {
+      const grid = document.getElementById('svc-form-photo-previews');
+      const hint = document.getElementById('svc-photo-count-hint');
+      const list = serviceState.pendingAttachments || [];
+      if (hint) {
+        hint.textContent = `${list.length} / ${SVC_MAX_ATTACHMENTS} attached`;
+      }
+      if (!grid) return;
+      if (!list.length) {
+        grid.innerHTML = '';
+        grid.classList.add('hidden');
+        return;
+      }
+      grid.classList.remove('hidden');
+      grid.innerHTML = list.map((att, idx) => {
+        const src = att.dataUrl || att.url || '';
+        const tag = att.capturedVia === 'camera' ? 'CAM' : 'IMG';
+        const metaTip = `${att.name || 'Photo'}${att.width && att.height ? ` (${att.width}×${att.height})` : ''}${att.sizeBytes ? ' · ' + formatAttachmentBytes(att.sizeBytes) : ''}`;
+        return `
+          <div class="svc-form-thumb" title="${escapeHtml(metaTip)}">
+            <button type="button" class="svc-form-thumb-btn" onclick="openPendingServicePhotoLightbox(${idx})" aria-label="Preview ${escapeHtml(att.name || 'attached photo')}">
+              <img src="${escapeHtml(src)}" alt="${escapeHtml(att.name || 'Service photo')}" />
+            </button>
+            <button type="button" class="svc-thumb-remove" onclick="removePendingServiceAttachment('${escapeHtml(att.id)}')" aria-label="Remove photo" title="Remove photo">&times;</button>
+            <span class="svc-thumb-tag font-mono-num">${tag}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function compressCanvasToAttachment(canvas, name, capturedVia, originalSize) {
+      const w = canvas.width;
+      const h = canvas.height;
+      let targetW = w;
+      let targetH = h;
+      if (Math.max(w, h) > SVC_IMAGE_MAX_DIM) {
+        const ratio = SVC_IMAGE_MAX_DIM / Math.max(w, h);
+        targetW = Math.max(1, Math.round(w * ratio));
+        targetH = Math.max(1, Math.round(h * ratio));
+      }
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = targetW;
+      outCanvas.height = targetH;
+      const ctx = outCanvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetW, targetH);
+      ctx.drawImage(canvas, 0, 0, targetW, targetH);
+
+      let dataUrl = outCanvas.toDataURL('image/jpeg', SVC_IMAGE_QUALITY);
+      // If still large (> 320 KB base64), do one gentler quality pass
+      if (dataUrl.length > 440000) {
+        dataUrl = outCanvas.toDataURL('image/jpeg', 0.64);
+      }
+      const b64Part = dataUrl.split(',')[1] || '';
+      const sizeBytes = Math.round((b64Part.length * 3) / 4);
+      const baseName = String(name || 'service_photo')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[^a-zA-Z0-9._-]+/g, '_')
+        .slice(0, 80) || 'service_photo';
+      return {
+        id: 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name: `${baseName}.jpg`,
+        mimeType: 'image/jpeg',
+        width: targetW,
+        height: targetH,
+        sizeBytes: sizeBytes || originalSize || 0,
+        capturedVia: capturedVia === 'camera' ? 'camera' : 'upload',
+        createdAt: new Date().toISOString(),
+        dataUrl
+      };
+    }
+
+    function compressImageFileToAttachment(file, capturedVia) {
+      return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error('No file selected'));
+        const isImgMime = /^image\//i.test(file.type || '');
+        const isImgExt = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(file.name || '');
+        if (!isImgMime && !isImgExt && file.type) {
+          return reject(new Error(`Unsupported file type (${file.type}). Choose an image file.`));
+        }
+
+        const finishWithImage = (imgEl, cleanup) => {
+          try {
+            const natW = imgEl.naturalWidth || imgEl.width || 0;
+            const natH = imgEl.naturalHeight || imgEl.height || 0;
+            if (!natW || !natH) {
+              throw new Error('Could not decode image dimensions.');
+            }
+            const srcCanvas = document.createElement('canvas');
+            srcCanvas.width = natW;
+            srcCanvas.height = natH;
+            const sctx = srcCanvas.getContext('2d');
+            sctx.fillStyle = '#FFFFFF';
+            sctx.fillRect(0, 0, natW, natH);
+            sctx.drawImage(imgEl, 0, 0, natW, natH);
+            const fallbackName = capturedVia === 'camera'
+              ? `service_camera_${todayIsoDate().replace(/-/g, '')}`
+              : (file.name || 'service_photo');
+            const att = compressCanvasToAttachment(srcCanvas, fallbackName, capturedVia, file.size);
+            if (cleanup) cleanup();
+            resolve(att);
+          } catch (err) {
+            if (cleanup) cleanup();
+            reject(err);
+          }
+        };
+
+        const loadViaFileReader = () => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => finishWithImage(img);
+            img.onerror = () => reject(new Error('Unable to read image file.'));
+            img.src = String(reader.result || '');
+          };
+          reader.onerror = () => reject(new Error('Failed to read image file.'));
+          reader.readAsDataURL(file);
+        };
+
+        try {
+          const objUrl = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => finishWithImage(img, () => { try { URL.revokeObjectURL(objUrl); } catch (_) {} });
+          img.onerror = () => {
+            try { URL.revokeObjectURL(objUrl); } catch (_) {}
+            loadViaFileReader();
+          };
+          img.src = objUrl;
+        } catch (_) {
+          loadViaFileReader();
+        }
+      });
+    }
+
+    function triggerServicePhotoUpload() {
+      if ((serviceState.pendingAttachments || []).length >= SVC_MAX_ATTACHMENTS) {
+        setServicePhotoStatusText(`Maximum of ${SVC_MAX_ATTACHMENTS} photos reached. Remove one to add another.`, 'text-[#B45309]');
+        return;
+      }
+      const inp = document.getElementById('svc-photo-upload-input');
+      if (inp) {
+        inp.value = '';
+        inp.click();
+      }
+    }
+
+    async function handleServicePhotoInputChange(inputEl, capturedVia) {
+      const files = inputEl && inputEl.files ? Array.from(inputEl.files) : [];
+      if (inputEl) inputEl.value = '';
+      if (!files.length) return;
+      await handleServicePhotoFiles(files, capturedVia);
+    }
+
+    async function handleServicePhotoFiles(files, capturedVia) {
+      const incoming = Array.from(files || []).filter(Boolean);
+      if (!incoming.length) return;
+      const remaining = SVC_MAX_ATTACHMENTS - (serviceState.pendingAttachments || []).length;
+      if (remaining <= 0) {
+        setServicePhotoStatusText(`Maximum of ${SVC_MAX_ATTACHMENTS} photos attached per service entry.`, 'text-[#B45309]');
+        return;
+      }
+
+      const toProcess = incoming.slice(0, remaining);
+      setServicePhotoStatusText(`Optimizing ${toProcess.length} photo${toProcess.length === 1 ? '' : 's'}...`, 'text-[#1473E6]');
+
+      let added = 0;
+      let lastErr = '';
+      for (const file of toProcess) {
+        try {
+          const att = await compressImageFileToAttachment(file, capturedVia);
+          serviceState.pendingAttachments.push(att);
+          added++;
+        } catch (err) {
+          lastErr = err && err.message ? err.message : 'Image decode failed';
+        }
+      }
+
+      renderFormPhotoPreviewsUi();
+      const totalBytes = serviceState.pendingAttachments.reduce((sum, a) => sum + (a.sizeBytes || 0), 0);
+      if (added > 0) {
+        const skippedNote = incoming.length > remaining ? ` (${incoming.length - remaining} skipped; max ${SVC_MAX_ATTACHMENTS})` : '';
+        setServicePhotoStatusText(
+          `Attached ${serviceState.pendingAttachments.length} photo${serviceState.pendingAttachments.length === 1 ? '' : 's'} (${formatAttachmentBytes(totalBytes)} total)${skippedNote}. Tap any thumbnail to preview.`,
+          'text-[#047857]'
+        );
+        logTerminal(`[SERVICE PHOTO] Attached ${added} ${capturedVia === 'camera' ? 'camera' : 'uploaded'} photo${added === 1 ? '' : 's'} (${formatAttachmentBytes(totalBytes)} total).`, 'text-[#047857]');
+      } else if (lastErr) {
+        setServicePhotoStatusText(`Could not attach image: ${lastErr}`, 'text-[#B91C1C]');
+      }
+    }
+
+    function removePendingServiceAttachment(attId) {
+      serviceState.pendingAttachments = (serviceState.pendingAttachments || []).filter(a => a.id !== attId);
+      renderFormPhotoPreviewsUi();
+      const count = serviceState.pendingAttachments.length;
+      if (!count) {
+        setServicePhotoStatusText('Attach receipts, odometer cluster, tyre tread, or parts photos (drag & drop or camera · auto-compressed JPEG, max 4).', 'text-[#5A5F6A]');
+      } else {
+        const totalBytes = serviceState.pendingAttachments.reduce((sum, a) => sum + (a.sizeBytes || 0), 0);
+        setServicePhotoStatusText(`Attached ${count} photo${count === 1 ? '' : 's'} (${formatAttachmentBytes(totalBytes)} total). Tap any thumbnail to preview.`, 'text-[#047857]');
+      }
+    }
+
+    function isMobileCameraPreferred() {
+      const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    }
+
+    function fallbackToDeviceCameraInput() {
+      closeServiceCameraModal();
+      const inp = document.getElementById('svc-photo-camera-input');
+      if (inp) {
+        inp.value = '';
+        inp.click();
+      }
+    }
+
+    async function openServiceCameraCapture() {
+      if ((serviceState.pendingAttachments || []).length >= SVC_MAX_ATTACHMENTS) {
+        setServicePhotoStatusText(`Maximum of ${SVC_MAX_ATTACHMENTS} photos reached. Remove one to take another.`, 'text-[#B45309]');
+        return;
+      }
+      // On phones/tablets, native capture="environment" launches the OS camera with flash, HDR & autofocus
+      if (isMobileCameraPreferred()) {
+        const inp = document.getElementById('svc-photo-camera-input');
+        if (inp) {
+          inp.value = '';
+          inp.click();
+          return;
+        }
+      }
+      // On desktop / secure contexts with getUserMedia, open live in-app camera viewfinder modal
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function' && window.isSecureContext) {
+        const modal = document.getElementById('svc-camera-modal');
+        if (modal) modal.classList.remove('hidden');
+        await startServiceCameraStream(serviceState.camera.facingMode || 'environment');
+        return;
+      }
+      // Fallback for file:// or browsers without getUserMedia
+      setServicePhotoStatusText('Live webcam preview requires HTTPS or localhost — opening device camera / image picker.', 'text-[#1473E6]');
+      fallbackToDeviceCameraInput();
+    }
+
+    function stopServiceCameraStream() {
+      const stream = serviceState.camera.stream;
+      if (stream && typeof stream.getTracks === 'function') {
+        stream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+      }
+      serviceState.camera.stream = null;
+      const vid = document.getElementById('svc-camera-video');
+      if (vid) {
+        try { vid.pause(); } catch (_) {}
+        vid.srcObject = null;
+      }
+    }
+
+    async function startServiceCameraStream(facingMode) {
+      stopServiceCameraStream();
+      serviceState.camera.facingMode = facingMode || 'environment';
+      const vid = document.getElementById('svc-camera-video');
+      const errBox = document.getElementById('svc-camera-error');
+      const errMsg = document.getElementById('svc-camera-error-msg');
+      const pill = document.getElementById('svc-camera-pill');
+      const capBtn = document.getElementById('svc-camera-capture-btn');
+
+      if (errBox) errBox.classList.add('hidden');
+      if (vid) vid.classList.remove('hidden');
+      if (pill) pill.textContent = 'STARTING';
+      if (capBtn) capBtn.disabled = true;
+
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: serviceState.camera.facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 960 }
+          },
+          audio: false
+        });
+      } catch (firstErr) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (secondErr) {
+          const reason = (secondErr && secondErr.name === 'NotAllowedError')
+            ? 'Camera permission was denied. Allow camera access or use the device camera / file picker below.'
+            : ((secondErr && secondErr.message) ? `Camera unavailable (${secondErr.message}). Use the file picker below.` : 'No camera detected. Use the file picker below.');
+          if (vid) vid.classList.add('hidden');
+          if (errBox) errBox.classList.remove('hidden');
+          if (errMsg) errMsg.textContent = reason;
+          if (pill) pill.textContent = 'UNAVAILABLE';
+          return;
+        }
+      }
+
+      serviceState.camera.stream = stream;
+      if (vid) {
+        vid.srcObject = stream;
+        try { await vid.play(); } catch (_) {}
+      }
+      if (pill) pill.textContent = serviceState.camera.facingMode === 'user' ? 'FRONT CAM' : 'LIVE CAM';
+      if (capBtn) capBtn.disabled = false;
+    }
+
+    async function switchServiceCameraFacing() {
+      const next = serviceState.camera.facingMode === 'environment' ? 'user' : 'environment';
+      await startServiceCameraStream(next);
+    }
+
+    function captureServiceCameraFrame() {
+      const vid = document.getElementById('svc-camera-video');
+      if (!vid || !vid.videoWidth || !vid.videoHeight) {
+        setServicePhotoStatusText('Camera frame not ready yet — wait a moment and try again.', 'text-[#B45309]');
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = vid.videoWidth;
+      canvas.height = vid.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+
+      const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      const att = compressCanvasToAttachment(canvas, `service_camera_${stamp}`, 'camera', 0);
+      serviceState.pendingAttachments.push(att);
+      closeServiceCameraModal();
+      renderFormPhotoPreviewsUi();
+      const totalBytes = serviceState.pendingAttachments.reduce((sum, a) => sum + (a.sizeBytes || 0), 0);
+      setServicePhotoStatusText(
+        `Captured camera photo (${att.width}×${att.height} · ${formatAttachmentBytes(att.sizeBytes)}). ${serviceState.pendingAttachments.length} photo${serviceState.pendingAttachments.length === 1 ? '' : 's'} ready (${formatAttachmentBytes(totalBytes)} total).`,
+        'text-[#047857]'
+      );
+      logTerminal(`[SERVICE PHOTO] Captured camera image (${att.width}×${att.height}, ${formatAttachmentBytes(att.sizeBytes)}).`, 'text-[#047857]');
+    }
+
+    function closeServiceCameraModal() {
+      stopServiceCameraStream();
+      const modal = document.getElementById('svc-camera-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openServiceLightboxWithItems(items, startIndex, title, subtitle) {
+      const clean = normalizeServiceAttachments(items);
+      if (!clean.length) return;
+      const idx = Math.max(0, Math.min(clean.length - 1, Number(startIndex) || 0));
+      serviceState.lightbox = {
+        items: clean,
+        index: idx,
+        title: title || 'Service Photo Preview',
+        subtitle: subtitle || ''
+      };
+      renderServiceLightboxUi();
+      const modal = document.getElementById('svc-lightbox-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function openPendingServicePhotoLightbox(startIndex) {
+      const title = (document.getElementById('svc-title')?.value || '').trim() || 'Draft Service Entry';
+      const dateVal = (document.getElementById('svc-date')?.value || '').trim();
+      openServiceLightboxWithItems(
+        serviceState.pendingAttachments,
+        startIndex,
+        title,
+        dateVal ? `Unsaved draft · ${dateVal}` : 'Unsaved draft attachment'
+      );
+    }
+
+    async function openSavedServicePhotoLightbox(recordId, startIndex) {
+      let rec = serviceState.renderedRecordsById.get(recordId) || null;
+      if (!rec) {
+        const vin = getServiceSelectedVin();
+        const records = await getServiceRecordsForVin(vin);
+        rec = records.find(r => r.id === recordId) || null;
+      }
+      if (!rec) return;
+      const atts = normalizeServiceAttachments(rec.attachments);
+      if (!atts.length) return;
+      const catDef = getServiceCategoryDef(rec.category);
+      const subParts = [
+        rec.categoryLabel || catDef.label,
+        rec.serviceDate || '',
+        rec.odometerKm != null ? formatNumberKm(rec.odometerKm) : ''
+      ].filter(Boolean);
+      openServiceLightboxWithItems(atts, startIndex || 0, rec.title || catDef.defaultTitle, subParts.join(' · '));
+    }
+
+    function renderServiceLightboxUi() {
+      const lb = serviceState.lightbox;
+      const item = lb.items && lb.items[lb.index];
+      if (!item) return;
+
+      const titleEl = document.getElementById('svc-lightbox-title');
+      const subEl = document.getElementById('svc-lightbox-subtitle');
+      const imgEl = document.getElementById('svc-lightbox-img');
+      const counterEl = document.getElementById('svc-lightbox-counter');
+      const metaEl = document.getElementById('svc-lightbox-meta');
+      const prevBtn = document.getElementById('svc-lightbox-prev');
+      const nextBtn = document.getElementById('svc-lightbox-next');
+
+      if (titleEl) titleEl.textContent = lb.title || 'Service Photo Preview';
+      if (subEl) subEl.textContent = lb.subtitle || '';
+      if (imgEl) {
+        imgEl.src = item.dataUrl || item.url || '';
+        imgEl.alt = item.name || lb.title || 'Service photo';
+      }
+      if (counterEl) counterEl.textContent = `${lb.index + 1} / ${lb.items.length}`;
+      if (metaEl) {
+        const parts = [
+          item.name || 'photo.jpg',
+          (item.width && item.height) ? `${item.width}×${item.height}` : '',
+          item.sizeBytes ? formatAttachmentBytes(item.sizeBytes) : '',
+          item.capturedVia === 'camera' ? 'Camera' : 'Uploaded'
+        ].filter(Boolean);
+        metaEl.textContent = parts.join(' · ');
+      }
+      const multi = lb.items.length > 1;
+      if (prevBtn) prevBtn.classList.toggle('hidden', !multi);
+      if (nextBtn) nextBtn.classList.toggle('hidden', !multi);
+    }
+
+    function stepServiceLightbox(delta) {
+      const lb = serviceState.lightbox;
+      if (!lb.items || lb.items.length <= 1) return;
+      lb.index = (lb.index + delta + lb.items.length) % lb.items.length;
+      renderServiceLightboxUi();
+    }
+
+    function downloadServiceLightboxPhoto() {
+      const lb = serviceState.lightbox;
+      const item = lb.items && lb.items[lb.index];
+      if (!item || !(item.dataUrl || item.url)) return;
+      const a = document.createElement('a');
+      a.href = item.dataUrl || item.url;
+      a.download = item.name || `pulseobd_service_photo_${lb.index + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function closeServiceLightbox() {
+      const modal = document.getElementById('svc-lightbox-modal');
+      if (modal) modal.classList.add('hidden');
+      const imgEl = document.getElementById('svc-lightbox-img');
+      if (imgEl) imgEl.src = '';
+    }
+
+    function initServicePhotoUiListeners() {
+      if (serviceState.photoUiInitialized) return;
+      serviceState.photoUiInitialized = true;
+      const dz = document.getElementById('svc-photo-dropzone');
+      if (dz) {
+        ['dragenter', 'dragover'].forEach(evName => {
+          dz.addEventListener(evName, (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            dz.classList.add('is-dragover');
+          });
+        });
+        ['dragleave', 'dragend'].forEach(evName => {
+          dz.addEventListener(evName, (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            dz.classList.remove('is-dragover');
+          });
+        });
+        dz.addEventListener('drop', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          dz.classList.remove('is-dragover');
+          const files = ev.dataTransfer && ev.dataTransfer.files ? Array.from(ev.dataTransfer.files) : [];
+          if (files.length) handleServicePhotoFiles(files, 'upload');
+        });
+      }
+      document.addEventListener('keydown', (ev) => {
+        const camOpen = !document.getElementById('svc-camera-modal')?.classList.contains('hidden');
+        const lbOpen = !document.getElementById('svc-lightbox-modal')?.classList.contains('hidden');
+        if (ev.key === 'Escape') {
+          if (camOpen) closeServiceCameraModal();
+          else if (lbOpen) closeServiceLightbox();
+        } else if (lbOpen && ev.key === 'ArrowLeft') {
+          stepServiceLightbox(-1);
+        } else if (lbOpen && ev.key === 'ArrowRight') {
+          stepServiceLightbox(1);
+        }
+      });
+      window.addEventListener('beforeunload', () => {
+        stopServiceCameraStream();
+      });
+    }
 
     function escapeHtml(val) {
       return String(val === null || val === undefined ? '' : val)
@@ -7832,20 +8670,43 @@
     }
 
     function writeServiceLocalFallback(vin, meta, records) {
+      const cleanVin = normalizeVinString(vin);
+      const safeMeta = {
+        vin: cleanVin,
+        latestOdometerKm: meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null,
+        deletedIds: Array.isArray(meta?.deletedIds) ? [...new Set(meta.deletedIds)] : [],
+        updatedAt: (meta && meta.updatedAt) || new Date().toISOString()
+      };
+      const recList = Array.isArray(records) ? records : [];
       try {
-        const cleanVin = normalizeVinString(vin);
         const all = readServiceLocalFallback();
-        all.byVin[cleanVin] = {
-          meta: {
-            vin: cleanVin,
-            latestOdometerKm: meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null,
-            deletedIds: Array.isArray(meta?.deletedIds) ? [...new Set(meta.deletedIds)] : [],
-            updatedAt: (meta && meta.updatedAt) || new Date().toISOString()
-          },
-          records: Array.isArray(records) ? records : []
-        };
+        all.byVin[cleanVin] = { meta: safeMeta, records: recList };
         localStorage.setItem(SERVICE_STORAGE_KEY, JSON.stringify(all));
-      } catch (_) {}
+      } catch (_) {
+        // Quota fallback: strip inline image base64 in localStorage copy while full images remain in IndexedDB + service_log.json
+        try {
+          const all = readServiceLocalFallback();
+          const slimRecords = recList.map(r => {
+            if (!r || !Array.isArray(r.attachments) || !r.attachments.length) return r;
+            return {
+              ...r,
+              attachments: r.attachments.map(a => ({
+                id: a.id,
+                name: a.name,
+                mimeType: a.mimeType,
+                width: a.width,
+                height: a.height,
+                sizeBytes: a.sizeBytes,
+                capturedVia: a.capturedVia,
+                createdAt: a.createdAt,
+                omittedInFallback: true
+              }))
+            };
+          });
+          all.byVin[cleanVin] = { meta: safeMeta, records: slimRecords };
+          localStorage.setItem(SERVICE_STORAGE_KEY, JSON.stringify(all));
+        } catch (_) {}
+      }
     }
 
     async function getServiceMetaForVin(vin) {
@@ -7926,7 +8787,9 @@
         dbList.forEach(r => {
           if (!r || !r.id) return;
           const prev = byId.get(r.id);
-          if (!prev || String(r.updatedAt || '').localeCompare(String(prev.updatedAt || '')) >= 0) {
+          const rNewerOrEqual = !prev || String(r.updatedAt || '').localeCompare(String(prev.updatedAt || '')) >= 0;
+          const prevMissingImgs = prev && Array.isArray(prev.attachments) && prev.attachments.some(a => a && a.omittedInFallback);
+          if (rNewerOrEqual || prevMissingImgs) {
             byId.set(r.id, r);
           }
         });
@@ -8526,6 +9389,10 @@
         const lastLine = lastRec
           ? `Last: ${escapeHtml(lastRec.serviceDate || '—')}${lastRec.odometerKm != null ? ' @ ' + formatNumberKm(lastRec.odometerKm) : ''}`
           : 'Not yet logged for this VIN';
+        const lastAtts = lastRec ? normalizeServiceAttachments(lastRec.attachments) : [];
+        const photoBtn = lastAtts.length
+          ? `<button type="button" onclick="openSavedServicePhotoLightbox('${escapeHtml(lastRec.id)}', 0)" title="Preview ${lastAtts.length} attached photo${lastAtts.length === 1 ? '' : 's'}" class="px-2 py-1 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] hover:bg-[#DBEAFE] font-mono-num font-semibold text-[10px] transition shrink-0 whitespace-nowrap">${lastAtts.length} Photo${lastAtts.length === 1 ? '' : 's'}</button>`
+          : '';
         return `
           <div class="acro-well rounded-xl p-3 flex flex-col justify-between gap-2 min-w-0">
             <div class="space-y-1">
@@ -8536,9 +9403,12 @@
               <div class="text-[11px] text-[#5A5F6A] font-mono-num truncate">${lastLine}</div>
               <div class="text-[11px] font-semibold text-[#222222] font-mono-num truncate">${escapeHtml(st.remLine)}</div>
             </div>
-            <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#E6E8EE]">
+            <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-[#E6E8EE]">
               <span class="text-[10px] text-[#6B7280] font-mono-num truncate">${cat.intervalKm ? (cat.intervalKm / 1000) + 'k km' : 'Condition'}${cat.intervalMonths ? ' / ' + cat.intervalMonths + 'm' : ''}</span>
-              <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
+              <div class="flex items-center gap-1 shrink-0">
+                ${photoBtn}
+                <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
+              </div>
             </div>
           </div>
         `;
@@ -8563,6 +9433,9 @@
       const subEl = document.getElementById('svc-history-subtitle');
       const filterVal = document.getElementById('svc-history-filter')?.value || 'ALL';
       const allRecs = Array.isArray(records) ? records : [];
+      serviceState.renderedRecordsById = new Map();
+      allRecs.forEach(r => { if (r && r.id) serviceState.renderedRecordsById.set(r.id, r); });
+
       const filtered = filterVal === 'ALL'
         ? allRecs
         : (filterVal === 'TYRES_ALL'
@@ -8594,6 +9467,25 @@
       listEl.innerHTML = filtered.map(r => {
         const snap = r.obdSnapshot || null;
         const catDef = getServiceCategoryDef(r.category);
+        const atts = normalizeServiceAttachments(r.attachments);
+        const photoCountBadge = atts.length
+          ? `<button type="button" onclick="openSavedServicePhotoLightbox('${escapeHtml(r.id)}', 0)" class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] hover:bg-[#D1FAE5] text-[10px] font-mono-num font-bold transition">${atts.length} Photo${atts.length === 1 ? '' : 's'}</button>`
+          : '';
+        const photoGalleryHtml = atts.length
+          ? `<div class="svc-record-photos">
+              ${atts.map((att, idx) => {
+                const src = att.dataUrl || att.url || '';
+                const tag = att.capturedVia === 'camera' ? 'CAM' : 'IMG';
+                const tip = `Preview ${att.name || 'photo'}${att.sizeBytes ? ' · ' + formatAttachmentBytes(att.sizeBytes) : ''}`;
+                return `
+                  <button type="button" class="svc-rec-thumb" onclick="openSavedServicePhotoLightbox('${escapeHtml(r.id)}', ${idx})" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">
+                    <img src="${escapeHtml(src)}" alt="${escapeHtml(att.name || 'Service record photo')}" loading="lazy" />
+                    <span class="svc-thumb-tag font-mono-num">${tag}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>`
+          : '';
         const snapPills = snap
           ? `<div class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono-num pt-1">
               <span class="px-2 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[#222222]">OBD ${snap.healthScore ?? '--'}/100</span>
@@ -8619,6 +9511,7 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] text-[10px] font-bold">${escapeHtml(r.categoryLabel || catDef.label)}</span>
+                  ${photoCountBadge}
                   <span class="font-mono-num text-[11px] text-[#5A5F6A]">${escapeHtml(metaRow)}</span>
                 </div>
                 <div class="font-bold text-sm text-[#222222] mt-1">${escapeHtml(r.title || catDef.defaultTitle)}</div>
@@ -8631,6 +9524,7 @@
             ${r.partsSpec ? `<div class="text-[11px] text-[#4A4E57]"><strong>Spec:</strong> ${escapeHtml(r.partsSpec)}</div>` : ''}
             ${nextDueStr ? `<div class="text-[11px] font-mono-num text-[#1473E6] font-semibold">${escapeHtml(nextDueStr)}</div>` : ''}
             ${r.notes ? `<p class="text-[11px] text-[#5A5F6A] leading-relaxed">${escapeHtml(r.notes)}</p>` : ''}
+            ${photoGalleryHtml}
             ${snapPills}
           </div>
         `;
@@ -8845,6 +9739,8 @@
         }
       }
 
+      initServicePhotoUiListeners();
+      renderFormPhotoPreviewsUi();
       updateServiceHealthAndSnapshotUi(appState.current, true);
       renderServiceIntervalsUi(vin, meta, records);
       renderServiceRecordsListUi(vin, records);
@@ -8998,6 +9894,7 @@
       const existing = editId ? (await getServiceRecordsForVin(vin)).find(r => r.id === editId) : null;
       const nowIso = new Date().toISOString();
 
+      const attachments = normalizeServiceAttachments(serviceState.pendingAttachments);
       const rec = {
         id: existing ? existing.id : ('svc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
         vin,
@@ -9014,6 +9911,7 @@
         workshop: workshopRaw,
         cost: costRaw,
         notes: notesRaw,
+        attachments,
         obdSnapshot: (existing && existing.obdSnapshot) ? existing.obdSnapshot : buildCurrentObdSnapshot(appState.current)
       };
 
@@ -9028,7 +9926,8 @@
       await persistServiceLogToProjectFolder(vin, { quiet: false });
       cancelServiceEdit(true);
       await refreshServiceTab();
-      logTerminal(`[SERVICE LOG] ${existing ? 'Updated' : 'Saved'} "${rec.title}" for ${vin}.`, 'text-[#047857] font-semibold');
+      const photoNote = attachments.length ? ` (${attachments.length} photo${attachments.length === 1 ? '' : 's'})` : '';
+      logTerminal(`[SERVICE LOG] ${existing ? 'Updated' : 'Saved'} "${rec.title}"${photoNote} for ${vin}.`, 'text-[#047857] font-semibold');
     }
 
     async function editServiceRecord(recordId) {
@@ -9049,6 +9948,18 @@
       setVal('svc-workshop', rec.workshop || '');
       setVal('svc-cost', rec.cost || '');
       setVal('svc-notes', rec.notes || '');
+
+      serviceState.pendingAttachments = normalizeServiceAttachments(rec.attachments).map(a => ({ ...a }));
+      renderFormPhotoPreviewsUi();
+      if (serviceState.pendingAttachments.length) {
+        const totalBytes = serviceState.pendingAttachments.reduce((sum, a) => sum + (a.sizeBytes || 0), 0);
+        setServicePhotoStatusText(
+          `Loaded ${serviceState.pendingAttachments.length} saved photo${serviceState.pendingAttachments.length === 1 ? '' : 's'} (${formatAttachmentBytes(totalBytes)} total). Add, preview, or remove photos before updating.`,
+          'text-[#047857]'
+        );
+      } else {
+        setServicePhotoStatusText('Attach receipts, odometer cluster, tyre tread, or parts photos (drag & drop or camera · auto-compressed JPEG, max 4).', 'text-[#5A5F6A]');
+      }
 
       const heading = document.getElementById('svc-form-heading');
       if (heading) heading.textContent = 'Edit Service / Maintenance Entry';
@@ -9072,6 +9983,15 @@
       setVal('svc-workshop', '');
       setVal('svc-cost', '');
       setVal('svc-notes', '');
+
+      serviceState.pendingAttachments = [];
+      const upInp = document.getElementById('svc-photo-upload-input');
+      if (upInp) upInp.value = '';
+      const camInp = document.getElementById('svc-photo-camera-input');
+      if (camInp) camInp.value = '';
+      closeServiceCameraModal();
+      renderFormPhotoPreviewsUi();
+      setServicePhotoStatusText('Attach receipts, odometer cluster, tyre tread, or parts photos (drag & drop or camera · auto-compressed JPEG, max 4).', 'text-[#5A5F6A]');
 
       const heading = document.getElementById('svc-form-heading');
       if (heading) heading.textContent = 'Log Service / Maintenance Entry';
@@ -9152,10 +10072,11 @@
       const doc = await buildServiceLogDocForVin(vin);
       const qCsv = (v) => `"${String(v === null || v === undefined ? '' : v).replace(/"/g, '""')}"`;
       const headers = [
-        'id,vin,category,title,service_date,odometer_km,next_due_km,next_due_date,parts_spec,workshop,cost,notes,obd_health_score,obd_dtc_count,obd_volt_v,obd_coolant_c'
+        'id,vin,category,title,service_date,odometer_km,next_due_km,next_due_date,parts_spec,workshop,cost,notes,obd_health_score,obd_dtc_count,obd_volt_v,obd_coolant_c,photo_count'
       ];
       const rows = (doc.records || []).map(r => {
         const s = r.obdSnapshot || {};
+        const photoCount = normalizeServiceAttachments(r.attachments).length;
         return [
           qCsv(r.id),
           qCsv(r.vin || vin),
@@ -9172,7 +10093,8 @@
           s.healthScore != null ? s.healthScore : '',
           s.dtcCount != null ? s.dtcCount : '',
           s.voltV != null ? s.voltV : '',
-          s.coolantC != null ? s.coolantC : ''
+          s.coolantC != null ? s.coolantC : '',
+          photoCount
         ].join(',');
       });
       const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });

@@ -1543,7 +1543,16 @@ try {
                     $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
                     $rawBody = $sr.ReadToEnd()
                     $sr.Close()
-                    $bodyObj = ConvertTo-PlainOrdered ($rawBody | ConvertFrom-Json)
+                    $parsedBody = $null
+                    try {
+                        $parsedBody = ($rawBody | ConvertFrom-Json)
+                    } catch {
+                        Add-Type -AssemblyName System.Web.Extensions -ErrorAction SilentlyContinue
+                        $jsSer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+                        $jsSer.MaxJsonLength = 67108864
+                        $parsedBody = $jsSer.DeserializeObject($rawBody)
+                    }
+                    $bodyObj = ConvertTo-PlainOrdered $parsedBody
                     $reqVin = Get-SafeVinName -RawVin ([string]$bodyObj['vin']) -FallbackPart ([string]$bodyObj['partNumber'])
                     $vinDir = Join-Path $VehicleHistoryRoot $reqVin
                     if (-not (Test-Path $vinDir)) {
@@ -1582,7 +1591,18 @@ try {
                 $rootFull = [System.IO.Path]::GetFullPath($VehicleHistoryRoot)
                 if ($candidate.StartsWith($rootFull) -and (Test-Path $candidate) -and -not (Get-Item $candidate).PSIsContainer) {
                     $bytes = [System.IO.File]::ReadAllBytes($candidate)
-                    $res.ContentType = if ($candidate.EndsWith('.csv')) { 'text/csv; charset=utf-8' } else { 'application/json; charset=utf-8' }
+                    $lowerCand = $candidate.ToLowerInvariant()
+                    $res.ContentType = if ($lowerCand.EndsWith('.csv')) {
+                        'text/csv; charset=utf-8'
+                    } elseif ($lowerCand.EndsWith('.jpg') -or $lowerCand.EndsWith('.jpeg')) {
+                        'image/jpeg'
+                    } elseif ($lowerCand.EndsWith('.png')) {
+                        'image/png'
+                    } elseif ($lowerCand.EndsWith('.webp')) {
+                        'image/webp'
+                    } else {
+                        'application/json; charset=utf-8'
+                    }
                     $res.OutputStream.Write($bytes, 0, $bytes.Length)
                 } else {
                     $res.StatusCode = 404
