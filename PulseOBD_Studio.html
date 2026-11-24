@@ -1364,7 +1364,7 @@
               <h3 class="text-sm sm:text-base font-bold text-[#222222]">Maintenance Schedule &amp; Next-Due Tracker</h3>
               <p class="text-xs text-[#5A5F6A]">Tap <strong>Log</strong> on any maintenance category to pre-fill dates, km intervals &amp; parts spec.</p>
             </div>
-            <span id="svc-intervals-summary" class="text-xs px-2.5 py-1 rounded-full acro-well font-mono-num font-semibold text-[#222222]">8 Service Items Tracked</span>
+            <span id="svc-intervals-summary" class="text-xs px-2.5 py-1 rounded-full acro-well font-mono-num font-semibold text-[#222222]">10 Service Items Tracked</span>
           </div>
 
           <div id="svc-intervals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs"></div>
@@ -1396,7 +1396,9 @@
                   <option value="cabin_filter">Cabin / Pollen Filter (30,000 km / 24 mo)</option>
                   <option value="brakes_fluid">Brake Pads &amp; DOT4 Fluid (30,000 km / 24 mo)</option>
                   <option value="battery_12v">12V Battery Test / Replacement (48 mo)</option>
-                  <option value="tires_alignment">Tires, Rotation &amp; Alignment (10,000 km / 12 mo)</option>
+                  <option value="tyres_replacement">Tyres — Replacement &amp; Tread (45,000 km / 48 mo)</option>
+                  <option value="tires_alignment">Tyres — Rotation &amp; Alignment (10,000 km / 12 mo)</option>
+                  <option value="wiper_blades">Wipers &amp; Blades — Front &amp; Rear (12 mo)</option>
                   <option value="inspection_baseline">Pre-Service OBD-II Baseline Inspection</option>
                   <option value="custom_repair">Repair / Diagnostic Follow-Up</option>
                 </select>
@@ -1430,8 +1432,8 @@
               </div>
 
               <div>
-                <label for="svc-parts" class="block font-semibold text-[#4A4E57] mb-1">Parts / Oil / Filter Specification</label>
-                <input id="svc-parts" type="text" placeholder="e.g. VW 502.00 5W-40 4L · Mann W712/95 oil filter" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <label for="svc-parts" class="block font-semibold text-[#4A4E57] mb-1">Parts / Tyres / Wipers / Fluid Spec</label>
+                <input id="svc-parts" type="text" placeholder="e.g. VW 502.00 5W-40 4L · Bosch Aerotwin 600/400mm · 185/60 R15" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]" />
               </div>
 
               <div class="grid grid-cols-2 gap-2">
@@ -1447,7 +1449,7 @@
 
               <div>
                 <label for="svc-notes" class="block font-semibold text-[#4A4E57] mb-1">Service Notes &amp; Findings</label>
-                <textarea id="svc-notes" rows="2" placeholder="Observations, filter condition, battery load test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
+                <textarea id="svc-notes" rows="2" placeholder="Observations, tread depth (mm), wiper condition, battery test, torques..." class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 text-[#222222] focus:outline-none focus:border-[#222222]"></textarea>
               </div>
 
               <div id="svc-snapshot-preview" class="acro-well rounded-xl p-2.5 text-[11px] font-mono-num text-[#4A4E57] leading-relaxed">
@@ -1467,7 +1469,23 @@
                 <h3 class="text-sm sm:text-base font-bold text-[#222222]">Recorded Service &amp; Inspection History</h3>
                 <p id="svc-history-subtitle" class="text-xs text-[#5A5F6A] truncate">Stored per VIN in IndexedDB + vehicle_history/&lt;VIN&gt;/service_log.json</p>
               </div>
-              <span id="svc-record-count" class="text-xs px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0">0 records</span>
+              <div class="flex items-center gap-1.5 min-w-0 w-full sm:w-auto">
+                <select id="svc-history-filter" onchange="onServiceHistoryFilterChange()" aria-label="Filter service history by category" class="min-w-0 flex-1 sm:flex-initial max-w-full text-xs bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1 font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition truncate">
+                  <option value="ALL">All Categories</option>
+                  <option value="TYRES_ALL">Tyres (All)</option>
+                  <option value="wiper_blades">Wipers &amp; Blades</option>
+                  <option value="oil_filter">Oil &amp; Filter</option>
+                  <option value="inspection_service">Annual / Major Inspection</option>
+                  <option value="brakes_fluid">Brakes &amp; Fluid</option>
+                  <option value="spark_plugs">Spark Plugs</option>
+                  <option value="air_filter">Engine Air Filter</option>
+                  <option value="cabin_filter">Cabin Filter</option>
+                  <option value="battery_12v">12V Battery</option>
+                  <option value="inspection_baseline">OBD-II Pre-Service Checks</option>
+                  <option value="custom_repair">Repairs / Follow-Up</option>
+                </select>
+                <span id="svc-record-count" class="text-xs px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 whitespace-nowrap">0 records</span>
+              </div>
             </div>
 
             <div id="svc-records-list" class="space-y-2.5 max-h-[540px] overflow-y-auto pr-1 text-xs">
@@ -7326,12 +7344,28 @@
         defaultParts: '60Ah EFB / AGM battery check · Pin 16 resting & alternator verification'
       },
       {
+        id: 'tyres_replacement',
+        label: 'Tyres (Replacement & Tread)',
+        defaultTitle: 'Tyre Replacement & Tread Depth Check',
+        intervalKm: 45000,
+        intervalMonths: 48,
+        defaultParts: 'Tyre set (185/60 R15 / 215/45 R16) · new valves, wheel balance & tread depth (mm)'
+      },
+      {
         id: 'tires_alignment',
-        label: 'Tires & Alignment',
-        defaultTitle: 'Tire Rotation, Pressure & 4-Wheel Alignment',
+        label: 'Tyres (Rotation & Alignment)',
+        defaultTitle: 'Tyre Rotation, Pressure & 4-Wheel Alignment',
         intervalKm: 10000,
         intervalMonths: 12,
-        defaultParts: 'Tire rotation · cold pressure check · balance & 4-wheel alignment'
+        defaultParts: 'Tyre rotation · cold pressure check · wheel balance & 4-wheel alignment'
+      },
+      {
+        id: 'wiper_blades',
+        label: 'Wipers & Blades',
+        defaultTitle: 'Front & Rear Wiper Blade Replacement',
+        intervalKm: null,
+        intervalMonths: 12,
+        defaultParts: 'Front aero wiper blades (600mm / 400mm · Bosch Aerotwin A555S) · Rear 280mm · Washer fluid'
       },
       {
         id: 'inspection_baseline',
@@ -8130,20 +8164,47 @@
       }
     }
 
+    async function onServiceHistoryFilterChange() {
+      const vin = getServiceSelectedVin();
+      const records = await getServiceRecordsForVin(vin);
+      renderServiceRecordsListUi(vin, records);
+    }
+
     function renderServiceRecordsListUi(vin, records) {
       const listEl = document.getElementById('svc-records-list');
       const countEl = document.getElementById('svc-record-count');
       const subEl = document.getElementById('svc-history-subtitle');
-      if (countEl) countEl.textContent = `${records.length} record${records.length === 1 ? '' : 's'}`;
+      const filterVal = document.getElementById('svc-history-filter')?.value || 'ALL';
+      const allRecs = Array.isArray(records) ? records : [];
+      const filtered = filterVal === 'ALL'
+        ? allRecs
+        : (filterVal === 'TYRES_ALL'
+            ? allRecs.filter(r => r.category === 'tyres_replacement' || r.category === 'tires_alignment')
+            : allRecs.filter(r => r.category === filterVal));
+
+      if (countEl) {
+        countEl.textContent = filterVal === 'ALL'
+          ? `${allRecs.length} record${allRecs.length === 1 ? '' : 's'}`
+          : `${filtered.length} of ${allRecs.length} record${allRecs.length === 1 ? '' : 's'}`;
+      }
       if (subEl) subEl.textContent = `Stored per VIN (${vin}) in IndexedDB + vehicle_history/${vin}/service_log.json`;
       if (!listEl) return;
 
-      if (!records.length) {
-        listEl.innerHTML = `<div class="acro-well rounded-xl p-4 text-[#5A5F6A]">No service or inspection entries stored for <strong>${escapeHtml(vin)}</strong> yet. Use the form or tap <strong>Capture Pre-Service OBD Snapshot</strong>.</div>`;
+      if (!filtered.length) {
+        if (filterVal !== 'ALL') {
+          const quickCat = filterVal === 'TYRES_ALL' ? 'tyres_replacement' : filterVal;
+          const catDef = getServiceCategoryDef(quickCat);
+          listEl.innerHTML = `<div class="acro-well rounded-xl p-4 text-[#5A5F6A] flex flex-wrap items-center justify-between gap-2">
+            <span>No <strong>${escapeHtml(filterVal === 'TYRES_ALL' ? 'Tyres' : catDef.label)}</strong> entries logged for <strong>${escapeHtml(vin)}</strong> yet.</span>
+            <button type="button" onclick="prefillServiceCategory('${escapeHtml(quickCat)}')" class="px-3 py-1 rounded-lg bg-[#222222] text-white font-semibold text-xs whitespace-nowrap">Log ${escapeHtml(filterVal === 'TYRES_ALL' ? 'Tyres' : catDef.label)}</button>
+          </div>`;
+        } else {
+          listEl.innerHTML = `<div class="acro-well rounded-xl p-4 text-[#5A5F6A]">No service or inspection entries stored for <strong>${escapeHtml(vin)}</strong> yet. Use the form or tap <strong>Capture Pre-Service OBD Snapshot</strong>.</div>`;
+        }
         return;
       }
 
-      listEl.innerHTML = records.map(r => {
+      listEl.innerHTML = filtered.map(r => {
         const snap = r.obdSnapshot || null;
         const catDef = getServiceCategoryDef(r.category);
         const snapPills = snap
