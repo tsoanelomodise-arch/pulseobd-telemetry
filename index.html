@@ -617,6 +617,37 @@
       object-fit: cover;
       display: block;
     }
+    /* Service & Maintenance Cost Tracking Bars & Interactive Category Cards */
+    .svc-cost-cat-card {
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .svc-cost-cat-card:hover {
+      border-color: #1473E6;
+      box-shadow: 0 0 0 1px rgba(20, 115, 230, 0.18);
+    }
+    html.dark .svc-cost-cat-card:hover {
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25);
+    }
+    .svc-cost-bar-track {
+      width: 100%;
+      height: 6px;
+      border-radius: 9999px;
+      background-color: var(--border);
+      overflow: hidden;
+    }
+    .svc-cost-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #1473E6, #10B981);
+      min-width: 0;
+      transition: width 0.2s ease;
+    }
+    html.dark .svc-cost-bar-fill {
+      background: linear-gradient(90deg, #60A5FA, #34D399);
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(128, 128, 136, 0.28); border-radius: 9999px; }
@@ -984,7 +1015,10 @@
       <section id="tab-graphs" class="hidden space-y-3">
         <div class="acro-card rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
           <div class="min-w-0">
-            <h2 class="text-sm sm:text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs</h2>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-sm sm:text-base font-bold text-[#222222]">6-Channel Synchronized Telemetry Graphs</h2>
+              <span id="graphs-odo-pill" class="text-[11px] font-mono-num px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold whitespace-nowrap">ODO: Not Set</span>
+            </div>
             <p class="text-xs text-[#5A5F6A]">Stopped/off subsystems stay truthfully flat; only active sensors &amp; live drives animate</p>
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
@@ -998,6 +1032,29 @@
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               Export CSV
             </button>
+          </div>
+        </div>
+
+        <!-- Current Mileage (Odometer) & Live Trip Telemetry Bar -->
+        <div class="acro-card rounded-xl p-3 sm:p-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs min-w-0">
+          <div class="flex flex-wrap items-center gap-3 min-w-0">
+            <div class="min-w-0">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-[#5A5F6A] block">Current Mileage (Odometer)</span>
+              <div class="flex flex-wrap items-baseline gap-2 mt-0.5">
+                <strong id="graphs-odo-value" class="font-mono-num text-xl sm:text-2xl font-bold text-[#222222] tracking-tight">Not Set</strong>
+                <span id="graphs-trip-delta" class="text-[11px] font-mono-num px-2 py-0.5 rounded-full bg-[#F7F8FA] border border-[#E6E8EE] text-[#5A5F6A] font-semibold whitespace-nowrap">+0.0 km session</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-mono-num">
+              <span id="graphs-odo-vin" class="px-2 py-0.5 rounded-full acro-well text-[#4A4E57] font-semibold">VIN AAVZZZ6RZHU112564</span>
+              <span id="graphs-dist-clear" class="px-2 py-0.5 rounded-full acro-well text-[#5A5F6A]">PID 0131: 65,535 km</span>
+              <span id="graphs-odo-source-note" class="text-[#5A5F6A]">Synced with Service Log (22 F4A6 cluster-gated)</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 w-full lg:w-auto">
+            <input id="graphs-odo-input" type="number" min="0" step="1" placeholder="Enter dash km" aria-label="Update current mileage in km" class="min-w-0 flex-1 sm:flex-initial sm:w-40 bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+            <button type="button" onclick="updateVehicleOdometerFromGraphsInput()" class="px-3 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Update km</button>
+            <button type="button" onclick="switchTab('service')" class="px-3 py-1.5 acro-pill-secondary whitespace-nowrap shrink-0">Service →</button>
           </div>
         </div>
 
@@ -1573,10 +1630,49 @@
               <h3 class="text-sm sm:text-base font-bold text-[#222222]">Maintenance Schedule &amp; Next-Due Tracker</h3>
               <p class="text-xs text-[#5A5F6A]">Tap <strong>Log</strong> on any maintenance category to pre-fill dates, km intervals &amp; parts spec.</p>
             </div>
-            <span id="svc-intervals-summary" class="text-xs px-2.5 py-1 rounded-full acro-well font-mono-num font-semibold text-[#222222]">10 Service Items Tracked</span>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span id="svc-intervals-cost-pill" class="text-xs px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold whitespace-nowrap">Total Spend: R 0</span>
+              <span id="svc-intervals-summary" class="text-xs px-2.5 py-1 rounded-full acro-well font-mono-num font-semibold text-[#222222]">10 Service Items Tracked</span>
+            </div>
           </div>
 
           <div id="svc-intervals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs"></div>
+        </div>
+
+        <!-- Service & Maintenance Cost Tracker (All Categories & Totals) -->
+        <div class="acro-card rounded-xl p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <h3 class="text-sm sm:text-base font-bold text-[#222222]">Service &amp; Maintenance Cost Tracker</h3>
+              <p class="text-xs text-[#5A5F6A]">Live spend totals across all service items &amp; maintenance categories — tap any category to filter history.</p>
+            </div>
+            <span id="svc-cost-total-pill" class="text-xs px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 whitespace-nowrap">TOTAL: R 0</span>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Total Spend (All Time)</span>
+              <strong id="svc-kpi-total-spend" class="font-mono-num text-lg font-bold text-[#047857] block truncate mt-0.5">R 0</strong>
+              <span id="svc-kpi-total-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">0 costed entries</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Year-to-Date Spend</span>
+              <strong id="svc-kpi-ytd-spend" class="font-mono-num text-lg font-bold text-[#1473E6] block truncate mt-0.5">R 0</strong>
+              <span id="svc-kpi-ytd-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Current calendar year</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Average per Service</span>
+              <strong id="svc-kpi-avg-spend" class="font-mono-num text-lg font-bold text-[#222222] block truncate mt-0.5">R 0</strong>
+              <span id="svc-kpi-avg-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Across costed items</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Highest-Spend Category</span>
+              <strong id="svc-kpi-top-cat" class="text-sm font-bold text-[#222222] block truncate mt-0.5">No costs logged</strong>
+              <span id="svc-kpi-top-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Add cost to any entry</span>
+            </div>
+          </div>
+
+          <div id="svc-cost-categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs"></div>
         </div>
 
         <!-- 2-Column Workspace: Add/Edit Service Form + Chronological Service History -->
@@ -1701,10 +1797,12 @@
                 <h3 class="text-sm sm:text-base font-bold text-[#222222]">Recorded Service &amp; Inspection History</h3>
                 <p id="svc-history-subtitle" class="text-xs text-[#5A5F6A] truncate">Stored per VIN in IndexedDB + vehicle_history/&lt;VIN&gt;/service_log.json</p>
               </div>
-              <div class="flex items-center gap-1.5 min-w-0 w-full sm:w-auto">
+              <div class="flex flex-wrap items-center gap-1.5 min-w-0 w-full sm:w-auto">
                 <select id="svc-history-filter" onchange="onServiceHistoryFilterChange()" aria-label="Filter service history by category" class="min-w-0 flex-1 sm:flex-initial max-w-full text-xs bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1 font-semibold text-[#222222] focus:outline-none hover:border-[#9CA3AF] transition truncate">
                   <option value="ALL">All Categories</option>
                   <option value="TYRES_ALL">Tyres (All)</option>
+                  <option value="tyres_replacement">Tyres (Replacement &amp; Tread)</option>
+                  <option value="tires_alignment">Tyres (Rotation &amp; Alignment)</option>
                   <option value="wiper_blades">Wipers &amp; Blades</option>
                   <option value="oil_filter">Oil &amp; Filter</option>
                   <option value="inspection_service">Annual / Major Inspection</option>
@@ -1716,6 +1814,7 @@
                   <option value="inspection_baseline">OBD-II Pre-Service Checks</option>
                   <option value="custom_repair">Repairs / Follow-Up</option>
                 </select>
+                <span id="svc-history-cost-total" class="text-xs px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold shrink-0 whitespace-nowrap">R 0</span>
                 <span id="svc-record-count" class="text-xs px-2.5 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold shrink-0 whitespace-nowrap">0 records</span>
               </div>
             </div>
@@ -4035,6 +4134,7 @@
         renderConnectedBtDevicesUi();
       }
       if (tabId === 'service' && typeof refreshServiceTab === 'function') refreshServiceTab();
+      if (tabId === 'graphs' && typeof refreshGraphsMileageUi === 'function') refreshGraphsMileageUi();
       if (tabId === 'cockpit' || tabId === 'graphs') updateDomMetrics(appState.current, true);
       renderAllChartsNow();
     }
@@ -4076,6 +4176,10 @@
         renderConnectedBtDevicesUi();
       }
       appState.source = src;
+      if (typeof serviceState !== 'undefined') {
+        serviceState.liveTripKm = 0;
+        serviceState.lastOdoTickMs = 0;
+      }
       const sel = document.getElementById('source-select');
       if (sel && sel.value !== src) sel.value = src;
       if (src === 'snap1' || src === 'snap2' || src === 'parked_off') {
@@ -4096,6 +4200,7 @@
       syncSimTimer();
       renderAllCharts();
       if (typeof updateTripStatusUi === 'function') updateTripStatusUi();
+      if (typeof refreshGraphsMileageUi === 'function') refreshGraphsMileageUi();
       if (appState.activeTab === 'passport') renderAllVariablesTable();
       if (appState.activeTab === 'service' && typeof updateServiceHealthAndSnapshotUi === 'function') {
         updateServiceHealthAndSnapshotUi(appState.current, true);
@@ -4311,6 +4416,10 @@
         if (typeof updateTripStatusUi === 'function') updateTripStatusUi();
       }
 
+      if (typeof accumulateLiveMileageTick === 'function') {
+        accumulateLiveMileageTick(d);
+      }
+
       if (onGraphs) {
         const pillLiveCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-bold shrink-0';
         const pillBlueCls = 'text-[10px] font-mono-num px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-bold shrink-0';
@@ -4357,6 +4466,9 @@
           : `Residual Rail ${d.rail.toFixed(2)} MPa · MAP ${Math.round(d.map)} kPa (Baro) · Timing 0.0°`);
         _setElText('g5-readout', `Pedal D/E ${d.pedalD.toFixed(1)}% · Thr A/B ${d.thr.toFixed(1)}% · Rel ${d.relThr.toFixed(1)}% · Act ${d.actThr.toFixed(1)}%`);
         _setElText('g6-readout', `${d.volt.toFixed(2)}V · Fuel ${d.fuel.toFixed(1)}% · EVAP ${d.evap.toFixed(1)}% · ${drv.fuelLh.toFixed(2)} L/h`);
+        if (typeof updateGraphsMileageLiveUi === 'function') {
+          updateGraphsMileageLiveUi(d);
+        }
       }
 
       if (onService && typeof updateServiceHealthAndSnapshotUi === 'function') {
@@ -8066,6 +8178,9 @@
       selectedVin: '',
       lastHealthRenderMs: 0,
       lastCockpitSummaryKey: '',
+      latestOdometerByVin: {},
+      liveTripKm: 0,
+      lastOdoTickMs: 0,
       pendingAttachments: [],
       renderedRecordsById: new Map(),
       lightbox: {
@@ -8080,6 +8195,339 @@
       },
       photoUiInitialized: false
     };
+
+    // --- Service Cost Parsing, Multi-Category Aggregation & Graphs Odometer Sync ---
+    function parseServiceCost(raw) {
+      if (raw === null || raw === undefined) return { amount: null, currency: '' };
+      if (typeof raw === 'number') {
+        return (!Number.isNaN(raw) && Number.isFinite(raw) && raw >= 0)
+          ? { amount: Math.round(raw * 100) / 100, currency: '' }
+          : { amount: null, currency: '' };
+      }
+      const str = String(raw).trim();
+      if (!str) return { amount: null, currency: '' };
+
+      let currency = '';
+      if (/\bZAR\b/i.test(str) || /^\s*R(?=\s*[\d.,])/i.test(str)) currency = 'R';
+      else if (str.includes('$') || /\bUSD\b/i.test(str)) currency = '$';
+      else if (str.includes('€') || /\bEUR\b/i.test(str)) currency = '€';
+      else if (str.includes('£') || /\bGBP\b/i.test(str)) currency = '£';
+
+      const numMatch = str.match(/[\d][\d\s.,]*/);
+      if (!numMatch) return { amount: null, currency };
+      let cleaned = numMatch[0].replace(/\s+/g, '');
+      const hasDot = cleaned.includes('.');
+      const hasComma = cleaned.includes(',');
+      if (hasDot && hasComma) {
+        if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (hasComma && !hasDot) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length >= 1 && parts[1].length <= 2) {
+          cleaned = parts[0] + '.' + parts[1];
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      }
+      const val = Number(cleaned);
+      if (Number.isNaN(val) || !Number.isFinite(val) || val < 0) {
+        return { amount: null, currency };
+      }
+      return { amount: Math.round(val * 100) / 100, currency };
+    }
+
+    function getRecordCostAmount(rec) {
+      if (!rec) return null;
+      if (rec.costAmount !== undefined && rec.costAmount !== null && rec.costAmount !== '' && !Number.isNaN(Number(rec.costAmount))) {
+        const n = Number(rec.costAmount);
+        if (Number.isFinite(n) && n >= 0) return Math.round(n * 100) / 100;
+      }
+      return parseServiceCost(rec.cost).amount;
+    }
+
+    function detectPreferredServiceCurrency(records) {
+      for (const r of (records || [])) {
+        if (!r || !r.cost) continue;
+        const parsed = parseServiceCost(r.cost);
+        if (parsed.currency) return parsed.currency;
+      }
+      return 'R';
+    }
+
+    function formatServiceCurrency(amount, currency) {
+      if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return '—';
+      const n = Math.max(0, Number(amount));
+      const cur = currency || 'R';
+      const hasCents = Math.abs(n - Math.round(n)) > 0.004;
+      const formatted = hasCents
+        ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : Math.round(n).toLocaleString();
+      return cur === 'R' ? `R ${formatted}` : `${cur}${formatted}`;
+    }
+
+    function computeServiceCostSummary(records) {
+      const allRecs = Array.isArray(records) ? records : [];
+      const currency = detectPreferredServiceCurrency(allRecs);
+      const curYear = String(new Date().getFullYear());
+      let totalSpend = 0;
+      let ytdSpend = 0;
+      let costedCount = 0;
+      let ytdCount = 0;
+      let highestRecord = null;
+
+      const byCatMap = new Map();
+      SERVICE_CATEGORIES.forEach(cat => {
+        byCatMap.set(cat.id, {
+          id: cat.id,
+          label: cat.label,
+          scheduled: cat.intervalKm !== null || cat.intervalMonths !== null,
+          total: 0,
+          count: 0,
+          costedCount: 0,
+          avg: 0,
+          lastCost: null,
+          sharePct: 0
+        });
+      });
+
+      allRecs.forEach(r => {
+        if (!r) return;
+        const catId = byCatMap.has(r.category) ? r.category : 'custom_repair';
+        const bucket = byCatMap.get(catId);
+        bucket.count += 1;
+        const amt = getRecordCostAmount(r);
+        if (amt !== null) {
+          totalSpend += amt;
+          costedCount += 1;
+          bucket.total += amt;
+          bucket.costedCount += 1;
+          if (bucket.lastCost === null) bucket.lastCost = amt;
+          if (String(r.serviceDate || '').startsWith(curYear)) {
+            ytdSpend += amt;
+            ytdCount += 1;
+          }
+          if (!highestRecord || amt > highestRecord.amount) {
+            highestRecord = {
+              id: r.id,
+              title: r.title || bucket.label,
+              categoryLabel: r.categoryLabel || bucket.label,
+              serviceDate: r.serviceDate || '',
+              amount: amt
+            };
+          }
+        }
+      });
+
+      totalSpend = Math.round(totalSpend * 100) / 100;
+      ytdSpend = Math.round(ytdSpend * 100) / 100;
+      const avgCost = costedCount > 0 ? Math.round((totalSpend / costedCount) * 100) / 100 : 0;
+
+      const byCategory = Array.from(byCatMap.values()).map(b => {
+        const tot = Math.round(b.total * 100) / 100;
+        return {
+          ...b,
+          total: tot,
+          avg: b.costedCount > 0 ? Math.round((tot / b.costedCount) * 100) / 100 : 0,
+          sharePct: totalSpend > 0 ? Math.round((tot / totalSpend) * 1000) / 10 : 0
+        };
+      });
+
+      const sortedCats = [...byCategory].sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        if (b.count !== a.count) return b.count - a.count;
+        return 0;
+      });
+      const topCategory = sortedCats.find(c => c.total > 0) || null;
+
+      return {
+        currency,
+        curYear,
+        totalSpend,
+        ytdSpend,
+        costedCount,
+        ytdCount,
+        totalRecords: allRecs.length,
+        avgCost,
+        highestRecord,
+        topCategory,
+        byCatMap: new Map(byCategory.map(c => [c.id, c])),
+        byCategory: sortedCats
+      };
+    }
+
+    function filterServiceHistoryByCategory(catId) {
+      const sel = document.getElementById('svc-history-filter');
+      if (sel) {
+        const hasOpt = Array.from(sel.options).some(o => o.value === catId);
+        sel.value = hasOpt ? catId : 'ALL';
+      }
+      onServiceHistoryFilterChange();
+      const listEl = document.getElementById('svc-records-list');
+      if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderServiceCostTrackerUi(vin, records) {
+      const summary = computeServiceCostSummary(records);
+      const fmt = (n) => formatServiceCurrency(n, summary.currency);
+
+      const totalPill = document.getElementById('svc-cost-total-pill');
+      const intCostPill = document.getElementById('svc-intervals-cost-pill');
+      const kpiTotal = document.getElementById('svc-kpi-total-spend');
+      const kpiTotalSub = document.getElementById('svc-kpi-total-sub');
+      const kpiYtd = document.getElementById('svc-kpi-ytd-spend');
+      const kpiYtdSub = document.getElementById('svc-kpi-ytd-sub');
+      const kpiAvg = document.getElementById('svc-kpi-avg-spend');
+      const kpiAvgSub = document.getElementById('svc-kpi-avg-sub');
+      const kpiTop = document.getElementById('svc-kpi-top-cat');
+      const kpiTopSub = document.getElementById('svc-kpi-top-sub');
+      const grid = document.getElementById('svc-cost-categories-grid');
+
+      if (totalPill) totalPill.textContent = `TOTAL: ${fmt(summary.totalSpend)}`;
+      if (intCostPill) intCostPill.textContent = `Total Spend: ${fmt(summary.totalSpend)}`;
+      if (kpiTotal) kpiTotal.textContent = fmt(summary.totalSpend);
+      if (kpiTotalSub) {
+        kpiTotalSub.textContent = summary.costedCount > 0
+          ? `${summary.costedCount} costed of ${summary.totalRecords} entr${summary.totalRecords === 1 ? 'y' : 'ies'}`
+          : `${summary.totalRecords} entr${summary.totalRecords === 1 ? 'y' : 'ies'} · add cost to track`;
+      }
+      if (kpiYtd) kpiYtd.textContent = fmt(summary.ytdSpend);
+      if (kpiYtdSub) {
+        kpiYtdSub.textContent = `${summary.curYear} (${summary.ytdCount} costed entr${summary.ytdCount === 1 ? 'y' : 'ies'})`;
+      }
+      if (kpiAvg) kpiAvg.textContent = summary.costedCount > 0 ? fmt(summary.avgCost) : fmt(0);
+      if (kpiAvgSub) {
+        kpiAvgSub.textContent = summary.highestRecord
+          ? `Peak: ${fmt(summary.highestRecord.amount)}`
+          : 'Across costed items';
+      }
+      if (kpiTop) {
+        kpiTop.textContent = summary.topCategory ? summary.topCategory.label : 'No costs logged';
+      }
+      if (kpiTopSub) {
+        kpiTopSub.textContent = summary.topCategory
+          ? `${fmt(summary.topCategory.total)} (${summary.topCategory.sharePct.toFixed(0)}% of total)`
+          : 'Enter Cost on any service entry';
+      }
+
+      if (grid) {
+        grid.innerHTML = summary.byCategory.map(cat => {
+          const hasSpend = cat.total > 0;
+          const barW = hasSpend ? Math.max(4, Math.min(100, cat.sharePct)) : 0;
+          const amtCls = hasSpend ? 'text-[#047857]' : 'text-[#6B7280]';
+          const metaLine = cat.costedCount > 0
+            ? `${cat.costedCount} costed · avg ${fmt(cat.avg)} · ${cat.sharePct.toFixed(0)}%`
+            : (cat.count > 0 ? `${cat.count} logged · no cost entered` : 'No entries logged');
+          return `
+            <button type="button" onclick="filterServiceHistoryByCategory('${escapeHtml(cat.id)}')" class="acro-well svc-cost-cat-card rounded-xl p-2.5 flex flex-col justify-between gap-1.5 min-w-0">
+              <div class="flex items-start justify-between gap-1.5 w-full min-w-0">
+                <span class="font-semibold text-[#222222] leading-snug truncate">${escapeHtml(cat.label)}</span>
+                <span class="font-mono-num font-bold shrink-0 ${amtCls}">${escapeHtml(fmt(cat.total))}</span>
+              </div>
+              <div class="svc-cost-bar-track">
+                <div class="svc-cost-bar-fill" style="width:${barW.toFixed(1)}%"></div>
+              </div>
+              <div class="text-[10px] font-mono-num text-[#5A5F6A] truncate w-full">${escapeHtml(metaLine)}</div>
+            </button>
+          `;
+        }).join('');
+      }
+      return summary;
+    }
+
+    function accumulateLiveMileageTick(d) {
+      const act = getTelemetryActivityState(d || appState.current || SNAPSHOTS.snap1);
+      if (!d || act.isStatic || appState.paused) {
+        serviceState.lastOdoTickMs = 0;
+        return;
+      }
+      const spd = Number(d.spd || 0);
+      const now = Date.now();
+      if (serviceState.lastOdoTickMs > 0 && spd > 0.3) {
+        const dtSec = Math.min(5, Math.max(0, (now - serviceState.lastOdoTickMs) / 1000));
+        serviceState.liveTripKm = (serviceState.liveTripKm || 0) + (spd * dtSec) / 3600;
+      }
+      serviceState.lastOdoTickMs = now;
+    }
+
+    function updateGraphsMileageLiveUi(d) {
+      const cur = d || appState.current || SNAPSHOTS.snap1;
+      const act = getTelemetryActivityState(cur);
+      const vin = getActiveVin();
+      const baseOdo = serviceState.latestOdometerByVin[vin];
+      const hasBase = baseOdo !== null && baseOdo !== undefined && !Number.isNaN(Number(baseOdo));
+      const tripKm = Math.max(0, Number(serviceState.liveTripKm || 0));
+      const liveOdo = hasBase ? (Number(baseOdo) + tripKm) : null;
+      const isStatic = Boolean(act.isStatic);
+      const distClear = cur.distClear !== undefined && cur.distClear !== null ? Number(cur.distClear) : 65535;
+
+      const pillText = liveOdo !== null
+        ? `ODO: ${tripKm >= 0.05 ? liveOdo.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : Math.round(liveOdo).toLocaleString()} km`
+        : 'ODO: Not Set';
+      const valText = liveOdo !== null
+        ? `${tripKm >= 0.05 ? liveOdo.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : Math.round(liveOdo).toLocaleString()} km`
+        : 'Not Set';
+
+      _setElText('graphs-odo-pill', pillText);
+      _setElText('graphs-odo-value', valText);
+      _setElText('graphs-odo-vin', `VIN ${vin}`);
+      _setElText('graphs-dist-clear', `PID 0131: ${Math.round(distClear).toLocaleString()} km`);
+
+      if (isStatic) {
+        _setElText('graphs-trip-delta', 'STATIC · 0.0 km session');
+      } else if (tripKm >= 0.01) {
+        _setElText('graphs-trip-delta', `+${tripKm.toFixed(2)} km live trip`);
+      } else {
+        _setElText('graphs-trip-delta', '+0.0 km session');
+      }
+
+      _setElText(
+        'graphs-odo-source-note',
+        hasBase
+          ? (tripKm >= 0.05
+              ? `Cluster base ${Math.round(Number(baseOdo)).toLocaleString()} km + live OBD speed`
+              : 'Synced with Service Log (22 F4A6 cluster-gated)')
+          : 'Enter dash km here or in Service tab (22 F4A6 cluster-gated)'
+      );
+    }
+
+    async function refreshGraphsMileageUi() {
+      const vin = getActiveVin();
+      const meta = await getServiceMetaForVin(vin);
+      serviceState.latestOdometerByVin[vin] = meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null;
+      const inp = document.getElementById('graphs-odo-input');
+      if (inp && document.activeElement !== inp) {
+        inp.value = meta && meta.latestOdometerKm != null ? String(meta.latestOdometerKm) : '';
+      }
+      updateGraphsMileageLiveUi(appState.current);
+    }
+
+    async function updateVehicleOdometerFromGraphsInput() {
+      const vin = getActiveVin();
+      const inp = document.getElementById('graphs-odo-input');
+      const raw = (inp?.value || '').trim();
+      const parsed = Number(raw);
+      if (!raw || Number.isNaN(parsed) || parsed < 0) {
+        logTerminal('[GRAPHS MILEAGE] Enter a valid non-negative odometer value in km.', 'text-[#B45309]');
+        inp?.focus();
+        return;
+      }
+      const odoKm = Math.round(parsed);
+      const meta = await getServiceMetaForVin(vin);
+      meta.latestOdometerKm = odoKm;
+      await saveServiceMetaForVin(meta);
+      serviceState.latestOdometerByVin[vin] = odoKm;
+      serviceState.liveTripKm = 0;
+      serviceState.lastOdoTickMs = 0;
+      const svcInput = document.getElementById('svc-current-odo');
+      if (svcInput) svcInput.value = String(odoKm);
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      await refreshGraphsMileageUi();
+      if (appState.activeTab === 'service') await refreshServiceTab();
+      logTerminal(`[MILEAGE] Updated current odometer for ${vin} → ${odoKm.toLocaleString()} km.`, 'text-[#047857] font-semibold');
+    }
 
     function formatAttachmentBytes(bytes) {
       const n = Number(bytes || 0);
@@ -9380,6 +9828,7 @@
 
       const scheduledCats = SERVICE_CATEGORIES.filter(c => c.intervalKm !== null || c.intervalMonths !== null);
       const currentOdoKm = meta && meta.latestOdometerKm !== undefined ? meta.latestOdometerKm : null;
+      const costSummary = computeServiceCostSummary(records);
       let dueCount = 0;
 
       grid.innerHTML = scheduledCats.map(cat => {
@@ -9389,6 +9838,11 @@
         const lastLine = lastRec
           ? `Last: ${escapeHtml(lastRec.serviceDate || '—')}${lastRec.odometerKm != null ? ' @ ' + formatNumberKm(lastRec.odometerKm) : ''}`
           : 'Not yet logged for this VIN';
+        const catCost = costSummary.byCatMap.get(cat.id);
+        const catSpendStr = catCost && catCost.total > 0
+          ? `Spent: ${formatServiceCurrency(catCost.total, costSummary.currency)}${catCost.costedCount > 1 ? ` (${catCost.costedCount})` : ''}`
+          : `Spent: ${formatServiceCurrency(0, costSummary.currency)}`;
+        const catSpendCls = catCost && catCost.total > 0 ? 'text-[#047857] font-semibold' : 'text-[#6B7280]';
         const lastAtts = lastRec ? normalizeServiceAttachments(lastRec.attachments) : [];
         const photoBtn = lastAtts.length
           ? `<button type="button" onclick="openSavedServicePhotoLightbox('${escapeHtml(lastRec.id)}', 0)" title="Preview ${lastAtts.length} attached photo${lastAtts.length === 1 ? '' : 's'}" class="px-2 py-1 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] hover:bg-[#DBEAFE] font-mono-num font-semibold text-[10px] transition shrink-0 whitespace-nowrap">${lastAtts.length} Photo${lastAtts.length === 1 ? '' : 's'}</button>`
@@ -9402,6 +9856,7 @@
               </div>
               <div class="text-[11px] text-[#5A5F6A] font-mono-num truncate">${lastLine}</div>
               <div class="text-[11px] font-semibold text-[#222222] font-mono-num truncate">${escapeHtml(st.remLine)}</div>
+              <div class="text-[10px] font-mono-num truncate ${catSpendCls}">${escapeHtml(catSpendStr)}</div>
             </div>
             <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-[#E6E8EE]">
               <span class="text-[10px] text-[#6B7280] font-mono-num truncate">${cat.intervalKm ? (cat.intervalKm / 1000) + 'k km' : 'Condition'}${cat.intervalMonths ? ' / ' + cat.intervalMonths + 'm' : ''}</span>
@@ -9430,9 +9885,11 @@
     function renderServiceRecordsListUi(vin, records) {
       const listEl = document.getElementById('svc-records-list');
       const countEl = document.getElementById('svc-record-count');
+      const costTotalEl = document.getElementById('svc-history-cost-total');
       const subEl = document.getElementById('svc-history-subtitle');
       const filterVal = document.getElementById('svc-history-filter')?.value || 'ALL';
       const allRecs = Array.isArray(records) ? records : [];
+      const currency = detectPreferredServiceCurrency(allRecs);
       serviceState.renderedRecordsById = new Map();
       allRecs.forEach(r => { if (r && r.id) serviceState.renderedRecordsById.set(r.id, r); });
 
@@ -9442,6 +9899,15 @@
             ? allRecs.filter(r => r.category === 'tyres_replacement' || r.category === 'tires_alignment')
             : allRecs.filter(r => r.category === filterVal));
 
+      const filteredSpend = filtered.reduce((sum, r) => {
+        const amt = getRecordCostAmount(r);
+        return amt !== null ? sum + amt : sum;
+      }, 0);
+
+      if (costTotalEl) {
+        const fmtSpend = formatServiceCurrency(filteredSpend, currency);
+        costTotalEl.textContent = filterVal === 'ALL' ? `Total: ${fmtSpend}` : `Filtered: ${fmtSpend}`;
+      }
       if (countEl) {
         countEl.textContent = filterVal === 'ALL'
           ? `${allRecs.length} record${allRecs.length === 1 ? '' : 's'}`
@@ -9467,6 +9933,13 @@
       listEl.innerHTML = filtered.map(r => {
         const snap = r.obdSnapshot || null;
         const catDef = getServiceCategoryDef(r.category);
+        const parsedAmt = getRecordCostAmount(r);
+        const costLabel = (r.cost && String(r.cost).trim())
+          ? String(r.cost).trim()
+          : (parsedAmt !== null ? formatServiceCurrency(parsedAmt, currency) : '');
+        const costBadge = costLabel
+          ? `<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-[10px] font-mono-num font-bold">${escapeHtml(costLabel)}</span>`
+          : '';
         const atts = normalizeServiceAttachments(r.attachments);
         const photoCountBadge = atts.length
           ? `<button type="button" onclick="openSavedServicePhotoLightbox('${escapeHtml(r.id)}', 0)" class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] hover:bg-[#D1FAE5] text-[10px] font-mono-num font-bold transition">${atts.length} Photo${atts.length === 1 ? '' : 's'}</button>`
@@ -9501,8 +9974,7 @@
         const metaRow = [
           r.serviceDate || 'No date',
           r.odometerKm != null ? formatNumberKm(r.odometerKm) : 'Odo N/A',
-          r.workshop || '',
-          r.cost || ''
+          r.workshop || ''
         ].filter(Boolean).join(' · ');
 
         return `
@@ -9511,6 +9983,7 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] text-[10px] font-bold">${escapeHtml(r.categoryLabel || catDef.label)}</span>
+                  ${costBadge}
                   ${photoCountBadge}
                   <span class="font-mono-num text-[11px] text-[#5A5F6A]">${escapeHtml(metaRow)}</span>
                 </div>
@@ -9705,6 +10178,7 @@
 
       const meta = await getServiceMetaForVin(vin);
       const records = await getServiceRecordsForVin(vin);
+      serviceState.latestOdometerByVin[vin] = meta.latestOdometerKm ?? null;
 
       const odoBadge = document.getElementById('svc-odo-badge');
       if (odoBadge) {
@@ -9743,7 +10217,9 @@
       renderFormPhotoPreviewsUi();
       updateServiceHealthAndSnapshotUi(appState.current, true);
       renderServiceIntervalsUi(vin, meta, records);
+      renderServiceCostTrackerUi(vin, records);
       renderServiceRecordsListUi(vin, records);
+      if (typeof updateGraphsMileageLiveUi === 'function') updateGraphsMileageLiveUi(appState.current);
     }
 
     async function onServiceVinSelect(vin) {
@@ -9816,10 +10292,14 @@
       const meta = await getServiceMetaForVin(vin);
       meta.latestOdometerKm = odoKm;
       await saveServiceMetaForVin(meta);
+      serviceState.latestOdometerByVin[vin] = odoKm;
+      serviceState.liveTripKm = 0;
+      serviceState.lastOdoTickMs = 0;
       const formOdo = document.getElementById('svc-odometer');
       if (formOdo && !formOdo.value) formOdo.value = String(odoKm);
       await persistServiceLogToProjectFolder(vin, { quiet: true });
       await refreshServiceTab();
+      await refreshGraphsMileageUi();
       logTerminal(`[SERVICE LOG] Updated cluster odometer for ${vin} → ${odoKm.toLocaleString()} km.`, 'text-[#047857] font-semibold');
     }
 
@@ -9894,6 +10374,7 @@
       const existing = editId ? (await getServiceRecordsForVin(vin)).find(r => r.id === editId) : null;
       const nowIso = new Date().toISOString();
 
+      const parsedCost = parseServiceCost(costRaw);
       const attachments = normalizeServiceAttachments(serviceState.pendingAttachments);
       const rec = {
         id: existing ? existing.id : ('svc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
@@ -9910,6 +10391,7 @@
         partsSpec: partsRaw || cat.defaultParts || '',
         workshop: workshopRaw,
         cost: costRaw,
+        costAmount: parsedCost.amount,
         notes: notesRaw,
         attachments,
         obdSnapshot: (existing && existing.obdSnapshot) ? existing.obdSnapshot : buildCurrentObdSnapshot(appState.current)
@@ -9921,11 +10403,15 @@
       if (odoVal !== null && (meta.latestOdometerKm == null || odoVal >= meta.latestOdometerKm)) {
         meta.latestOdometerKm = odoVal;
         await saveServiceMetaForVin(meta);
+        serviceState.latestOdometerByVin[vin] = odoVal;
+        serviceState.liveTripKm = 0;
+        serviceState.lastOdoTickMs = 0;
       }
 
       await persistServiceLogToProjectFolder(vin, { quiet: false });
       cancelServiceEdit(true);
       await refreshServiceTab();
+      await refreshGraphsMileageUi();
       const photoNote = attachments.length ? ` (${attachments.length} photo${attachments.length === 1 ? '' : 's'})` : '';
       logTerminal(`[SERVICE LOG] ${existing ? 'Updated' : 'Saved'} "${rec.title}"${photoNote} for ${vin}.`, 'text-[#047857] font-semibold');
     }
@@ -10052,11 +10538,21 @@
       const vin = getServiceSelectedVin();
       const doc = await buildServiceLogDocForVin(vin);
       const veh = appState.vehicleRegistry[vin] || DEFAULT_VEHICLE_PROFILE;
+      const costSummary = computeServiceCostSummary(doc.records);
       const payload = {
         exportedAt: new Date().toISOString(),
         readOnlyEnforced: true,
         vehicle: veh,
         latestHealthCheck: evaluateVehicleServiceHealth(appState.current, veh),
+        costSummary: {
+          currency: costSummary.currency,
+          totalSpend: costSummary.totalSpend,
+          ytdSpend: costSummary.ytdSpend,
+          costedCount: costSummary.costedCount,
+          avgCost: costSummary.avgCost,
+          topCategory: costSummary.topCategory,
+          byCategory: costSummary.byCategory
+        },
         ...doc
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -10072,11 +10568,12 @@
       const doc = await buildServiceLogDocForVin(vin);
       const qCsv = (v) => `"${String(v === null || v === undefined ? '' : v).replace(/"/g, '""')}"`;
       const headers = [
-        'id,vin,category,title,service_date,odometer_km,next_due_km,next_due_date,parts_spec,workshop,cost,notes,obd_health_score,obd_dtc_count,obd_volt_v,obd_coolant_c,photo_count'
+        'id,vin,category,title,service_date,odometer_km,next_due_km,next_due_date,parts_spec,workshop,cost,cost_amount,notes,obd_health_score,obd_dtc_count,obd_volt_v,obd_coolant_c,photo_count'
       ];
       const rows = (doc.records || []).map(r => {
         const s = r.obdSnapshot || {};
         const photoCount = normalizeServiceAttachments(r.attachments).length;
+        const costAmt = getRecordCostAmount(r);
         return [
           qCsv(r.id),
           qCsv(r.vin || vin),
@@ -10089,6 +10586,7 @@
           qCsv(r.partsSpec),
           qCsv(r.workshop),
           qCsv(r.cost),
+          costAmt != null ? costAmt : '',
           qCsv(r.notes),
           s.healthScore != null ? s.healthScore : '',
           s.dtcCount != null ? s.dtcCount : '',
@@ -12575,6 +13073,7 @@
       .then(() => loadProjectHistoryManifest())
       .then(() => {
         updateVehicleIdentityDom();
+        if (typeof refreshGraphsMileageUi === 'function') refreshGraphsMileageUi();
         if (appState.activeTab === 'passport') renderAllVariablesTable({ force: true });
         if (appState.activeTab === 'bluetooth') refreshPassiveSessionsUi();
         if (appState.activeTab === 'history') refreshHistoryTab();
