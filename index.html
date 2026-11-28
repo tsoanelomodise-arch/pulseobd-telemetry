@@ -648,6 +648,100 @@
     html.dark .svc-cost-bar-fill {
       background: linear-gradient(90deg, #60A5FA, #34D399);
     }
+    /* Mileage Tracker & Workshop Manuals Library */
+    .manual-card {
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .manual-card:hover {
+      border-color: #1473E6;
+      box-shadow: 0 0 0 1px rgba(20, 115, 230, 0.18);
+    }
+    html.dark .manual-card:hover {
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.26);
+    }
+    .manual-modal-dialog {
+      width: 100%;
+      max-width: 780px;
+      max-height: 92vh;
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.875rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.48);
+    }
+    .manual-modal-body {
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+      flex: 1 1 auto;
+    }
+    .manual-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.625rem;
+      border: 1px solid var(--border);
+      background-color: var(--secondary);
+      cursor: pointer;
+      transition: border-color 0.15s ease, opacity 0.15s ease;
+    }
+    .manual-step-item:hover {
+      border-color: #1473E6;
+    }
+    .manual-step-item.done {
+      border-color: #10B981;
+      opacity: 0.78;
+    }
+    .manual-step-item.done .manual-step-text {
+      text-decoration: line-through;
+    }
+    .manual-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+    }
+    .manual-step-item.done .manual-step-num {
+      background-color: #10B981;
+      border-color: #10B981;
+      color: #FFFFFF;
+    }
+    .mileage-spark-wrap {
+      width: 100%;
+      min-height: 110px;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background-color: var(--secondary);
+      padding: 0.625rem 0.75rem;
+    }
+    #svc-mileage-tracker-card,
+    #svc-manuals-library-card {
+      scroll-margin-top: 8.75rem;
+    }
+    .manual-tab-btn-active {
+      background-color: #222222;
+      color: #FFFFFF;
+      border-color: #222222;
+    }
+    html.dark .manual-tab-btn-active {
+      background-color: #FAFAFA;
+      color: #09090B;
+      border-color: #FAFAFA;
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(128, 128, 136, 0.28); border-radius: 9999px; }
@@ -1557,6 +1651,8 @@
 
           <div class="flex flex-wrap items-center gap-2 min-w-0">
             <button type="button" onclick="capturePreServiceSnapshotRecord()" class="text-xs px-3.5 py-1.5 acro-pill-primary shadow-sm">Capture Pre-Service OBD Snapshot</button>
+            <button type="button" onclick="scrollToServiceSection('svc-mileage-tracker-card')" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Mileage Tracker</button>
+            <button type="button" onclick="scrollToServiceSection('svc-manuals-library-card')" class="text-xs px-3.5 py-1.5 acro-pill-secondary">User Manuals</button>
             <button type="button" onclick="copyPartsAndEcuSpec()" id="btn-copy-parts-spec" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Copy Parts &amp; ECU Spec</button>
             <button type="button" onclick="saveServiceLogNow(true)" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Save to Project Folder</button>
             <button type="button" onclick="exportServiceReportJson()" class="text-xs px-3.5 py-1.5 acro-pill-secondary">Export Service JSON</button>
@@ -1603,6 +1699,103 @@
             <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0 w-full lg:w-auto">
               <input id="svc-current-odo" type="number" min="0" step="1" placeholder="e.g. 124500 km" class="min-w-0 flex-1 sm:flex-initial sm:w-40 bg-white border border-[#D4D6DC] rounded-lg px-3.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
               <button type="button" onclick="updateVehicleOdometerFromInput()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Save Odometer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mileage, Trip Distance & Fuel Economy Tracker -->
+        <div id="svc-mileage-tracker-card" class="acro-card rounded-xl p-4 sm:p-5 space-y-3.5 min-w-0">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-[#222222]">Mileage, Trip &amp; Fuel Economy Tracker</h3>
+                <span id="mil-live-trip-pill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold whitespace-nowrap">Live OBD Trip: +0.00 km</span>
+              </div>
+              <p class="text-xs text-[#5A5F6A] mt-0.5">Log odometer checkpoints, fuel fill-ups &amp; live OBD trip distances per VIN — automatically drives maintenance countdowns and daily/annual km projections.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+              <button type="button" id="btn-mil-commit-trip" onclick="commitLiveObdTripToMileage()" class="text-xs px-3 py-1.5 acro-pill-secondary whitespace-nowrap">Commit Live Trip</button>
+              <button type="button" onclick="exportMileageHistoryCsv()" class="text-xs px-3 py-1.5 acro-pill-secondary whitespace-nowrap">Export Mileage CSV</button>
+            </div>
+          </div>
+
+          <!-- 4 Mileage KPI Tiles -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Current Odometer</span>
+              <strong id="mil-kpi-current" class="font-mono-num text-lg font-bold text-[#1473E6] block truncate mt-0.5">Not Set</strong>
+              <span id="mil-kpi-current-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Synced with 6 Graphs &amp; Service</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Distance Tracked</span>
+              <strong id="mil-kpi-tracked" class="font-mono-num text-lg font-bold text-[#047857] block truncate mt-0.5">0 km</strong>
+              <span id="mil-kpi-tracked-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">0 checkpoints · Last 30d: 0 km</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Avg Daily / Est. Yearly</span>
+              <strong id="mil-kpi-daily" class="font-mono-num text-lg font-bold text-[#222222] block truncate mt-0.5">— km/day</strong>
+              <span id="mil-kpi-yearly-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Log 2+ dates for projection</span>
+            </div>
+            <div class="acro-well rounded-xl p-3 min-w-0">
+              <span class="text-[11px] text-[#5A5F6A] font-medium block">Measured Fuel Economy</span>
+              <strong id="mil-kpi-fuel-econ" class="font-mono-num text-lg font-bold text-[#222222] block truncate mt-0.5">— L/100km</strong>
+              <span id="mil-kpi-fuel-sub" class="text-[10px] font-mono-num text-[#5A5F6A] block truncate">Add liters on fuel fill-ups</span>
+            </div>
+          </div>
+
+          <!-- 2-Column Mileage Entry Form + Progression Chart & History -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 text-xs">
+            <div class="lg:col-span-5 acro-well rounded-xl p-3 space-y-2.5 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-[#222222]">Log Mileage / Fuel Checkpoint</span>
+                <label class="inline-flex items-center gap-1.5 text-[11px] text-[#4A4E57] cursor-pointer select-none">
+                  <input id="mil-auto-commit-trip" type="checkbox" checked onchange="onToggleAutoCommitLiveTrip(this.checked)" class="rounded border-[#D4D6DC]" />
+                  <span>Auto-add OBD trips</span>
+                </label>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="mil-entry-date" class="block font-semibold text-[#4A4E57] mb-1">Date</label>
+                  <input id="mil-entry-date" type="date" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+                <div>
+                  <label for="mil-entry-odo" class="block font-semibold text-[#4A4E57] mb-1">Odometer (km)</label>
+                  <input id="mil-entry-odo" type="number" min="0" step="1" placeholder="e.g. 125240" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label for="mil-entry-type" class="block font-semibold text-[#4A4E57] mb-1">Trip / Entry Type</label>
+                  <select id="mil-entry-type" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2 py-1.5 font-semibold text-[#222222] focus:outline-none focus:border-[#222222]">
+                    <option value="Daily / Commute">Daily / Commute</option>
+                    <option value="Fuel Fill-Up">Fuel Fill-Up</option>
+                    <option value="Highway Trip">Highway Trip</option>
+                    <option value="City Driving">City Driving</option>
+                    <option value="Service Check">Service Check</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="mil-entry-liters" class="block font-semibold text-[#4A4E57] mb-1">Fuel (L · Opt)</label>
+                  <input id="mil-entry-liters" type="number" min="0" step="0.1" placeholder="e.g. 38.5" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+                <div>
+                  <label for="mil-entry-fuel-cost" class="block font-semibold text-[#4A4E57] mb-1">Fuel Cost (Opt)</label>
+                  <input id="mil-entry-fuel-cost" type="text" placeholder="e.g. R 890" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-mono-num text-[#222222] focus:outline-none focus:border-[#222222]" />
+                </div>
+              </div>
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                <input id="mil-entry-notes" type="text" placeholder="Route, petrol station, tyre pressure, or notes (optional)" class="min-w-0 flex-1 bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222] focus:outline-none focus:border-[#222222]" />
+                <button type="button" onclick="saveMileageEntryFromForm()" class="px-3.5 py-1.5 acro-pill-primary whitespace-nowrap shrink-0">Log Mileage</button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 flex flex-col gap-2.5 min-w-0">
+              <div id="mil-sparkline-box" class="mileage-spark-wrap">
+                <div class="text-[11px] text-[#5A5F6A]">Log 2+ odometer readings to visualize mileage progression &amp; distance per period.</div>
+              </div>
+              <div id="mil-history-list" class="space-y-1.5 max-h-[210px] overflow-y-auto pr-1">
+                <div class="acro-well rounded-xl p-3 text-[#5A5F6A]">No mileage checkpoints logged for this VIN yet.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1692,7 +1885,10 @@
 
             <div class="space-y-2.5 text-xs">
               <div>
-                <label for="svc-category" class="block font-semibold text-[#4A4E57] mb-1">Service Category</label>
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <label for="svc-category" class="block font-semibold text-[#4A4E57]">Service Category</label>
+                  <button type="button" onclick="openServiceManualForSelectedCategory()" class="text-[11px] font-semibold text-[#1473E6] hover:underline whitespace-nowrap">Open Service Manual →</button>
+                </div>
                 <select id="svc-category" onchange="onServiceCategoryChange(this.value)" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-3 py-2 font-semibold text-[#222222] focus:outline-none focus:border-[#222222]">
                   <option value="oil_filter">Oil &amp; Filter Change (VW 502.00 / 15,000 km / 12 mo)</option>
                   <option value="inspection_service">Annual / Major Inspection (30,000 km / 12 mo)</option>
@@ -1823,6 +2019,88 @@
               <div class="text-[#5A5F6A] py-4">Loading service history for this vehicle...</div>
             </div>
           </div>
+        </div>
+
+        <!-- Workshop User Manuals: Service Item Guides & Common Issue Fix Manuals -->
+        <div id="svc-manuals-library-card" class="acro-card rounded-xl p-4 sm:p-5 space-y-3.5 min-w-0">
+          <div class="flex flex-wrap items-start justify-between gap-2.5">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-[#222222]">User Manuals — Service Items &amp; Common Issue Fixes</h3>
+                <span id="manuals-count-pill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold whitespace-nowrap">22 Manuals</span>
+              </div>
+              <p class="text-xs text-[#5A5F6A] mt-0.5">Step-by-step interactive checklists, torque &amp; fluid specs, safety warnings, and read-only OBD-II verification guides for routine servicing and troubleshooting common faults.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+              <button type="button" id="btn-toggle-custom-manual" onclick="toggleCustomManualForm()" class="text-xs px-3 py-1.5 acro-pill-primary whitespace-nowrap">+ Add Custom Manual</button>
+            </div>
+          </div>
+
+          <!-- Live OBD-II Smart Troubleshooting Suggestions -->
+          <div id="manuals-obd-suggestions" class="hidden acro-well rounded-xl p-3 text-xs space-y-1.5"></div>
+
+          <!-- Custom Manual Authoring Drawer (collapsed by default) -->
+          <div id="custom-manual-form-panel" class="hidden acro-well rounded-xl p-3.5 space-y-2.5 text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <strong class="text-[#222222]">Add Custom User Manual (Saved per VIN)</strong>
+              <button type="button" onclick="toggleCustomManualForm(false)" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#5A5F6A] font-semibold">Close</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label for="cm-type" class="block font-semibold text-[#4A4E57] mb-1">Manual Type</label>
+                <select id="cm-type" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-semibold text-[#222222]">
+                  <option value="issue">Common Issue Fix Manual</option>
+                  <option value="service">Service Item Manual</option>
+                </select>
+              </div>
+              <div>
+                <label for="cm-difficulty" class="block font-semibold text-[#4A4E57] mb-1">Difficulty</label>
+                <select id="cm-difficulty" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 font-semibold text-[#222222]">
+                  <option value="Easy DIY">Easy DIY</option>
+                  <option value="Intermediate DIY">Intermediate DIY</option>
+                  <option value="Workshop Recommended">Workshop Recommended</option>
+                </select>
+              </div>
+              <div>
+                <label for="cm-time" class="block font-semibold text-[#4A4E57] mb-1">Est. Time</label>
+                <input id="cm-time" type="text" placeholder="e.g. 30–45 min" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222]" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label for="cm-title" class="block font-semibold text-[#4A4E57] mb-1">Manual Title</label>
+                <input id="cm-title" type="text" placeholder="e.g. Headlight Bulb H7 Replacement or EPC Light Check" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222]" />
+              </div>
+              <div>
+                <label for="cm-parts" class="block font-semibold text-[#4A4E57] mb-1">Parts / Tools / Torques (Optional)</label>
+                <input id="cm-parts" type="text" placeholder="e.g. H7 55W bulb, Torx T25, nitrile gloves" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222]" />
+              </div>
+            </div>
+            <div>
+              <label for="cm-steps" class="block font-semibold text-[#4A4E57] mb-1">Step-by-Step Instructions (one step per line)</label>
+              <textarea id="cm-steps" rows="3" placeholder="1. Switch ignition OFF and allow engine bay to cool.&#10;2. Unclip rear weather cap and release bulb spring clip.&#10;3. Install new bulb without touching glass; test beams." class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222]"></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input id="cm-safety" type="text" placeholder="Safety note (optional)" class="w-full bg-white border border-[#D4D6DC] rounded-lg px-2.5 py-1.5 text-[#222222]" />
+              <div class="flex items-center justify-end gap-2">
+                <button type="button" onclick="saveCustomManualFromForm()" class="px-4 py-1.5 acro-pill-primary whitespace-nowrap">Save Custom Manual</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills & Search Input -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" id="manual-filter-all" onclick="setManualsFilter('all')" class="px-3 py-1.5 rounded-lg border border-[#D4D6DC] font-semibold transition manual-tab-btn-active">All Manuals</button>
+              <button type="button" id="manual-filter-service" onclick="setManualsFilter('service')" class="px-3 py-1.5 rounded-lg border border-[#D4D6DC] bg-white text-[#222222] font-semibold transition">Service Items (12)</button>
+              <button type="button" id="manual-filter-issue" onclick="setManualsFilter('issue')" class="px-3 py-1.5 rounded-lg border border-[#D4D6DC] bg-white text-[#222222] font-semibold transition">Common Issue Fixes (10)</button>
+              <button type="button" id="manual-filter-custom" onclick="setManualsFilter('custom')" class="px-3 py-1.5 rounded-lg border border-[#D4D6DC] bg-white text-[#222222] font-semibold transition">Custom (0)</button>
+            </div>
+            <input id="manuals-search-input" type="text" oninput="renderManualsLibraryUi()" placeholder="Search oil, spark plugs, misfire, battery, P0300, brakes, Bluetooth..." class="min-w-0 w-full sm:w-72 bg-white border border-[#D4D6DC] rounded-lg px-3 py-1.5 text-[#222222] placeholder-[#9CA3AF] focus:outline-none focus:border-[#222222]" />
+          </div>
+
+          <!-- Manuals Cards Grid -->
+          <div id="svc-manuals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs"></div>
         </div>
 
       </section>
@@ -2460,6 +2738,37 @@
           <button type="button" onclick="fallbackToDeviceCameraInput()" class="px-3 py-1.5 acro-pill-secondary text-xs font-semibold whitespace-nowrap">Use File Picker</button>
         </div>
         <button type="button" id="svc-camera-capture-btn" onclick="captureServiceCameraFrame()" class="px-4 py-2 acro-pill-primary text-xs font-semibold whitespace-nowrap">Capture &amp; Attach</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Workshop Manual Reader Modal (Service Items & Common Issue Fixes) -->
+  <div id="svc-manual-modal" class="svc-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="manual-modal-title" onclick="if(event.target===this) closeManualModal()">
+    <div class="manual-modal-dialog">
+      <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-[#ECEEF2]">
+        <div class="min-w-0 space-y-1">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span id="manual-modal-type-pill" class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num text-[10px] font-bold">SERVICE MANUAL</span>
+            <span id="manual-modal-diff-pill" class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num text-[10px] font-bold">Easy DIY</span>
+            <span id="manual-modal-time-pill" class="px-2 py-0.5 rounded-full acro-well font-mono-num text-[10px] font-semibold text-[#5A5F6A]">30–45 min</span>
+          </div>
+          <h4 id="manual-modal-title" class="text-sm sm:text-base font-bold text-[#222222] leading-snug">Workshop Manual</h4>
+        </div>
+        <button type="button" onclick="closeManualModal()" aria-label="Close manual" class="px-2.5 py-1 rounded-lg acro-pill-secondary text-xs font-semibold shrink-0">Close ✕</button>
+      </div>
+
+      <div id="manual-modal-body" class="manual-modal-body space-y-3.5 text-xs"></div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-[#ECEEF2] text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="manual-modal-progress-pill" class="px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold text-[11px]">0 / 0 steps</span>
+          <button type="button" onclick="resetActiveManualChecks()" class="px-2.5 py-1 rounded-lg acro-pill-secondary text-xs font-semibold">Reset Steps</button>
+          <button type="button" id="manual-modal-delete-btn" onclick="deleteActiveCustomManual()" class="hidden px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold text-xs">Delete Custom</button>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="printActiveManual()" class="px-3 py-1.5 acro-pill-secondary text-xs font-semibold whitespace-nowrap">Print / PDF</button>
+          <button type="button" id="manual-modal-log-btn" onclick="logServiceFromActiveManual()" class="px-3.5 py-1.5 acro-pill-primary text-xs font-semibold whitespace-nowrap">Log This Service →</button>
+        </div>
       </div>
     </div>
   </div>
@@ -6983,6 +7292,9 @@
             endReason: reason,
             completedAtMs: Date.now()
           };
+          if (typeof autoCommitLiveTripOnSessionEnd === 'function') {
+            autoCommitLiveTripOnSessionEnd(session?.vin || getActiveVin(), sessionId).catch(() => {});
+          }
         }
 
         passiveState.activeSessionId = null;
@@ -8580,6 +8892,10 @@
               : 'Synced with Service Log (22 F4A6 cluster-gated)')
           : 'Enter dash km here or in Service tab (22 F4A6 cluster-gated)'
       );
+      _setElText('mil-live-trip-pill', `Live OBD Trip: +${tripKm.toFixed(2)} km`);
+      if (liveOdo !== null && appState.activeTab === 'service') {
+        _setElText('mil-kpi-current', valText);
+      }
     }
 
     async function refreshGraphsMileageUi() {
@@ -8604,12 +8920,13 @@
         return;
       }
       const odoKm = Math.round(parsed);
-      const meta = await getServiceMetaForVin(vin);
-      meta.latestOdometerKm = odoKm;
-      await saveServiceMetaForVin(meta);
-      serviceState.latestOdometerByVin[vin] = odoKm;
-      serviceState.liveTripKm = 0;
-      serviceState.lastOdoTickMs = 0;
+      await appendMileageEntryForVin(vin, {
+        date: todayIsoDate(),
+        odometerKm: odoKm,
+        tripType: 'Odometer Update',
+        source: 'graphs',
+        notes: 'Updated from 6 Graphs odometer bar'
+      }, { setAsLatest: true, resetLiveTrip: true });
       const svcInput = document.getElementById('svc-current-odo');
       if (svcInput) svcInput.value = String(odoKm);
       await persistServiceLogToProjectFolder(vin, { quiet: true });
@@ -9139,9 +9456,11 @@
       document.addEventListener('keydown', (ev) => {
         const camOpen = !document.getElementById('svc-camera-modal')?.classList.contains('hidden');
         const lbOpen = !document.getElementById('svc-lightbox-modal')?.classList.contains('hidden');
+        const manualOpen = !document.getElementById('svc-manual-modal')?.classList.contains('hidden');
         if (ev.key === 'Escape') {
           if (camOpen) closeServiceCameraModal();
           else if (lbOpen) closeServiceLightbox();
+          else if (manualOpen && typeof closeManualModal === 'function') closeManualModal();
         } else if (lbOpen && ev.key === 'ArrowLeft') {
           stepServiceLightbox(-1);
         } else if (lbOpen && ev.key === 'ArrowRight') {
@@ -9246,12 +9565,78 @@
       }
     }
 
+    function normalizeMileageLogArray(rawList) {
+      if (!Array.isArray(rawList)) return [];
+      const seen = new Map();
+      for (const item of rawList) {
+        if (!item || typeof item !== 'object') continue;
+        const odo = Number(item.odometerKm);
+        if (Number.isNaN(odo) || !Number.isFinite(odo) || odo < 0) continue;
+        const id = String(item.id || ('mil_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)));
+        const litersRaw = item.fuelLiters !== undefined && item.fuelLiters !== null && item.fuelLiters !== '' ? Number(item.fuelLiters) : null;
+        const fuelLiters = (litersRaw !== null && !Number.isNaN(litersRaw) && litersRaw > 0) ? Math.round(litersRaw * 100) / 100 : null;
+        const costRaw = String(item.fuelCost || '').trim();
+        const parsedCost = parseServiceCost(costRaw);
+        const fuelCostAmount = (item.fuelCostAmount !== undefined && item.fuelCostAmount !== null && !Number.isNaN(Number(item.fuelCostAmount)))
+          ? Math.round(Number(item.fuelCostAmount) * 100) / 100
+          : parsedCost.amount;
+        seen.set(id, {
+          id,
+          date: String(item.date || todayIsoDate()).slice(0, 10),
+          odometerKm: Math.round(odo),
+          tripType: String(item.tripType || 'Daily / Commute').slice(0, 48),
+          source: String(item.source || 'manual'),
+          fuelLiters,
+          fuelCost: costRaw,
+          fuelCostAmount,
+          notes: String(item.notes || '').slice(0, 240),
+          createdAt: String(item.createdAt || new Date().toISOString())
+        });
+      }
+      return Array.from(seen.values()).sort((a, b) => {
+        const dc = String(a.date || '').localeCompare(String(b.date || ''));
+        if (dc !== 0) return dc;
+        if (a.odometerKm !== b.odometerKm) return a.odometerKm - b.odometerKm;
+        return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+      });
+    }
+
+    function normalizeCustomManualsArray(rawList) {
+      if (!Array.isArray(rawList)) return [];
+      const seen = new Map();
+      for (const m of rawList) {
+        if (!m || typeof m !== 'object' || !m.title) continue;
+        const id = String(m.id || ('cman_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)));
+        const steps = Array.isArray(m.steps)
+          ? m.steps.map(s => String(s || '').trim()).filter(Boolean)
+          : String(m.steps || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        seen.set(id, {
+          id,
+          isCustom: true,
+          type: m.type === 'service' ? 'service' : 'issue',
+          categoryId: String(m.categoryId || (m.type === 'service' ? 'custom_repair' : 'custom_repair')),
+          title: String(m.title).trim().slice(0, 140),
+          difficulty: String(m.difficulty || 'Intermediate DIY'),
+          estTime: String(m.estTime || '30 min').slice(0, 40),
+          summary: String(m.summary || (steps[0] || 'User-authored vehicle guide')).slice(0, 220),
+          tools: Array.isArray(m.tools) ? m.tools.map(t => String(t).trim()).filter(Boolean) : [],
+          partsSpec: String(m.partsSpec || '').slice(0, 240),
+          safetyNote: String(m.safetyNote || 'Park on level ground, set parking brake, allow hot components to cool, and keep PulseOBD strictly read-only.').slice(0, 320),
+          steps: steps.length ? steps : ['Inspect component carefully and log findings in Service History.'],
+          obdVerify: Array.isArray(m.obdVerify) ? m.obdVerify : [],
+          createdAt: String(m.createdAt || new Date().toISOString())
+        });
+      }
+      return Array.from(seen.values());
+    }
+
     async function getServiceMetaForVin(vin) {
       const cleanVin = normalizeVinString(vin);
       const fb = readServiceLocalFallback().byVin[cleanVin]?.meta || null;
       const db = await openDriveDb();
+      let dbMeta = null;
       if (db && db.objectStoreNames.contains('serviceMeta')) {
-        const dbMeta = await new Promise((resolve) => {
+        dbMeta = await new Promise((resolve) => {
           try {
             const req = db.transaction('serviceMeta', 'readonly').objectStore('serviceMeta').get(cleanVin);
             req.onsuccess = () => resolve(req.result || null);
@@ -9260,18 +9645,23 @@
             resolve(null);
           }
         });
-        if (dbMeta) {
-          return {
-            vin: cleanVin,
-            latestOdometerKm: dbMeta.latestOdometerKm !== undefined && dbMeta.latestOdometerKm !== null
-              ? dbMeta.latestOdometerKm
-              : (fb ? fb.latestOdometerKm : null),
-            deletedIds: Array.from(new Set([...(fb?.deletedIds || []), ...(dbMeta.deletedIds || [])])),
-            updatedAt: dbMeta.updatedAt || fb?.updatedAt || ''
-          };
-        }
       }
-      return fb || { vin: cleanVin, latestOdometerKm: null, deletedIds: [], updatedAt: '' };
+      const primary = dbMeta || fb;
+      const mergedMileage = normalizeMileageLogArray([...(fb?.mileageLog || []), ...(dbMeta?.mileageLog || [])]);
+      const mergedCustomManuals = normalizeCustomManualsArray([...(fb?.customManuals || []), ...(dbMeta?.customManuals || [])]);
+      const latestOdo = (dbMeta && dbMeta.latestOdometerKm !== undefined && dbMeta.latestOdometerKm !== null)
+        ? dbMeta.latestOdometerKm
+        : (fb && fb.latestOdometerKm !== undefined && fb.latestOdometerKm !== null ? fb.latestOdometerKm : null);
+      const autoCommit = primary && primary.autoCommitLiveTrip !== undefined ? Boolean(primary.autoCommitLiveTrip) : true;
+      return {
+        vin: cleanVin,
+        latestOdometerKm: latestOdo,
+        deletedIds: Array.from(new Set([...(fb?.deletedIds || []), ...(dbMeta?.deletedIds || [])])),
+        mileageLog: mergedMileage,
+        autoCommitLiveTrip: autoCommit,
+        customManuals: mergedCustomManuals,
+        updatedAt: dbMeta?.updatedAt || fb?.updatedAt || ''
+      };
     }
 
     async function saveServiceMetaForVin(meta) {
@@ -9283,6 +9673,9 @@
           ? Math.max(0, Math.round(Number(meta.latestOdometerKm)))
           : null,
         deletedIds: Array.isArray(meta.deletedIds) ? Array.from(new Set(meta.deletedIds)) : [],
+        mileageLog: normalizeMileageLogArray(meta.mileageLog || []),
+        autoCommitLiveTrip: meta.autoCommitLiveTrip !== undefined ? Boolean(meta.autoCommitLiveTrip) : true,
+        customManuals: normalizeCustomManualsArray(meta.customManuals || []),
         updatedAt: new Date().toISOString()
       };
       const db = await openDriveDb();
@@ -9951,6 +10344,7 @@
               <span class="text-[10px] text-[#6B7280] font-mono-num truncate">${cat.intervalKm ? (cat.intervalKm / 1000) + 'k km' : 'Condition'}${cat.intervalMonths ? ' / ' + cat.intervalMonths + 'm' : ''}</span>
               <div class="flex items-center gap-1 shrink-0">
                 ${photoBtn}
+                <button type="button" onclick="openServiceManualByCategory('${cat.id}')" title="Open step-by-step service manual for ${escapeHtml(cat.label)}" class="px-2 py-1 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] hover:bg-[#DBEAFE] font-semibold text-[11px] transition shrink-0">Manual</button>
                 <button type="button" onclick="prefillServiceCategory('${cat.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-[#D4D6DC] text-[#222222] hover:bg-[#222222] hover:text-white font-semibold transition shrink-0">Log</button>
               </div>
             </div>
@@ -10099,11 +10493,14 @@
       const meta = await getServiceMetaForVin(cleanVin);
       const records = await getServiceRecordsForVin(cleanVin);
       return {
-        version: 1,
+        version: 2,
         vin: cleanVin,
         vehicleLabel: veh.label || `Vehicle ${cleanVin}`,
         updatedAt: new Date().toISOString(),
         latestOdometerKm: meta.latestOdometerKm ?? null,
+        autoCommitLiveTrip: meta.autoCommitLiveTrip !== false,
+        mileageLog: normalizeMileageLogArray(meta.mileageLog || []),
+        customManuals: normalizeCustomManualsArray(meta.customManuals || []),
         records
       };
     }
@@ -10182,6 +10579,18 @@
       if (extDoc.latestOdometerKm !== null && extDoc.latestOdometerKm !== undefined && meta.latestOdometerKm === null) {
         meta.latestOdometerKm = Math.round(Number(extDoc.latestOdometerKm));
         metaChanged = true;
+      }
+      if (Array.isArray(extDoc.mileageLog) && extDoc.mileageLog.length > 0) {
+        const filteredExtMil = extDoc.mileageLog.filter(m => m && m.id && !deletedSet.has(m.id));
+        const prevLen = (meta.mileageLog || []).length;
+        meta.mileageLog = normalizeMileageLogArray([...(meta.mileageLog || []), ...filteredExtMil]);
+        if (meta.mileageLog.length !== prevLen) metaChanged = true;
+      }
+      if (Array.isArray(extDoc.customManuals) && extDoc.customManuals.length > 0) {
+        const filteredExtMan = extDoc.customManuals.filter(m => m && m.id && !deletedSet.has(m.id));
+        const prevManLen = (meta.customManuals || []).length;
+        meta.customManuals = normalizeCustomManualsArray([...(meta.customManuals || []), ...filteredExtMan]);
+        if (meta.customManuals.length !== prevManLen) metaChanged = true;
       }
       if (metaChanged) await saveServiceMetaForVin(meta);
 
@@ -10305,9 +10714,11 @@
       initServicePhotoUiListeners();
       renderFormPhotoPreviewsUi();
       updateServiceHealthAndSnapshotUi(appState.current, true);
+      if (typeof renderMileageTrackerUi === 'function') renderMileageTrackerUi(vin, meta);
       renderServiceIntervalsUi(vin, meta, records);
       renderServiceCostTrackerUi(vin, records);
       renderServiceRecordsListUi(vin, records);
+      if (typeof renderManualsLibraryUi === 'function') renderManualsLibraryUi(vin, meta);
       if (typeof updateGraphsMileageLiveUi === 'function') updateGraphsMileageLiveUi(appState.current);
     }
 
@@ -10378,12 +10789,13 @@
         return;
       }
       const odoKm = Math.round(parsed);
-      const meta = await getServiceMetaForVin(vin);
-      meta.latestOdometerKm = odoKm;
-      await saveServiceMetaForVin(meta);
-      serviceState.latestOdometerByVin[vin] = odoKm;
-      serviceState.liveTripKm = 0;
-      serviceState.lastOdoTickMs = 0;
+      await appendMileageEntryForVin(vin, {
+        date: todayIsoDate(),
+        odometerKm: odoKm,
+        tripType: 'Odometer Update',
+        source: 'manual',
+        notes: 'Updated from Cluster Odometer bar'
+      }, { setAsLatest: true, resetLiveTrip: true });
       const formOdo = document.getElementById('svc-odometer');
       if (formOdo && !formOdo.value) formOdo.value = String(odoKm);
       await persistServiceLogToProjectFolder(vin, { quiet: true });
@@ -10488,13 +10900,14 @@
 
       await putServiceRecordInDb(rec);
 
-      const meta = await getServiceMetaForVin(vin);
-      if (odoVal !== null && (meta.latestOdometerKm == null || odoVal >= meta.latestOdometerKm)) {
-        meta.latestOdometerKm = odoVal;
-        await saveServiceMetaForVin(meta);
-        serviceState.latestOdometerByVin[vin] = odoVal;
-        serviceState.liveTripKm = 0;
-        serviceState.lastOdoTickMs = 0;
+      if (odoVal !== null) {
+        await appendMileageEntryForVin(vin, {
+          date: dateRaw,
+          odometerKm: odoVal,
+          tripType: 'Service Check',
+          source: 'service',
+          notes: `Service: ${rec.title}`
+        }, { setAsLatest: false, resetLiveTrip: true });
       }
 
       await persistServiceLogToProjectFolder(vin, { quiet: false });
@@ -10690,6 +11103,1410 @@
       a.download = `pulseobd_${vin}_service_history.csv`;
       a.click();
       logTerminal(`[EXPORT] Exported pulseobd_${vin}_service_history.csv (${doc.records.length} row(s)).`, 'text-[#047857]');
+    }
+
+    // =========================================================================
+    // 10D. MILEAGE, TRIP DISTANCE & FUEL ECONOMY TRACKER (PER-VIN)
+    // =========================================================================
+    function scrollToServiceSection(elId) {
+      const el = document.getElementById(elId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function appendMileageEntryForVin(vin, rawEntry, opts = {}) {
+      const cleanVin = normalizeVinString(vin || getServiceSelectedVin());
+      const odoKm = Math.round(Number(rawEntry?.odometerKm));
+      if (Number.isNaN(odoKm) || !Number.isFinite(odoKm) || odoKm < 0) return null;
+
+      const meta = await getServiceMetaForVin(cleanVin);
+      const list = normalizeMileageLogArray(meta.mileageLog || []);
+      const entryDate = String(rawEntry?.date || todayIsoDate()).slice(0, 10);
+      const litersRaw = rawEntry?.fuelLiters !== undefined && rawEntry?.fuelLiters !== null && rawEntry?.fuelLiters !== '' ? Number(rawEntry.fuelLiters) : null;
+      const fuelLiters = (litersRaw !== null && !Number.isNaN(litersRaw) && litersRaw > 0) ? Math.round(litersRaw * 100) / 100 : null;
+      const fuelCostStr = String(rawEntry?.fuelCost || '').trim();
+      const parsedFuelCost = parseServiceCost(fuelCostStr);
+
+      // Avoid cluttering log with identical date + exact same km unless user added fuel data
+      const duplicate = list.find(e => e.date === entryDate && e.odometerKm === odoKm && !fuelLiters && !fuelCostStr);
+      let savedEntry = duplicate || null;
+      if (!duplicate) {
+        savedEntry = {
+          id: String(rawEntry?.id || ('mil_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6))),
+          date: entryDate,
+          odometerKm: odoKm,
+          tripType: String(rawEntry?.tripType || 'Daily / Commute').slice(0, 48),
+          source: String(rawEntry?.source || 'manual'),
+          fuelLiters,
+          fuelCost: fuelCostStr,
+          fuelCostAmount: parsedFuelCost.amount,
+          notes: String(rawEntry?.notes || '').slice(0, 240),
+          createdAt: new Date().toISOString()
+        };
+        list.push(savedEntry);
+      } else if (rawEntry?.notes && !duplicate.notes) {
+        duplicate.notes = String(rawEntry.notes).slice(0, 240);
+      }
+
+      const sorted = normalizeMileageLogArray(list);
+      const maxLoggedOdo = sorted.reduce((mx, e) => (e.odometerKm > mx ? e.odometerKm : mx), 0);
+      meta.mileageLog = sorted;
+      if (opts.setAsLatest) {
+        meta.latestOdometerKm = odoKm;
+      } else if (meta.latestOdometerKm == null || maxLoggedOdo > meta.latestOdometerKm) {
+        meta.latestOdometerKm = maxLoggedOdo;
+      }
+      await saveServiceMetaForVin(meta);
+      serviceState.latestOdometerByVin[cleanVin] = meta.latestOdometerKm;
+      if (opts.resetLiveTrip) {
+        serviceState.liveTripKm = 0;
+        serviceState.lastOdoTickMs = 0;
+      }
+      return { meta, entry: savedEntry };
+    }
+
+    function computeMileageAnalytics(meta) {
+      const sorted = normalizeMileageLogArray(meta?.mileageLog || []);
+      const enriched = [];
+      let totalTrackedKm = 0;
+      let last30Km = 0;
+      let totalFuelLitersForEcon = 0;
+      let totalDistForEcon = 0;
+      let totalFuelSpend = 0;
+      let fuelEntries = 0;
+      const nowMs = Date.parse(todayIsoDate() + 'T00:00:00');
+      const cutoff30Ms = nowMs - (30 * 86400000);
+
+      for (let i = 0; i < sorted.length; i++) {
+        const cur = sorted[i];
+        const prev = i > 0 ? sorted[i - 1] : null;
+        const deltaKm = prev ? Math.max(0, cur.odometerKm - prev.odometerKm) : 0;
+        if (deltaKm > 0) {
+          totalTrackedKm += deltaKm;
+          const curMs = Date.parse((cur.date || todayIsoDate()) + 'T00:00:00');
+          if (!Number.isNaN(curMs) && curMs >= cutoff30Ms) {
+            last30Km += deltaKm;
+          }
+        }
+        let econL100 = null;
+        if (cur.fuelLiters && cur.fuelLiters > 0 && deltaKm >= 5) {
+          econL100 = Math.round(((cur.fuelLiters / deltaKm) * 100) * 10) / 10;
+          totalFuelLitersForEcon += cur.fuelLiters;
+          totalDistForEcon += deltaKm;
+        }
+        if (cur.fuelLiters && cur.fuelLiters > 0) fuelEntries++;
+        if (cur.fuelCostAmount != null && cur.fuelCostAmount > 0) totalFuelSpend += cur.fuelCostAmount;
+        enriched.push({ ...cur, deltaKm, econL100 });
+      }
+
+      let avgDailyKm = null;
+      let estYearlyKm = null;
+      if (sorted.length >= 2) {
+        const firstMs = Date.parse(sorted[0].date + 'T00:00:00');
+        const lastMs = Date.parse(sorted[sorted.length - 1].date + 'T00:00:00');
+        const spanDays = (!Number.isNaN(firstMs) && !Number.isNaN(lastMs)) ? Math.max(1, Math.round((lastMs - firstMs) / 86400000)) : 0;
+        const spanKm = Math.max(0, sorted[sorted.length - 1].odometerKm - sorted[0].odometerKm);
+        if (spanDays >= 1 && spanKm > 0) {
+          avgDailyKm = Math.round((spanKm / spanDays) * 10) / 10;
+          estYearlyKm = Math.round(avgDailyKm * 365);
+        }
+      }
+
+      const avgEconL100 = (totalDistForEcon >= 5 && totalFuelLitersForEcon > 0)
+        ? Math.round(((totalFuelLitersForEcon / totalDistForEcon) * 100) * 10) / 10
+        : null;
+
+      return {
+        entries: enriched,
+        count: enriched.length,
+        totalTrackedKm: Math.round(totalTrackedKm),
+        last30Km: Math.round(last30Km),
+        avgDailyKm,
+        estYearlyKm,
+        avgEconL100,
+        fuelEntries,
+        totalFuelSpend: Math.round(totalFuelSpend * 100) / 100
+      };
+    }
+
+    function renderMileageSparklineSvg(entries) {
+      const box = document.getElementById('mil-sparkline-box');
+      if (!box) return;
+      if (!entries || entries.length < 2) {
+        box.innerHTML = `<div class="flex items-center justify-between gap-2 text-[11px] text-[#5A5F6A]">
+          <span>Log 2+ odometer readings (or commit live OBD trips) to view your mileage progression chart &amp; daily/annual distance projections.</span>
+          <span class="font-mono-num font-semibold shrink-0">${entries ? entries.length : 0} / 2 pts</span>
+        </div>`;
+        return;
+      }
+      const pts = entries.slice(-14);
+      const minOdo = Math.min(...pts.map(p => p.odometerKm));
+      const maxOdo = Math.max(...pts.map(p => p.odometerKm));
+      const span = Math.max(1, maxOdo - minOdo);
+      const W = 540, H = 78, padX = 14, padY = 10;
+      const coords = pts.map((p, idx) => {
+        const x = padX + (idx / Math.max(1, pts.length - 1)) * (W - padX * 2);
+        const y = (H - padY) - ((p.odometerKm - minOdo) / span) * (H - padY * 2);
+        return { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)), p };
+      });
+      const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x},${c.y}`).join(' ');
+      const areaPath = `${linePath} L${coords[coords.length - 1].x},${H - padY} L${coords[0].x},${H - padY} Z`;
+      const dots = coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3.2" fill="#1473E6" stroke="var(--card)" stroke-width="1.5"><title>${escapeHtml(c.p.date)} · ${c.p.odometerKm.toLocaleString()} km${c.p.deltaKm ? ' (+' + c.p.deltaKm.toLocaleString() + ' km)' : ''}</title></circle>`).join('');
+
+      box.innerHTML = `
+        <div class="flex items-center justify-between gap-2 text-[10px] font-mono-num text-[#5A5F6A] mb-1">
+          <span>Odometer Progression (${escapeHtml(pts[0].date)} → ${escapeHtml(pts[pts.length - 1].date)})</span>
+          <span class="font-bold text-[#047857]">+${(maxOdo - minOdo).toLocaleString()} km across ${pts.length} pts</span>
+        </div>
+        <svg viewBox="0 0 ${W} ${H}" class="w-full h-[76px] block" role="img" aria-label="Mileage progression chart">
+          <defs>
+            <linearGradient id="milGradFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1473E6" stop-opacity="0.28" />
+              <stop offset="100%" stop-color="#10B981" stop-opacity="0.02" />
+            </linearGradient>
+          </defs>
+          <path d="${areaPath}" fill="url(#milGradFill)" />
+          <path d="${linePath}" fill="none" stroke="#1473E6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          ${dots}
+        </svg>
+        <div class="flex items-center justify-between text-[10px] font-mono-num text-[#5A5F6A] mt-0.5">
+          <span>Start: ${minOdo.toLocaleString()} km</span>
+          <span>Latest: ${maxOdo.toLocaleString()} km</span>
+        </div>
+      `;
+    }
+
+    function renderMileageTrackerUi(vin, meta) {
+      const stats = computeMileageAnalytics(meta);
+      const baseOdo = meta && meta.latestOdometerKm != null ? Number(meta.latestOdometerKm) : null;
+      const tripKm = Math.max(0, Number(serviceState.liveTripKm || 0));
+      const liveOdo = baseOdo !== null ? (baseOdo + tripKm) : null;
+
+      _setElText('mil-live-trip-pill', `Live OBD Trip: +${tripKm.toFixed(2)} km`);
+      _setElText('mil-kpi-current', liveOdo !== null
+        ? (tripKm >= 0.05 ? `${liveOdo.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km` : formatNumberKm(liveOdo))
+        : 'Not Set');
+      _setElText('mil-kpi-current-sub', baseOdo !== null
+        ? (tripKm >= 0.05 ? `Base ${Math.round(baseOdo).toLocaleString()} km + live OBD` : `VIN ${vin} · Synced with 6 Graphs`)
+        : 'Enter dash km below or on 6 Graphs');
+
+      _setElText('mil-kpi-tracked', `${stats.totalTrackedKm.toLocaleString()} km`);
+      _setElText('mil-kpi-tracked-sub', `${stats.count} checkpoint${stats.count === 1 ? '' : 's'} · Last 30d: ${stats.last30Km.toLocaleString()} km`);
+
+      _setElText('mil-kpi-daily', stats.avgDailyKm !== null ? `${stats.avgDailyKm.toLocaleString()} km/day` : '— km/day');
+      _setElText('mil-kpi-yearly-sub', stats.estYearlyKm !== null
+        ? `Est. ${stats.estYearlyKm.toLocaleString()} km/yr`
+        : 'Log 2+ dates for projection');
+
+      const liveDerivedEcon = Number(appState.current?.l100km || 0);
+      if (stats.avgEconL100 !== null) {
+        _setElText('mil-kpi-fuel-econ', `${stats.avgEconL100.toFixed(1)} L/100km`);
+        _setElText('mil-kpi-fuel-sub', stats.totalFuelSpend > 0
+          ? `${stats.fuelEntries} fill-up${stats.fuelEntries === 1 ? '' : 's'} · Fuel: ${formatServiceCurrency(stats.totalFuelSpend, 'R')}`
+          : `Measured across ${stats.fuelEntries} fill-up${stats.fuelEntries === 1 ? '' : 's'}`);
+      } else if (liveDerivedEcon > 0 && liveDerivedEcon < 40) {
+        _setElText('mil-kpi-fuel-econ', `${liveDerivedEcon.toFixed(1)} L/100km`);
+        _setElText('mil-kpi-fuel-sub', 'Live OBD derived · log fuel for avg');
+      } else {
+        _setElText('mil-kpi-fuel-econ', '— L/100km');
+        _setElText('mil-kpi-fuel-sub', 'Add liters on fuel fill-ups');
+      }
+
+      const autoCb = document.getElementById('mil-auto-commit-trip');
+      if (autoCb) autoCb.checked = meta?.autoCommitLiveTrip !== false;
+
+      const dateInp = document.getElementById('mil-entry-date');
+      if (dateInp && !dateInp.value) dateInp.value = todayIsoDate();
+      const odoInp = document.getElementById('mil-entry-odo');
+      if (odoInp && document.activeElement !== odoInp && !odoInp.value && baseOdo !== null) {
+        odoInp.placeholder = `Current: ${Math.round(baseOdo).toLocaleString()} km`;
+      }
+
+      renderMileageSparklineSvg(stats.entries);
+
+      const listEl = document.getElementById('mil-history-list');
+      if (!listEl) return;
+      if (!stats.entries.length) {
+        listEl.innerHTML = `<div class="acro-well rounded-xl p-3 text-[#5A5F6A]">No mileage checkpoints logged for <strong>${escapeHtml(vin)}</strong> yet. Log your current odometer reading on the left or update it from <strong>6 Graphs</strong>.</div>`;
+        return;
+      }
+
+      const desc = [...stats.entries].reverse();
+      listEl.innerHTML = desc.map(e => {
+        const deltaBadge = e.deltaKm > 0
+          ? `<span class="px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] text-[10px] font-mono-num font-bold">+${e.deltaKm.toLocaleString()} km</span>`
+          : '';
+        const econBadge = e.econL100 !== null
+          ? `<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] text-[10px] font-mono-num font-bold">${e.econL100.toFixed(1)} L/100km</span>`
+          : '';
+        const fuelPart = e.fuelLiters ? `${e.fuelLiters} L${e.fuelCost ? ' · ' + e.fuelCost : ''}` : (e.fuelCost || '');
+        const subBits = [e.tripType, fuelPart, e.notes].filter(Boolean).join(' · ');
+        return `
+          <div class="acro-well rounded-xl px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <strong class="font-mono-num text-[#222222]">${e.odometerKm.toLocaleString()} km</strong>
+                <span class="font-mono-num text-[11px] text-[#5A5F6A]">${escapeHtml(e.date)}</span>
+                ${deltaBadge}
+                ${econBadge}
+              </div>
+              ${subBits ? `<div class="text-[11px] text-[#5A5F6A] truncate mt-0.5">${escapeHtml(subBits)}</div>` : ''}
+            </div>
+            <button type="button" onclick="deleteMileageEntry('${escapeHtml(e.id)}')" title="Delete mileage entry" class="px-2 py-1 rounded-lg bg-[#FEE2E2] text-[#B91C1C] font-semibold text-[10px] shrink-0">Delete</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveMileageEntryFromForm() {
+      const vin = getServiceSelectedVin();
+      const dateVal = (document.getElementById('mil-entry-date')?.value || '').trim() || todayIsoDate();
+      const odoRaw = (document.getElementById('mil-entry-odo')?.value || '').trim();
+      const typeVal = document.getElementById('mil-entry-type')?.value || 'Daily / Commute';
+      const litersRaw = (document.getElementById('mil-entry-liters')?.value || '').trim();
+      const costRaw = (document.getElementById('mil-entry-fuel-cost')?.value || '').trim();
+      const notesRaw = (document.getElementById('mil-entry-notes')?.value || '').trim();
+
+      const odoNum = Number(odoRaw);
+      if (!odoRaw || Number.isNaN(odoNum) || odoNum < 0) {
+        logTerminal('[MILEAGE] Enter a valid non-negative odometer reading in km.', 'text-[#B45309]');
+        document.getElementById('mil-entry-odo')?.focus();
+        return;
+      }
+
+      const odoKm = Math.round(odoNum);
+      await appendMileageEntryForVin(vin, {
+        date: dateVal,
+        odometerKm: odoKm,
+        tripType: typeVal,
+        source: litersRaw ? 'fuel' : 'manual',
+        fuelLiters: litersRaw !== '' ? Number(litersRaw) : null,
+        fuelCost: costRaw,
+        notes: notesRaw
+      }, { setAsLatest: false, resetLiveTrip: true });
+
+      const clearIds = ['mil-entry-odo', 'mil-entry-liters', 'mil-entry-fuel-cost', 'mil-entry-notes'];
+      clearIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      await refreshServiceTab();
+      await refreshGraphsMileageUi();
+      logTerminal(`[MILEAGE] Logged ${odoKm.toLocaleString()} km (${typeVal}) for ${vin}.`, 'text-[#047857] font-semibold');
+    }
+
+    async function deleteMileageEntry(entryId) {
+      if (!entryId) return;
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      meta.mileageLog = (meta.mileageLog || []).filter(e => e.id !== entryId);
+      meta.deletedIds = Array.from(new Set([...(meta.deletedIds || []), entryId]));
+      if (meta.mileageLog.length > 0) {
+        meta.latestOdometerKm = Math.max(...meta.mileageLog.map(e => e.odometerKm));
+      }
+      await saveServiceMetaForVin(meta);
+      serviceState.latestOdometerByVin[vin] = meta.latestOdometerKm;
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      await refreshServiceTab();
+      await refreshGraphsMileageUi();
+      logTerminal(`[MILEAGE] Deleted mileage checkpoint ${entryId} for ${vin}.`, 'text-[#5A5F6A]');
+    }
+
+    async function onToggleAutoCommitLiveTrip(enabled) {
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      meta.autoCommitLiveTrip = Boolean(enabled);
+      await saveServiceMetaForVin(meta);
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      logTerminal(`[MILEAGE] Auto-add live OBD trips on engine-off: ${meta.autoCommitLiveTrip ? 'ENABLED' : 'PAUSED'}.`, 'text-[#1473E6]');
+    }
+
+    async function commitLiveObdTripToMileage(opts = {}) {
+      const vin = normalizeVinString(opts.vin || getServiceSelectedVin());
+      const tripKm = Math.max(0, Number(serviceState.liveTripKm || 0));
+      if (tripKm < 0.05) {
+        if (!opts.quiet) logTerminal('[MILEAGE] No accumulated live OBD trip distance yet (drive with live OBD or simulation active).', 'text-[#B45309]');
+        return false;
+      }
+      const meta = await getServiceMetaForVin(vin);
+      const baseOdo = meta.latestOdometerKm != null ? Number(meta.latestOdometerKm) : null;
+      if (baseOdo === null) {
+        if (!opts.quiet) logTerminal('[MILEAGE] Set your starting cluster odometer (km) first so live OBD trips can be added accurately.', 'text-[#B45309]');
+        return false;
+      }
+      const newOdo = Math.round(baseOdo + tripKm);
+      await appendMileageEntryForVin(vin, {
+        date: todayIsoDate(),
+        odometerKm: newOdo,
+        tripType: 'Live OBD Trip',
+        source: 'live_obd',
+        notes: `+${tripKm.toFixed(2)} km via OBD speed integration${opts.sessionId ? ' (' + opts.sessionId + ')' : ''}`
+      }, { setAsLatest: true, resetLiveTrip: true });
+
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      await refreshGraphsMileageUi();
+      if (appState.activeTab === 'service') await refreshServiceTab();
+      logTerminal(`[MILEAGE] Committed +${tripKm.toFixed(2)} km live OBD trip → Odometer now ${newOdo.toLocaleString()} km.`, 'text-[#047857] font-semibold');
+      return true;
+    }
+
+    async function autoCommitLiveTripOnSessionEnd(vin, sessionId) {
+      const cleanVin = normalizeVinString(vin || getActiveVin());
+      const tripKm = Math.max(0, Number(serviceState.liveTripKm || 0));
+      if (tripKm < 0.2) return false;
+      const meta = await getServiceMetaForVin(cleanVin);
+      if (meta.autoCommitLiveTrip === false || meta.latestOdometerKm == null) return false;
+      return await commitLiveObdTripToMileage({ vin: cleanVin, sessionId, quiet: true });
+    }
+
+    async function exportMileageHistoryCsv() {
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      const stats = computeMileageAnalytics(meta);
+      const qCsv = (v) => `"${String(v === null || v === undefined ? '' : v).replace(/"/g, '""')}"`;
+      const headers = ['id,vin,date,odometer_km,delta_km,trip_type,source,fuel_liters,fuel_cost,fuel_cost_amount,econ_l_per_100km,notes'];
+      const rows = stats.entries.map(e => [
+        qCsv(e.id),
+        qCsv(vin),
+        qCsv(e.date),
+        e.odometerKm,
+        e.deltaKm,
+        qCsv(e.tripType),
+        qCsv(e.source),
+        e.fuelLiters != null ? e.fuelLiters : '',
+        qCsv(e.fuelCost),
+        e.fuelCostAmount != null ? e.fuelCostAmount : '',
+        e.econL100 != null ? e.econL100 : '',
+        qCsv(e.notes)
+      ].join(','));
+      const blob = new Blob([headers.concat(rows).join('\n')], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `pulseobd_${vin}_mileage_log.csv`;
+      a.click();
+      logTerminal(`[EXPORT] Exported pulseobd_${vin}_mileage_log.csv (${stats.entries.length} checkpoint(s)).`, 'text-[#047857]');
+    }
+
+    // =========================================================================
+    // 10E. USER MANUALS — SERVICE ITEM GUIDES & COMMON ISSUE FIX MANUALS
+    // =========================================================================
+    const MANUAL_CHECKS_STORAGE_KEY = 'pulseobd_manual_checks_v1';
+
+    const SERVICE_ITEM_MANUALS = [
+      {
+        id: 'svc_manual_oil_filter',
+        type: 'service',
+        categoryId: 'oil_filter',
+        title: 'Engine Oil & Filter Change (EA211 1.2L TSI / General Petrol)',
+        difficulty: 'Easy DIY',
+        estTime: '40–60 min',
+        intervalLabel: 'Every 15,000 km or 12 months (10,000 km for short urban trips)',
+        summary: 'Complete drain, spin-on oil filter swap, fresh VW 502.00 5W-40 fill (4.0 L), leak check, and read-only OBD-II thermal verification.',
+        tools: ['19mm socket & torque wrench', 'Torx T25 (undertray)', 'Oil filter strap/cup wrench (76mm)', '5L+ drain pan', 'Funnel & nitrile gloves', 'Jack & rated jack stands'],
+        partsSpec: 'VW 502.00 5W-40 Full Synthetic (4.0 L) · Mann W712/95 (OEM 04E115561H) filter · Drain plug + crush washer N90813202 (30 Nm)',
+        safetyNote: 'Never work beneath a car supported only by a scissor/floor jack — always use rated jack stands and wheel chocks. Warm oil can scald: let engine cool 15–20 min after warming.',
+        steps: [
+          'Warm the engine for 3–5 minutes so oil flows freely, then park on level ground, set the handbrake, switch ignition OFF, and wait 15 minutes.',
+          'Safely raise the front onto jack stands, chock the rear wheels, and remove the lower splash shield (Torx T25 screws).',
+          'Loosen the oil filler cap on top of the valve cover to allow smooth draining, then position the drain pan below the sump plug.',
+          'Remove the 19mm sump drain plug and allow old oil to drain completely for 10–15 minutes. Inspect oil for metallic sheen or milky emulsion.',
+          'Unscrew the spin-on oil filter (W712/95), confirm the old rubber gasket came off with the filter, and wipe the mounting flange clean.',
+          'Coat the new oil filter gasket lightly with fresh engine oil and hand-tighten 3/4 turn after gasket contact (approx. 20 Nm — do not over-tighten with a wrench).',
+          'Install a new sump drain plug/crush washer and torque to 30 Nm. Wipe the sump dry so any future drip is immediately visible.',
+          'Lower the vehicle to level ground, pour in 3.6 L of VW 502.00 5W-40 oil, wait 2 minutes, check dipstick, and top up toward the MAX crosshatch (total ~4.0 L).',
+          'Reinstall the filler cap, start the engine for 30 seconds, confirm the oil pressure warning light extinguishes within 2 seconds, shut off, wait 5 minutes, and re-verify dipstick level.',
+          'Check underneath for zero drips, refit the undertray, reset the instrument cluster oil reminder via the dash trip stalk (PulseOBD stays strictly read-only), and log the service with a photo of the receipt.'
+        ],
+        obdVerify: [
+          'Coolant Temp (0105): smooth warm-up to 85–98°C with stable idle (~750–790 RPM on 010C).',
+          'Fuel Trims (0106 STFT / 0107 LTFT): stay within ±5% after oil cap & dipstick are sealed.',
+          'DTCs (03 / 07): confirm 0 confirmed and 0 pending fault codes.'
+        ],
+        keywords: ['oil', 'filter', '5w-40', '502.00', 'drain plug', 'w712', 'sump', 'service']
+      },
+      {
+        id: 'svc_manual_inspection_service',
+        type: 'service',
+        categoryId: 'inspection_service',
+        title: 'Annual / 30,000 km Multi-Point Vehicle Inspection',
+        difficulty: 'Easy DIY',
+        estTime: '45–60 min',
+        intervalLabel: 'Every 30,000 km or 12 months',
+        summary: 'Systematic 30-point inspection covering under-bonnet fluids, belts, hoses, suspension boots, lighting, brakes, tyres, and full 124-variable OBD-II baseline.',
+        tools: ['Torch / inspection lamp', 'Tyre tread depth gauge & pressure gauge', 'Torque wrench (120 Nm)', 'PulseOBD Studio (live OBD-II)'],
+        partsSpec: 'G12evo/G13 coolant top-up if needed · Washer fluid · DOT4 fluid check · Accessory belt inspection',
+        safetyNote: 'Keep hands, hair, and loose clothing clear of serpentine belts and radiator cooling fans — electric fans can switch on unexpectedly even with ignition off.',
+        steps: [
+          'Capture a Pre-Service OBD-II Baseline Snapshot in PulseOBD (check DTCs, readiness, Mode 06 misfires, battery voltage, and fuel trims).',
+          'With engine cold, check coolant expansion tank level (between MIN and MAX, clear pink/violet — never rusty or oily) and inspect hoses for white crusty seepage.',
+          'Check brake fluid reservoir level and color (clear pale amber; dark fluid means moisture absorption and needs a DOT4 flush).',
+          'Inspect the serpentine/ribbed drive belt for glazing, cracks, or fraying, and check engine mounts for excess movement.',
+          'Inspect all exterior lights (low/high beam, indicators, brake lights, reverse, fog, license plate) and horn operation.',
+          'Check windscreen for stone chips/cracks, test front & rear washers, and inspect wiper blades for splits.',
+          'Measure tyre tread depth across inner, center, and outer grooves (legal min 1.6 mm; replace near 3.0 mm) and check spare tyre pressure.',
+          'Visually inspect CV joint rubber boots, shock absorbers (dry, no oil weeping), exhaust hangers, and brake pad thickness through wheel spokes.',
+          'Lubricate door hinges/latches lightly with silicone or white lithium grease and verify parking brake holds firmly at 3–5 clicks.'
+        ],
+        obdVerify: [
+          'Health Score >= 85/100 in PulseOBD Pre-Service Health Checks.',
+          'Battery / Alternator (0142 / ATRV): 12.4–12.7V resting, 13.5–14.5V charging.',
+          'Mode 06 Misfires (06A2–06A5): 0 active cylinder misfires.'
+        ],
+        keywords: ['annual', 'major', 'inspection', '30-point', 'fluids', 'belt', 'coolant', 'lights']
+      },
+      {
+        id: 'svc_manual_spark_plugs',
+        type: 'service',
+        categoryId: 'spark_plugs',
+        title: 'Spark Plug Replacement (EA211 1.2L TSI Coil-on-Plug)',
+        difficulty: 'Intermediate DIY',
+        estTime: '45–75 min',
+        intervalLabel: 'Every 60,000 km or 48 months',
+        summary: 'Safe removal of intake duct & individual ignition coils, proper spark plug gap/torque installation (22 Nm), and Mode 06 misfire verification.',
+        tools: ['16mm magnetic spark plug socket + long extension', 'Torque wrench (15–30 Nm)', '10mm socket / Torx T30 (coil bolts)', 'Compressed air / brush', 'Dielectric grease (tiny dab)'],
+        partsSpec: '4x NGK PZKER7B8EGS / OEM 04E905602 iridium spark plugs (pre-gapped ~0.7–0.8 mm — do NOT pry iridium tip) · Torque: 22 Nm',
+        safetyNote: 'ONLY replace spark plugs on a completely COLD aluminum cylinder head to avoid stripping threads! Blow debris out of plug wells before unscrewing old plugs.',
+        steps: [
+          'Ensure the engine is completely cold and ignition is OFF. Disconnect/remove the air intake ducting over the ignition coils if obstructing access.',
+          'Unclip the 4 electrical connectors from the ignition coils carefully (press release tab gently; never yank by the wires).',
+          'Remove the coil hold-down bolts (10mm / T30) and pull each ignition coil straight up with a gentle twisting motion.',
+          'Blow out each spark plug well with compressed air or a clean vacuum nozzle so zero grit can fall into the cylinders.',
+          'Unscrew one spark plug at a time using a 16mm magnetic/rubber-insert spark plug socket and inspect the electrode color (tan/light gray = healthy; black soot = rich; white blistered = lean/hot; oil = valve cover seal).',
+          'Thread the new iridium spark plug in BY HAND using the socket & extension only — never start with a ratchet (prevents cross-threading).',
+          'Torque each spark plug to 22 Nm (do not apply anti-seize to trivalent-plated NGK threads, as it causes over-torquing).',
+          'Apply a tiny smear of dielectric grease inside the rubber coil boot lip, seat each ignition coil firmly onto the plug, torque coil bolts to 8–9 Nm, and click connectors back until locked.',
+          'Refit intake ducting securely (confirm all clamps are tight so no unmetered air leaks occur), start the engine, and verify smooth idle.'
+        ],
+        obdVerify: [
+          'Mode 06 Cylinder Misfires (06A2, 06A3, 06A4, 06A5): confirm 0 misfires across cylinders 1–4.',
+          'Ignition Timing (010E) & RPM (010C): smooth, jitter-free idle without stumble.',
+          'DTCs (03 / 07): zero P0300–P0304 pending codes.'
+        ],
+        keywords: ['spark', 'plugs', 'ea211', 'tsi', 'ignition', 'coil', 'misfire', 'ngk', '22 nm']
+      },
+      {
+        id: 'svc_manual_air_filter',
+        type: 'service',
+        categoryId: 'air_filter',
+        title: 'Engine Air Filter Replacement',
+        difficulty: 'Easy DIY',
+        estTime: '15–20 min',
+        intervalLabel: 'Every 30,000 km or 24 months (15,000 km in dusty areas)',
+        summary: 'Quick airbox swap restoring crisp turbo spool, accurate intake density, and lower fuel consumption.',
+        tools: ['Torx T25 screwdriver', 'Microfiber cloth / handheld vacuum'],
+        partsSpec: 'OEM 04E129620 / Mann C27009 pleated paper air filter element',
+        safetyNote: 'Make sure no leaves, sand, or dropped screws fall into the clean (turbo-side) airbox outlet while the filter is removed.',
+        steps: [
+          'Switch ignition OFF and open the bonnet. Locate the air filter housing on top/side of the EA211 1.2L TSI engine.',
+          'Unscrew the captive Torx T25 screws around the airbox lid (or release side spring clips) and carefully lift the cover.',
+          'Note the exact orientation of the old filter gasket, then lift out the dirty filter element.',
+          'Vacuum or wipe dust, insects, and leaves from the bottom (dirty side) of the airbox housing while keeping the intake pipe covered.',
+          'Seat the new filter cleanly into the housing rim so the rubber perimeter seal sits completely flat with no pinched corners.',
+          'Refit the airbox lid, tighten Torx screws evenly snug (do not crack plastic tabs), and double-check that the intake duct & vacuum hose are connected.'
+        ],
+        obdVerify: [
+          'Intake Air Temp (010F) & MAP (010B): normal idle vacuum (~26–32 kPa) and responsive boost buildup.',
+          'Short/Long Fuel Trims (0106 / 0107): remain balanced within ±5%.'
+        ],
+        keywords: ['air filter', 'intake', 'airbox', 'c27009', '04e129620', 'dust']
+      },
+      {
+        id: 'svc_manual_cabin_filter',
+        type: 'service',
+        categoryId: 'cabin_filter',
+        title: 'Cabin / Pollen (Activated Carbon) Filter Replacement',
+        difficulty: 'Easy DIY',
+        estTime: '10–15 min',
+        intervalLabel: 'Every 30,000 km or 24 months',
+        summary: 'Clears musty A/C odors, restores demister airflow, and traps fine pollen/exhaust soot inside the passenger footwell housing.',
+        tools: ['None (tool-free sliding tabs under passenger glovebox)', 'Torch & vacuum'],
+        partsSpec: 'Mann CUK26010 / OEM 6R0819653 activated carbon cabin filter (note AIR FLOW arrow)',
+        safetyNote: 'Switch blower fan OFF before opening the housing so loose leaves are not drawn into the blower motor squirrel cage.',
+        steps: [
+          'Slide the front passenger seat all the way back and look directly underneath the glovebox (passenger footwell).',
+          'Slide the two plastic locking tabs inward/sideways to unlatch the rectangular cabin filter cover plate and lower it.',
+          'Pull the old cabin filter straight down — hold a cloth or bag beneath it to catch dry leaves and dust.',
+          'Check the directional AIR FLOW arrow printed on the side of the old filter (airflow travels from fresh-air intake toward the center heater core).',
+          'Vacuum any loose debris from the slot, then slide the new activated-carbon filter straight up with the AIR FLOW arrow matching the correct direction.',
+          'Snap the cover plate back in place, lock both sliding tabs firmly, and test A/C blower speeds 1–4 for clean, quiet airflow.'
+        ],
+        obdVerify: [
+          'Cabin filter is non-OBD mechanical; log the date & odometer in PulseOBD Service History so your 24-month reminder stays active.'
+        ],
+        keywords: ['cabin', 'pollen', 'ac', 'odor', 'smell', 'cuk26010', '6r0819653', 'blower']
+      },
+      {
+        id: 'svc_manual_brakes_fluid',
+        type: 'service',
+        categoryId: 'brakes_fluid',
+        title: 'Brake Pad Inspection & DOT4 LV Brake Fluid Flush',
+        difficulty: 'Intermediate DIY',
+        estTime: '60–90 min',
+        intervalLabel: 'Fluid every 24 months (moisture-sensitive); inspect pads every 15,000–30,000 km',
+        summary: 'Measure pad friction material, inspect rotors & caliper slide pins, and bleed fresh VW DOT4 LV brake fluid to prevent vapor lock and ABS corrosion.',
+        tools: ['Jack, rated jack stands & wheel chocks', '17mm lug socket + torque wrench (120 Nm)', '11mm flare-nut spanner', 'Clear bleed hose & catch bottle', 'Turkey baster/syringe for reservoir', 'Brake cleaner'],
+        partsSpec: 'VW B000750M3 DOT4 LV (Low Viscosity, Class 6) brake fluid — 1.0 L · Wheel lug torque: 120 Nm',
+        safetyNote: 'CRITICAL SAFETY SYSTEM: Never let the brake master cylinder run dry during bleeding (introduces air into ABS unit). Brake fluid destroys paint — rinse any spill immediately with water.',
+        steps: [
+          'Park on level ground, crack wheel lug bolts 1/4 turn, raise the car onto jack stands, and remove wheels for clear brake inspection.',
+          'Measure both inner and outer pad thickness on every wheel (replace pads at <= 3 mm friction material). Check rotors for deep scoring, blue heat spots, or heavy outer lip.',
+          'Inspect flexible rubber brake hoses for cracks or bulges and ensure caliper slide pins glide smoothly without seized boots.',
+          'Clean around the brake fluid reservoir cap, siphon out old dark fluid from the reservoir (leaving a thin layer above the bottom screen), and top up with fresh sealed DOT4 LV fluid.',
+          'Bleed in order from farthest wheel to master cylinder: Rear-Left / Rear-Right (furthest first) -> Front-Far -> Front-Near (using a pressure bleeder at ~1 bar or 2-person pedal-pump method).',
+          'Keep the reservoir topped above MIN after every 5–6 pumps; flush each caliper until crystal-clear pale fluid flows with zero air bubbles (~200–250 ml per corner).',
+          'Tighten each bleed nipple snugly (approx. 10 Nm), refit rubber dust caps, spray off residue with brake cleaner, and top reservoir to MAX.',
+          'Reinstall wheels, lower car, torque lug bolts in a star pattern to 120 Nm, and pump the brake pedal firmly before driving until rock-solid.',
+          'Perform a cautious low-speed brake test in a safe empty area before entering traffic.'
+        ],
+        obdVerify: [
+          'Verify no ABS/brake warning lamps on instrument cluster and 0 DTCs in PulseOBD Mode 03/07.',
+          'Log pad thickness (mm) and fluid flush date in Service Notes for next 24-month alert.'
+        ],
+        keywords: ['brakes', 'pads', 'rotors', 'discs', 'dot4', 'bleed', 'fluid', 'caliper', 'squeal']
+      },
+      {
+        id: 'svc_manual_battery_12v',
+        type: 'service',
+        categoryId: 'battery_12v',
+        title: '12V Battery Test, Terminal Service & Replacement',
+        difficulty: 'Easy DIY',
+        estTime: '20–30 min',
+        intervalLabel: 'Load test annually after year 3; typical life 4–5 years',
+        summary: 'Verify resting SOC & alternator charging in PulseOBD, clean corroded posts, and swap a weak 12V battery safely without voltage spikes.',
+        tools: ['10mm & 13mm sockets + extension', 'Wire terminal brush', 'Baking soda + water solution (for acid crust)', 'Dielectric / terminal protector spray', 'Safety glasses & gloves'],
+        partsSpec: '60Ah EFB (Start/Stop) or standard 12V DIN battery (match original CCA & physical group size)',
+        safetyNote: 'Wear eye protection. ALWAYS disconnect the NEGATIVE (-) black terminal FIRST, and reconnect NEGATIVE (-) LAST to prevent wrench-to-chassis short circuits.',
+        steps: [
+          'Test resting battery voltage with ignition OFF/KOEO in PulseOBD (ATRV / 0142): >= 12.5V is healthy; <= 12.1V indicates discharged or sulfated cells.',
+          'Start the engine and confirm charging voltage rises to 13.5–14.6V (confirms the alternator is healthy and the battery itself is the weak component).',
+          'Switch ignition OFF, remove key, wait 5 minutes for CAN modules to sleep, then loosen and remove the NEGATIVE (-) clamp first and tuck it safely away.',
+          'Remove the POSITIVE (+) clamp and the 13mm battery hold-down bracket at the base of the tray.',
+          'Lift the old battery straight out (heavy ~15 kg — keep upright) and clean any white corrosion from the tray and cable clamps with a wire brush.',
+          'Drop the new battery in, secure the base hold-down bracket firmly so the battery cannot shift, connect POSITIVE (+) first, then NEGATIVE (-).',
+          'Apply a light coat of battery terminal protector grease, start the engine, and turn steering lock-to-lock if the EPS steering lamp briefly appears after power loss.',
+          'Note: Vehicles with Start/Stop Battery Management (BEM) may require battery adaptation at a workshop if changing battery capacity/chemistry.'
+        ],
+        obdVerify: [
+          'ATRV / Control Module Voltage (0142): >= 12.5V resting, 13.5–14.5V at warm idle.',
+          'Mode 03/07: verify no low-voltage fault codes remain after a normal drive cycle.'
+        ],
+        keywords: ['battery', '12v', 'alternator', 'charging', 'atrv', '0142', 'efb', 'agm', 'crank']
+      },
+      {
+        id: 'svc_manual_tyres_replacement',
+        type: 'service',
+        categoryId: 'tyres_replacement',
+        title: 'Tyre Replacement, Tread Depth & DOT Age Guide',
+        difficulty: 'Workshop Recommended',
+        estTime: '45–60 min (Fitment center)',
+        intervalLabel: 'Every 40,000–50,000 km, at <= 3.0 mm tread, or 6+ years DOT age',
+        summary: 'Check wear bars, decode the 4-digit DOT manufacture week/year, verify load/speed rating, and confirm proper wheel balance and lug torque.',
+        tools: ['Tread depth gauge', 'Calibrated cold tyre pressure gauge', 'Torque wrench (120 Nm) for 100 km re-check'],
+        partsSpec: 'Match OEM placard inside fuel flap/door jamb (e.g. 185/60 R15 84H or 215/45 R16 86H) + new rubber valve stems + dynamic balance',
+        safetyNote: 'Legal minimum tread is 1.6 mm, but wet braking distance degrades sharply below 3.0 mm. Never fit tyres older than 6 years (check 4-digit DOT code, e.g. 2423 = week 24 of 2023).',
+        steps: [
+          'Measure tread depth at inner, center, and outer grooves of all 4 tyres plus the spare. Note uneven wear patterns (indicates alignment or inflation issues).',
+          'Inspect sidewalls for bulges, dry-rot cracking, cuts, or embedded nails/screws near the shoulder.',
+          'Verify size, load index, and speed rating against the factory tyre placard on the fuel filler flap or B-pillar.',
+          'When fitting 2 new tyres instead of 4, always mount the NEW tyres on the REAR axle to prevent wet-weather oversteer/fishtailing.',
+          'Ensure the tyre shop installs new valve stems, dynamically balances every wheel, and checks directional ("ROTATION") or asymmetric ("OUTSIDE") sidewall markings.',
+          'Verify cold tyre pressures match the door/fuel-flap placard, reset the indirect TPMS (SET button in glovebox/cluster if equipped), and re-torque lug bolts to 120 Nm after 50–100 km.'
+        ],
+        obdVerify: [
+          'Vehicle Speed (010D) stays accurate when keeping OEM rolling circumference.',
+          'Attach photo of the tyre invoice & DOT sidewall code to your PulseOBD Service Entry!'
+        ],
+        keywords: ['tyres', 'tires', 'tread', 'dot', 'balance', 'valve', 'tpms', 'puncture']
+      },
+      {
+        id: 'svc_manual_tires_alignment',
+        type: 'service',
+        categoryId: 'tires_alignment',
+        title: 'Tyre Rotation, Cold Pressure & 4-Wheel Alignment',
+        difficulty: 'Easy DIY',
+        estTime: '30–45 min (Rotation) / 45 min (Shop alignment)',
+        intervalLabel: 'Every 10,000 km or 12 months',
+        summary: 'Equalize front-wheel-drive tyre wear, eliminate steering pull or vibration, and maximize tyre lifespan and fuel economy.',
+        tools: ['Floor jack & 4 jack stands', '17mm lug socket', 'Torque wrench (120 Nm)', 'Tyre pressure gauge'],
+        partsSpec: 'FWD Rotation Pattern: Fronts straight to Rear, Rears cross to Front (for non-directional tyres); Front-to-Rear same side only for directional tyres',
+        safetyNote: 'Never mix up directional tread arrows. Always torque wheel bolts in a criss-cross star pattern on the ground to 120 Nm.',
+        steps: [
+          'Check cold tyre pressures first thing in the morning (before driving > 2 km) and inflate to the fuel-flap/door placard spec (including the spare tyre).',
+          'Check whether tyres are directional (arrow on sidewall) or non-directional to choose the correct rotation pattern.',
+          'Loosen lug bolts 1/4 turn on the ground, safely lift the vehicle onto jack stands, and swap wheels according to the FWD pattern.',
+          'Inspect inner tyre shoulders and brake pads while each wheel is off.',
+          'Hand-thread lug bolts completely before tightening, lower the car, and torque all bolts in a star pattern to 120 Nm.',
+          'If the steering wheel sits off-center, the car drifts on a flat road, or tread shows feathered/one-sided wear, book a laser 4-wheel alignment immediately.'
+        ],
+        obdVerify: [
+          'Track fuel economy improvement in the PulseOBD Mileage Tracker after correcting under-inflation or alignment toe drag.'
+        ],
+        keywords: ['rotation', 'alignment', 'pressure', 'steering', 'vibration', 'pull', 'tyre', 'tire']
+      },
+      {
+        id: 'svc_manual_wiper_blades',
+        type: 'service',
+        categoryId: 'wiper_blades',
+        title: 'Front & Rear Wiper Blade Replacement & Washer Check',
+        difficulty: 'Easy DIY',
+        estTime: '10 min',
+        intervalLabel: 'Every 12 months (or whenever streaking/chattering starts)',
+        summary: 'Fast, tool-free replacement of flat aero blades (600mm driver / 400mm passenger / 280mm rear) and windscreen glass decontamination.',
+        tools: ['Folded thick towel (protects windscreen glass!)', 'Microfiber cloth & glass cleaner'],
+        partsSpec: 'Front Bosch Aerotwin A555S (600mm / 400mm · push-button/pinch tab) · Rear 280mm · Screenwash concentrate',
+        safetyNote: 'ALWAYS place a folded towel on the windscreen beneath the lifted metal wiper arm — if a bare arm snaps back, it can crack the glass instantly!',
+        steps: [
+          'Enable Wiper Service Position if arms sit under the bonnet edge (ignition ON -> OFF, then tap wiper stalk down once within 10 seconds).',
+          'Lay a thick folded towel across the glass below the wiper arm before lifting the arm away from the windscreen.',
+          'Press the square release button on the blade connector and slide the old wiper blade straight off the arm.',
+          'Slide the new blade onto the arm until it clicks positively into the lock button (600mm on driver side, 400mm on passenger side).',
+          'Clean the windscreen thoroughly with glass cleaner to remove road film/wax that causes new blades to chatter.',
+          'Gently lower both arms back onto the glass, remove the towel, swap the rear 280mm blade, top up washer fluid, and test spray + wipe sweep.'
+        ],
+        obdVerify: [
+          'Log replacement date and blade length/model in PulseOBD Service History so reordering next year takes 5 seconds.'
+        ],
+        keywords: ['wiper', 'blades', 'aerotwin', 'streaking', 'washer', 'windscreen', '600mm', '400mm']
+      },
+      {
+        id: 'svc_manual_inspection_baseline',
+        type: 'service',
+        categoryId: 'inspection_baseline',
+        title: 'Pre-Service Read-Only OBD-II Baseline Audit',
+        difficulty: 'Easy DIY',
+        estTime: '10 min',
+        intervalLabel: 'Before & after every workshop visit or long road trip',
+        summary: 'Use PulseOBD to snapshot all 124 ECU variables, Mode 06 misfires, readiness monitors, and clear-code audit before handing keys to a workshop.',
+        tools: ['Paired Bluetooth OBD-II adapter (ELM327)', 'PulseOBD Studio'],
+        partsSpec: '100% Strictly Read-Only (Mode 01/02/03/06/07/09/0A + UDS 0x22 — zero writes)',
+        safetyNote: 'Never clear DTCs right before visiting a mechanic — clearing wipes freeze-frame evidence and resets emissions readiness monitors.',
+        steps: [
+          'Turn vehicle ignition ON (or start engine at warm idle) — PulseOBD auto-connects to your paired Bluetooth adapter without re-pairing.',
+          'Open the Service tab and review all 8 Automated Pre-Service Health Checks (DTCs, battery charging, coolant, fuel trims, Mode 06 misfires, catalyst readiness, fuel reserve).',
+          'Click "Capture Pre-Service OBD Snapshot" to archive a timestamped baseline linked to your VIN and current odometer.',
+          'Click "Copy Parts & ECU Spec" to share your exact VIN, engine code (R4 1.2l TFS), and ECU part number (04E906027LH) with parts suppliers.',
+          'After service is completed, capture a follow-up snapshot to verify zero new DTCs, clean Mode 06 counters, and stable charging voltage.'
+        ],
+        obdVerify: [
+          'Confirm Distance Since Codes Cleared (0131) and Warmups (0130) match expected history.',
+          'Verify VIN (0902) and Calibration CVN (0906) remain consistent.'
+        ],
+        keywords: ['obd', 'baseline', 'snapshot', 'pre-service', 'audit', 'readiness', 'health']
+      },
+      {
+        id: 'svc_manual_custom_repair',
+        type: 'service',
+        categoryId: 'custom_repair',
+        title: 'General Repair Documentation & Workshop Follow-Up Guide',
+        difficulty: 'Easy DIY',
+        estTime: '15 min',
+        intervalLabel: 'As needed for any unscheduled repair or diagnostic visit',
+        summary: 'Best-practice checklist for documenting faults, parts warranties, photos of worn components, and post-repair verification.',
+        tools: ['PulseOBD Studio', 'Phone camera for receipts & old parts'],
+        partsSpec: 'Record OEM / aftermarket part numbers, warranty period, and invoice reference',
+        safetyNote: 'Always request old replaced parts back or photograph them on-site for your permanent per-VIN maintenance record.',
+        steps: [
+          'Record the exact symptom, operating condition (cold start, hot idle, highway boost, braking), and any dashboard warning lamps.',
+          'Capture a live PulseOBD OBD-II snapshot before repair so pre-fix vs post-fix telemetry can be compared.',
+          'Photograph the workshop invoice, part boxes/part numbers, and the repaired area using "Take Photo" or "Upload Image" in the Service form.',
+          'Enter the repair cost so PulseOBD automatically tracks total vehicle ownership cost across all categories.',
+          'Re-check after 100–200 km of driving to verify zero leaks, noises, or returning pending DTCs (Mode 07).'
+        ],
+        obdVerify: [
+          'Check Mode 03 (Confirmed) & Mode 07 (Pending) DTCs after 2 full warm-up drive cycles.'
+        ],
+        keywords: ['repair', 'warranty', 'invoice', 'workshop', 'follow-up', 'custom']
+      }
+    ];
+
+    const COMMON_ISSUE_MANUALS = [
+      {
+        id: 'issue_mil_dtc',
+        type: 'issue',
+        categoryId: 'custom_repair',
+        title: 'Fix Guide: Check Engine Light (MIL ON) & Fault Codes (DTCs)',
+        difficulty: 'Easy DIY',
+        estTime: '15–30 min',
+        symptoms: ['Amber Check Engine Light (MIL) solid or flashing', 'Pending (Mode 07) or Confirmed (Mode 03) DTCs shown in PulseOBD', 'Reduced power or rough running'],
+        summary: 'How to diagnose Check Engine codes methodically without throwing expensive parts at the problem.',
+        tools: ['PulseOBD Studio + paired Bluetooth OBD-II adapter', 'Torch for visual engine bay check'],
+        partsSpec: 'Identify exact P-code family first (P01xx Fuel/Air, P02xx Fuel/Boost, P03xx Ignition/Misfire, P04xx Emissions/EVAP/Cat)',
+        safetyNote: 'FLASHING Check Engine Light means active severe catalyst-damaging misfire! Pull over safely, reduce load immediately, and avoid driving until diagnosed.',
+        steps: [
+          'Check whether the MIL is SOLID (safe to diagnose calmly) or FLASHING (severe misfire — stop driving promptly to protect the catalytic converter).',
+          'Open PulseOBD -> Health / 124 Vars tab and note every Mode 03 (Confirmed) and Mode 07 (Pending) fault code along with live Coolant (0105), Battery (0142), STFT/LTFT (0106/0107), and RPM (010C).',
+          'Do the 60-second visual check first: ensure the fuel filler cap clicks tight (causes EVAP codes), oil cap & dipstick are seated (causes lean codes), and no intake hoses or sensor plugs are loose.',
+          'Group multiple codes together — a single root cause (e.g. a split PCV hose or weak 12V battery) often triggers 3–4 secondary codes at once. Always fix the upstream root cause first.',
+          'Capture a Pre-Service OBD Snapshot in PulseOBD to preserve evidence before visiting a mechanic or replacing a part.',
+          'After the mechanical/electrical repair is fixed, verify via PulseOBD that Pending Mode 07 stays clean over 3 consecutive warm-up cycles (modern ECUs self-extinguish the MIL once self-tests pass).'
+        ],
+        obdVerify: [
+          'Mode 03 (Confirmed DTCs) = 0 and Mode 07 (Pending DTCs) = 0.',
+          'Distance with MIL ON (0121) stops incrementing once fault is resolved.'
+        ],
+        obdTriggers: ['dtc'],
+        keywords: ['check engine', 'mil', 'dtc', 'fault code', 'p0', 'warning light', 'mode 03', 'mode 07']
+      },
+      {
+        id: 'issue_misfire_rough_idle',
+        type: 'issue',
+        categoryId: 'spark_plugs',
+        title: 'Fix Guide: Engine Misfire, Rough Idle or Acceleration Stumble',
+        difficulty: 'Intermediate DIY',
+        estTime: '30–60 min',
+        symptoms: ['Shaking/vibrating engine at idle', 'Hesitation under boost/acceleration', 'P0300 (random) or P0301–P0304 (cylinder-specific) DTCs', 'Non-zero Mode 06 counts (06A2–06A5)'],
+        summary: 'Pinpoint whether a misfire is caused by an ignition coil, spark plug, vacuum leak, or fuel delivery using the classic coil-swap diagnostic test.',
+        tools: ['10mm / Torx T30 for coil bolts', '16mm spark plug socket', 'PulseOBD Studio (Mode 06 + live 010C/0123)'],
+        partsSpec: 'Check coil pack (OEM 04E905110K), spark plugs (NGK PZKER7B8EGS), and HPFP rail pressure (0123: ~4–14 MPa)',
+        safetyNote: 'Switch ignition OFF before unplugging ignition coils. Never drive extended distances with a dead cylinder — unburned fuel rapidly melts the catalytic converter.',
+        steps: [
+          'Check PulseOBD Mode 06 (06A2–06A5) or DTCs (P0301–P0304) to identify WHICH cylinder(s) are misfiring.',
+          'Single cylinder misfire (e.g. Cyl 2): let engine cool, swap Ignition Coil #2 with Ignition Coil #1, clear/monitor Mode 06 counters while idling.',
+          'If the misfire MOVES to Cylinder #1 -> the ignition coil is faulty (replace coil pack).',
+          'If the misfire STAYS on Cylinder #2 -> remove & inspect spark plug #2 for cracked porcelain, carbon tracking, oil fouling, or worn electrode gap; swap plug with Cyl #3 to confirm.',
+          'Random misfire across ALL cylinders (P0300): check for unmetered intake/PCV vacuum leaks (look for high +STFT/+LTFT on 0106/0107), low HPFP fuel rail pressure (0123), or contaminated fuel.',
+          'Inspect electrical coil harness connectors for oil wicking or brittle locking clips, then retest live idle smoothness and acceleration.'
+        ],
+        obdVerify: [
+          'Mode 06 06A2 / 06A3 / 06A4 / 06A5: 0 misfire counts at idle and under load.',
+          'Fuel Rail Pressure (0123): steady ~10–14 MPa at warm idle on TSI direct injection.'
+        ],
+        obdTriggers: ['misfire', 'dtc'],
+        keywords: ['misfire', 'p0300', 'p0301', 'p0302', 'p0303', 'p0304', 'rough idle', 'stumble', 'coil', 'hesitation']
+      },
+      {
+        id: 'issue_battery_alternator',
+        type: 'issue',
+        categoryId: 'battery_12v',
+        title: 'Fix Guide: Weak 12V Battery, Slow Crank or Alternator Charging Fault',
+        difficulty: 'Easy DIY',
+        estTime: '20–40 min',
+        symptoms: ['Slow sluggish engine cranking', 'Red battery warning light on dash', 'PulseOBD ATRV / 0142 below 12.2V (engine off) or below 13.3V / above 14.9V (engine running)'],
+        summary: 'Separate a dying 12V battery from a failing alternator, loose belt, or parasitic overnight drain in under 15 minutes.',
+        tools: ['PulseOBD Studio (ATRV & PID 0142)', 'Digital multimeter (optional)', '10mm wrench & wire terminal brush'],
+        partsSpec: 'Healthy resting: 12.5–12.7V · Cranking min: >= 10.0V · Alternator charging: 13.5–14.6V',
+        safetyNote: 'Never disconnect a battery cable while the engine is running — the sudden load dump voltage spike can destroy the ECU and instrument cluster!',
+        steps: [
+          'With ignition ON and engine OFF (KOEO), read Battery Voltage in PulseOBD (ATRV / 0142). Below 12.2V means the battery is under-charged (<50% SOC) or has a failing cell.',
+          'Watch voltage while cranking the starter: if it plummets below 9.6V and resets clock/dash warnings, the battery fails load capacity and needs replacement.',
+          'With the engine idling and headlights + A/C fan ON, verify voltage rises to 13.5–14.6V. Note: modern smart-charging VW alternators may sit near 13.2–13.5V when the battery is already full, then jump to 14.2V under electrical load.',
+          'If running voltage stays <= 12.6V even with headlights ON: inspect the serpentine belt for slip/breakage, check alternator B+ cable & ground strap corrosion, and have alternator/voltage regulator tested.',
+          'If running voltage exceeds 15.0V: stop driving — a failed voltage regulator is overcharging/boiling the battery.',
+          'If a brand-new battery dies overnight: check for aftermarket dashcams, boot/glovebox lights staying ON, or an OBD adapter left drawing power on an older vehicle with weak sleep mode.'
+        ],
+        obdVerify: [
+          'PID 0142 & ATRV: 12.5–12.7V engine off; 13.5–14.6V engine running under electrical load.'
+        ],
+        obdTriggers: ['battery'],
+        keywords: ['battery', 'alternator', 'voltage', 'charging', '12v', 'drain', 'slow crank', 'no start', 'atrv', '0142']
+      },
+      {
+        id: 'issue_overheating_coolant',
+        type: 'issue',
+        categoryId: 'inspection_service',
+        title: 'Fix Guide: Engine Overheating, Slow Warmup or Coolant Loss',
+        difficulty: 'Intermediate DIY',
+        estTime: '30–60 min',
+        symptoms: ['Coolant Temp (0105) rising above 105°C', 'Coolant temperature gauge stuck cold (<75°C after 15 min drive)', 'Low coolant warning / sweet smell under bonnet'],
+        summary: 'Safe emergency response to overheating plus diagnosing thermostat, radiator fan, expansion cap, and EA211 water pump leaks.',
+        tools: ['PulseOBD Studio (PID 0105 Coolant)', 'Torch / inspection mirror', 'G12evo/G13 premixed coolant (only when cold)'],
+        partsSpec: 'Normal warm operating temp: 85–100°C · Radiator fan kicks on ~100–105°C · Coolant: VW G12evo (pink/violet — never mix green IAT coolant!)',
+        safetyNote: 'EXTREME SCALD HAZARD: NEVER open a hot pressurized coolant expansion cap! Wait at least 45–60 minutes until upper radiator hose is cool and soft to squeeze.',
+        steps: [
+          'If overheating while driving (>108°C): turn A/C OFF, set cabin heater to MAX HOT + MAX FAN (sheds engine heat), pull over safely, and shut the engine OFF immediately.',
+          'Once completely cold (45+ min), inspect the coolant expansion tank level. If low, inspect the plastic thermostat/water-pump housing (belt side on EA211), radiator corners, and hose clamps for dried pink/white crust.',
+          'Inspect the expansion tank cap O-ring — a weak cap fails to hold ~1.4 bar pressure, causing coolant to boil prematurely.',
+          'Start cold and watch PID 0105 in PulseOBD: healthy engines climb steadily to ~88–95°C within 6–10 minutes and hold steady.',
+          'If Coolant climbs above 104°C while idling and the electric radiator fan NEVER spins -> check fan fuse, fan control relay/module, or radiator fan switch.',
+          'If Coolant drops to 65–72°C on the highway or never reaches 85°C -> thermostat is stuck open (increases fuel burn & engine wear; schedule thermostat housing replacement).'
+        ],
+        obdVerify: [
+          'Coolant Temp (0105): reaches 87–98°C cleanly and stabilizes without spiking over 105°C at idle.'
+        ],
+        obdTriggers: ['coolant'],
+        keywords: ['overheat', 'coolant', 'thermostat', 'fan', 'water pump', 'temperature', '0105', 'g12', 'g13', 'leak']
+      },
+      {
+        id: 'issue_fuel_trims_vacuum',
+        type: 'issue',
+        categoryId: 'air_filter',
+        title: 'Fix Guide: High Fuel Trims (Lean/Rich), Vacuum Leaks & Poor Fuel Economy',
+        difficulty: 'Intermediate DIY',
+        estTime: '30–60 min',
+        symptoms: ['STFT (0106) or LTFT (0107) beyond ±10%', 'P0171 (System Too Lean) or P0172 (System Too Rich)', 'Higher than normal L/100 km in Mileage Tracker', 'Hissing sound under bonnet'],
+        summary: 'Use live STFT/LTFT fuel trim behavior at idle vs 2,500 RPM to pinpoint vacuum leaks, PCV failures, dirty MAP sensors, or EVAP purge valve faults.',
+        tools: ['PulseOBD Studio (6 Graphs: 0106 STFT, 0107 LTFT, 010B MAP, 0123 Rail)', 'Torch', 'MAP/electronics cleaner'],
+        partsSpec: 'Healthy combined STFT + LTFT: within ±5% (acceptable up to ±8%; >±10% signals a fault)',
+        safetyNote: 'Never spray flammable brake cleaner or carb cleaner onto a hot turbocharger or exhaust manifold to hunt vacuum leaks — use a smoke tester or soapy water/listen carefully.',
+        steps: [
+          'Warm the engine to >= 85°C and observe STFT (0106) + LTFT (0107) at idle AND while holding a steady 2,500 RPM in neutral.',
+          'LEAN (+10% to +25%) at IDLE that DROPS back near 0% at 2,500 RPM -> Classic unmetered VACUUM / PCV LEAK! Inspect intake boots, PCV breather hose, brake booster line, oil filler cap seal, and dipstick O-ring.',
+          'LEAN (+10% to +25%) at BOTH idle AND 2,500 RPM / load -> Fuel delivery or sensor bias. Check HPFP Fuel Rail Pressure (0123), fuel filter, or dirty intake pressure/temp (T-MAP) sensor.',
+          'RICH (-10% to -25%) -> Excess fuel or restricted air. Check clogged engine air filter, stuck-open EVAP purge valve (N80 — especially if hard to start right after refuelling!), or leaking injector.',
+          'Check O2 Sensor B1S1 (0114) switching & Lambda (0144 ~1.000 at steady cruise) to verify closed-loop sensor response.',
+          'After repairing a hose or replacing a sensor/filter, monitor LTFT over 20–30 km to confirm it trends back inside ±5%.'
+        ],
+        obdVerify: [
+          'STFT (0106) oscillates cleanly around 0% (±4%) and LTFT (0107) settles inside ±5%.',
+          'Equivalence Ratio Lambda (0144) tracks ~1.000 in closed loop.'
+        ],
+        obdTriggers: ['fuel_trim'],
+        keywords: ['fuel trim', 'stft', 'ltft', 'lean', 'rich', 'p0171', 'p0172', 'vacuum leak', 'pcv', 'evap', 'economy']
+      },
+      {
+        id: 'issue_turbo_boost_loss',
+        type: 'issue',
+        categoryId: 'custom_repair',
+        title: 'Fix Guide: Turbo Boost Loss, EPC / Limp Mode & Wastegate Check (TSI)',
+        difficulty: 'Intermediate DIY',
+        estTime: '30–60 min',
+        symptoms: ['Sluggish acceleration / feels non-turbo', 'EPC light illuminated on dash', 'MAP (010B) never rises above Barometric Pressure (0133) under acceleration', 'P0299 (Underboost) or P2563'],
+        summary: 'Diagnose boost leaks, stuck EA211 electronic wastegate actuator linkages, and charge-pipe couplings using live MAP vs Baro telemetry.',
+        tools: ['PulseOBD Studio (010B MAP, 0133 Baro, 0104 Load, 0123 Rail)', 'Torch', 'High-temp anti-seize / penetrant (if wastegate pivot binds)'],
+        partsSpec: 'KOEO check: MAP (010B) must match Baro (0133) within ±2 kPa · Idle vacuum: ~26–35 kPa · Full TSI boost: ~150–195 kPa absolute',
+        safetyNote: 'Turbocharger housing exceeds 400°C! Only inspect wastegate actuator rod and charge pipes when the engine is stone COLD.',
+        steps: [
+          'Perform the Key-On Engine-Off (KOEO) sensor sanity check in PulseOBD: MAP (010B) should equal Barometric Pressure (0133, e.g. ~83 kPa at Johannesburg altitude or ~101 kPa at sea level) within ±2 kPa.',
+          'With engine cold, inspect all intercooler/charge pipes, silicone couplers, and hose clamps for splits, popped-off hoses, or oily soot streaks (boost leak telltale).',
+          'On EA211 1.2L TSI engines, gently inspect the metal wastegate actuator rod on the turbocharger for stiffness or rusted pivot binding (common cause of EPC light & P0299/P334B).',
+          'Listen during moderate acceleration for loud whooshing/hissing (split boost hose or torn diverter valve diaphragm).',
+          'Check Fuel Rail Pressure (0123) during a safe pull — low rail pressure can trigger ECU limp mode and cut turbo boost protectively.',
+          'If EPC resets after restarting ignition but returns under hill climb or overtaking, capture the Mode 03/07 DTC immediately in PulseOBD before shutting off.'
+        ],
+        obdVerify: [
+          'MAP (010B) climbs smoothly above Baro (0133) under load without sudden cutbacks.',
+          'Zero P0299 / P0234 / wastegate DTCs in Mode 03 & Mode 07.'
+        ],
+        obdTriggers: [],
+        keywords: ['turbo', 'boost', 'epc', 'limp mode', 'wastegate', 'p0299', 'map', 'tsi', 'sluggish']
+      },
+      {
+        id: 'issue_brakes_squeal_soft',
+        type: 'issue',
+        categoryId: 'brakes_fluid',
+        title: 'Fix Guide: Brake Squeal, Spongy Pedal or Steering Vibration Under Braking',
+        difficulty: 'Intermediate DIY',
+        estTime: '30–60 min',
+        symptoms: ['High-pitched squeal when braking lightly', 'Soft or sinking brake pedal', 'Steering wheel judder when slowing from highway speed', 'Grinding noise (URGENT)'],
+        summary: 'Distinguish harmless morning surface rust from worn pads, air/moisture in DOT4 fluid, sticking caliper pins, or rotor thickness variation.',
+        tools: ['Torch', 'Jack & jack stands', 'Silicone caliper pin grease', 'Brake cleaner'],
+        partsSpec: 'Minimum pad friction thickness: 3.0 mm · DOT4 LV fluid · Wheel lug torque: 120 Nm',
+        safetyNote: 'Metal-on-metal GRINDING or a pedal sinking to the floor is an immediate safety emergency — do not drive; tow or repair on site.',
+        steps: [
+          'Squeal ONLY on first 2 stops after rain/washing -> Normal overnight surface rust film on iron discs; clears automatically.',
+          'Persistent squeal or scraping -> Inspect both outer AND inner brake pads (inner pads often wear faster if slide pins stick). Replace pads + inspect discs if <= 3 mm remains.',
+          'Spongy / soft pedal -> Inspect brake fluid level and check all 4 wheels & flexible lines for wet fluid leaks; perform a full DOT4 LV fluid bleed (moisture lowers boiling point).',
+          'Steering wheel vibration ONLY while braking from 80–120 km/h -> Disc thickness variation (DTV) / uneven pad deposits or hub rust behind rotor. Inspect rotors and ensure wheel bolts were torqued evenly to 120 Nm.',
+          'Pulling to one side under braking -> Clean and lubricate caliper guide pins with high-temp silicone brake grease (never petroleum grease, which swells rubber boots).'
+        ],
+        obdVerify: [
+          'Verify 0 ABS/wheel-speed DTCs and log inspection findings & pad thickness (mm) in PulseOBD Service History.'
+        ],
+        obdTriggers: [],
+        keywords: ['brake', 'squeal', 'spongy', 'soft pedal', 'vibration', 'judder', 'grinding', 'rotor', 'caliper']
+      },
+      {
+        id: 'issue_tyre_wear_pull',
+        type: 'issue',
+        categoryId: 'tires_alignment',
+        title: 'Fix Guide: Uneven Tyre Wear, Car Pulling or Highway Vibration',
+        difficulty: 'Easy DIY',
+        estTime: '20–30 min',
+        symptoms: ['Car drifts left or right on straight level road', 'Steering wheel vibrates at 90–120 km/h', 'Rapid wear on tyre edges or center'],
+        summary: 'Read your tyre tread like a diagnostic report to fix inflation, wheel balance, or alignment before ruining a set of tyres.',
+        tools: ['Cold tyre pressure gauge', 'Tread depth gauge'],
+        partsSpec: 'Check cold pressure monthly (match fuel-flap/door placard; typically ~2.1–2.4 bar front/rear)',
+        safetyNote: 'A sudden thumping vibration or sidewall bubble indicates internal cord separation — fit the spare wheel immediately and replace the tyre.',
+        steps: [
+          'Center worn faster than edges -> Over-inflated tyres. Set cold pressures to the factory placard.',
+          'Both outer edges worn faster than center -> Under-inflated tyres (also hurts fuel economy). Inflate to placard spec and inspect for slow nail leaks.',
+          'One shoulder feathered or worn bald -> Toe or camber misalignment (often after hitting a pothole or kerb). Book a 4-wheel laser alignment promptly.',
+          'Vibration at 90–120 km/h that happens even while coasting (not just braking) -> Lost wheel balance weight or slightly bent rim. Have wheels dynamically balanced.',
+          'Check tread depth & rotate tyres every 10,000 km and log pressures/depths in PulseOBD.'
+        ],
+        obdVerify: [
+          'Monitor Mileage Tracker L/100 km after fixing under-inflation or alignment drag.'
+        ],
+        obdTriggers: [],
+        keywords: ['tyre', 'tire', 'wear', 'pulling', 'vibration', 'alignment', 'balance', 'pothole', 'pressure']
+      },
+      {
+        id: 'issue_catalyst_readiness',
+        type: 'issue',
+        categoryId: 'inspection_baseline',
+        title: 'Fix Guide: Catalyst Monitor Incomplete / O2 Heater & Readiness Drive Cycle',
+        difficulty: 'Easy DIY',
+        estTime: '25–35 min drive',
+        symptoms: ['Catalyst Monitor B1 shows Incomplete in PulseOBD (0101 / 0141)', 'Short city trips keep emissions readiness unfinished', 'High Catalyst Temp or O2 sensor questions'],
+        summary: 'Why short urban commutes leave Catalyst Monitor B1 incomplete (even on a 100% healthy car) and the exact smooth drive cycle to complete it.',
+        tools: ['PulseOBD Studio (Health / 124 Vars Readiness Monitors)'],
+        partsSpec: 'Fuel tank between 25% and 75% full · Coolant >= 85°C · Steady cruise 80–100 km/h',
+        safetyNote: 'Always obey local speed limits and traffic safety while performing a readiness drive cycle — never look at your phone while driving.',
+        steps: [
+          'Check Fuel Level (012F): most VW/OBD-II ECUs require fuel between 15% and 85% (ideally 25–75%) before running Catalyst & EVAP readiness self-tests.',
+          'Verify zero active DTCs (Mode 03/07) and healthy Coolant Temp (0105 >= 85°C) — a stuck-open thermostat or active O2 fault blocks catalyst testing.',
+          'Verify O2 Heater resistance in Mode 06 (0641 / 0642) is within spec and B1S2 downstream O2 voltage (0115) holds fairly steady (~0.65–0.80V) at warm idle while B1S1 (0114) switches cleanly.',
+          'Drive smoothly at a steady highway speed of 80–100 km/h for 10–15 minutes with minimal throttle changes, followed by 2 gentle coast-downs in gear without braking.',
+          'Finish with 2–3 minutes of smooth warm idle, then check Readiness Monitors in PulseOBD Health tab.'
+        ],
+        obdVerify: [
+          'Catalyst Monitor B1 (0101) transitions to Ready; Catalyst Temp (013C) reaches 450–650°C on steady highway cruise.',
+          'B1S2 voltage (0115) remains steady (not mirroring rapid B1S1 swings).'
+        ],
+        obdTriggers: ['catalyst', 'low_fuel'],
+        keywords: ['catalyst', 'readiness', 'incomplete', 'o2', 'emissions', 'drive cycle', '0114', '0115', '0641', 'low fuel']
+      },
+      {
+        id: 'issue_bluetooth_obd_connection',
+        type: 'issue',
+        categoryId: 'inspection_baseline',
+        title: 'Fix Guide: Bluetooth OBD-II Pairing, Ignition Standby & Audio Coexistence',
+        difficulty: 'Easy DIY',
+        estTime: '5–10 min',
+        symptoms: ['Adapter shows IGNITION STANDBY with key off', 'Want zero re-pairing on Android/Desktop', 'Car stereo Bluetooth audio stutters when OBD is active'],
+        summary: 'Quick setup & recovery guide for permanent once-only pairing, instant ignition-ON wakeup, and smooth car stereo coexistence.',
+        tools: ['PulseOBD Studio (Bluetooth tab)', 'ELM327 BLE or Classic BT SPP (COM3) adapter'],
+        partsSpec: 'Classic BT SPP: OBDII (COM3 @ 38400 8N1) · BLE: FFF0/FFE0 ELM327 · Chrome / Edge recommended',
+        safetyNote: 'Only plug/unplug the OBD-II adapter when parked safely — never reach into the driver footwell while driving.',
+        steps: [
+          'Pair ONCE in the Bluetooth tab (BLE on phone/web, Web Serial COM3 on desktop, or start Launch_PulseOBD.bat for the Windows Bridge). Leave "Auto-reconnect" enabled.',
+          'When vehicle ignition is OFF, PulseOBD stays quietly in "IGNITION STANDBY" (zero re-pairing prompts) and automatically wakes ECU discovery + live telemetry the moment you turn ignition ON.',
+          'Android Chrome tip: if Chrome ever forgets your BLE adapter after completely closing the browser app, open chrome://flags/#enable-web-bluetooth-new-permissions-backend, set it to Enabled, and relaunch Chrome once.',
+          'If your car stereo (A2DP) or smartwatch feels sluggish while OBD is live, switch the Mobile RF Coexistence Profile to "Audio / Multi-BT Priority" or tap "Yield 20s" while pairing another device.',
+          'If the ELM327 adapter itself ever freezes after days plugged in, unplug it from the OBD-II port for 10 seconds, plug back in, and turn ignition ON — PulseOBD will reconnect automatically.'
+        ],
+        obdVerify: [
+          'Header badge transitions automatically: IGNITION STANDBY -> IGNITION ON -> TRIP REC as soon as engine starts.'
+        ],
+        obdTriggers: ['bt_standby'],
+        keywords: ['bluetooth', 'pairing', 'reconnect', 'ignition', 'standby', 'com3', 'ble', 'audio', 'elm327', 'bridge']
+      }
+    ];
+
+    const manualsUiState = {
+      filter: 'all',
+      activeManualId: '',
+      cachedCustomManuals: []
+    };
+
+    function loadManualStepChecksMap() {
+      try {
+        const raw = localStorage.getItem(MANUAL_CHECKS_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function saveManualStepChecksMap(map) {
+      try { localStorage.setItem(MANUAL_CHECKS_STORAGE_KEY, JSON.stringify(map || {})); } catch (_) {}
+    }
+
+    function getAllAvailableManuals(customList) {
+      const custom = Array.isArray(customList) ? customList : (manualsUiState.cachedCustomManuals || []);
+      return [...SERVICE_ITEM_MANUALS, ...COMMON_ISSUE_MANUALS, ...custom];
+    }
+
+    function setManualsFilter(filterMode) {
+      manualsUiState.filter = filterMode || 'all';
+      ['all', 'service', 'issue', 'custom'].forEach(k => {
+        const btn = document.getElementById('manual-filter-' + k);
+        if (!btn) return;
+        if (k === manualsUiState.filter) {
+          btn.classList.add('manual-tab-btn-active');
+          btn.classList.remove('bg-white', 'text-[#222222]');
+        } else {
+          btn.classList.remove('manual-tab-btn-active');
+          btn.classList.add('bg-white', 'text-[#222222]');
+        }
+      });
+      renderManualsLibraryUi();
+    }
+
+    function toggleCustomManualForm(forceState) {
+      const panel = document.getElementById('custom-manual-form-panel');
+      if (!panel) return;
+      const shouldShow = (forceState !== undefined) ? Boolean(forceState) : panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !shouldShow);
+      if (shouldShow) {
+        document.getElementById('cm-title')?.focus();
+      }
+    }
+
+    function getLiveObdSuggestedManualIds() {
+      const d = appState.current || SNAPSHOTS.snap1;
+      const suggested = [];
+      const addUniq = (id, reason) => {
+        if (!suggested.some(x => x.id === id)) suggested.push({ id, reason });
+      };
+      if ((Number(d.dtcCount) || 0) > 0 || d.milOn) {
+        addUniq('issue_mil_dtc', `${d.dtcCount || 1} DTC(s) / MIL active`);
+      }
+      const v = Number(d.volt || 0);
+      const engOn = (Number(d.rpm) || 0) >= 50;
+      if (v > 0 && ((engOn && (v < 13.2 || v > 14.9)) || (!engOn && v < 12.2))) {
+        addUniq('issue_battery_alternator', `Voltage ${v.toFixed(2)}V`);
+      }
+      const cool = Number(d.coolant || 0);
+      if (cool >= 104) addUniq('issue_overheating_coolant', `Coolant ${Math.round(cool)}°C`);
+      const stft = Math.abs(Number(d.stft || 0));
+      const ltft = Math.abs(Number(d.ltft || 0));
+      if (stft >= 10 || ltft >= 10) {
+        addUniq('issue_fuel_trims_vacuum', `Fuel Trim ${d.stft > 0 ? '+' : ''}${Number(d.stft || 0).toFixed(1)}% / ${Number(d.ltft || 0).toFixed(1)}%`);
+      }
+      const catMon = READINESS_MONITORS.find(m => /catalyst monitor b1/i.test(m.name));
+      if ((catMon && /incomplete/i.test(catMon.s0101)) || (Number(d.fuel || 0) > 0 && Number(d.fuel || 0) < 15)) {
+        addUniq('issue_catalyst_readiness', `Catalyst Incomplete / Fuel ${Number(d.fuel || 0).toFixed(1)}%`);
+      }
+      if ((appState.blePollingActive || appState.serialPollingActive) && !passiveState.ecuOnline) {
+        addUniq('issue_bluetooth_obd_connection', 'Adapter in Ignition Standby');
+      }
+      return suggested;
+    }
+
+    function renderManualsLibraryUi(vin, meta) {
+      if (meta && Array.isArray(meta.customManuals)) {
+        manualsUiState.cachedCustomManuals = normalizeCustomManualsArray(meta.customManuals);
+      }
+      const all = getAllAvailableManuals();
+      const customCount = (manualsUiState.cachedCustomManuals || []).length;
+
+      _setElText('manuals-count-pill', `${all.length} Manuals`);
+      _setElText('manual-filter-service', `Service Items (${SERVICE_ITEM_MANUALS.length})`);
+      _setElText('manual-filter-issue', `Common Issue Fixes (${COMMON_ISSUE_MANUALS.length})`);
+      _setElText('manual-filter-custom', `Custom (${customCount})`);
+
+      // Live OBD-II smart troubleshooting suggestions
+      const sugBox = document.getElementById('manuals-obd-suggestions');
+      if (sugBox) {
+        const sugs = getLiveObdSuggestedManualIds();
+        if (sugs.length > 0) {
+          sugBox.classList.remove('hidden');
+          sugBox.innerHTML = `
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-bold text-[#B45309] shrink-0">OBD-II Suggested Fix Manuals:</span>
+              ${sugs.map(s => {
+                const m = all.find(x => x.id === s.id);
+                if (!m) return '';
+                return `<button type="button" onclick="openManualModal('${escapeHtml(m.id)}')" class="px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] hover:bg-[#FDE68A] font-semibold text-[11px] transition">${escapeHtml(m.title.replace(/^Fix Guide:\s*/i, ''))} <span class="font-mono-num opacity-80">(${escapeHtml(s.reason)})</span></button>`;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          sugBox.classList.add('hidden');
+        }
+      }
+
+      const query = (document.getElementById('manuals-search-input')?.value || '').trim().toLowerCase();
+      const filtered = all.filter(m => {
+        if (manualsUiState.filter === 'service' && m.type !== 'service') return false;
+        if (manualsUiState.filter === 'issue' && m.type !== 'issue') return false;
+        if (manualsUiState.filter === 'custom' && !m.isCustom) return false;
+        if (!query) return true;
+        const hay = [
+          m.title, m.summary, m.partsSpec, m.difficulty,
+          ...(m.keywords || []),
+          ...(m.symptoms || []),
+          ...(m.steps || [])
+        ].join(' ').toLowerCase();
+        return hay.includes(query);
+      });
+
+      const checksMap = loadManualStepChecksMap();
+      const grid = document.getElementById('svc-manuals-grid');
+      if (!grid) return;
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="sm:col-span-2 lg:col-span-3 acro-well rounded-xl p-4 text-[#5A5F6A]">No manuals match "<strong>${escapeHtml(query || manualsUiState.filter)}</strong>". Try clearing search or click <strong>+ Add Custom Manual</strong> to write your own guide.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(m => {
+        const isIssue = m.type === 'issue';
+        const typeBadge = m.isCustom
+          ? `<span class="px-2 py-0.5 rounded-full bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono-num text-[10px] font-bold">CUSTOM</span>`
+          : (isIssue
+              ? `<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num text-[10px] font-bold">ISSUE FIX</span>`
+              : `<span class="px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num text-[10px] font-bold">SERVICE</span>`);
+        const diffCls = /easy/i.test(m.difficulty)
+          ? 'text-[#047857]'
+          : (/workshop/i.test(m.difficulty) ? 'text-[#B91C1C]' : 'text-[#1473E6]');
+        const totalSteps = (m.steps || []).length;
+        const doneCount = Array.isArray(checksMap[m.id]) ? checksMap[m.id].filter(i => i >= 0 && i < totalSteps).length : 0;
+        const progressBadge = doneCount > 0
+          ? `<span class="text-[10px] font-mono-num font-bold text-[#047857]">${doneCount}/${totalSteps} done</span>`
+          : `<span class="text-[10px] font-mono-num text-[#6B7280]">${totalSteps} steps · ${escapeHtml(m.estTime || '')}</span>`;
+
+        return `
+          <button type="button" onclick="openManualModal('${escapeHtml(m.id)}')" class="acro-well manual-card rounded-xl p-3 flex flex-col justify-between gap-2 min-w-0">
+            <div class="space-y-1.5 w-full min-w-0">
+              <div class="flex items-center justify-between gap-1.5 w-full">
+                ${typeBadge}
+                <span class="text-[10px] font-mono-num font-bold ${diffCls} shrink-0">${escapeHtml(m.difficulty)}</span>
+              </div>
+              <div class="font-bold text-[#222222] leading-snug">${escapeHtml(m.title)}</div>
+              <p class="text-[11px] text-[#5A5F6A] leading-relaxed">${escapeHtml(m.summary)}</p>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-[#E6E8EE] w-full">
+              ${progressBadge}
+              <span class="text-[11px] font-bold text-[#1473E6] shrink-0">Open Manual →</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function openServiceManualByCategory(catId) {
+      const m = SERVICE_ITEM_MANUALS.find(x => x.categoryId === catId) || SERVICE_ITEM_MANUALS[0];
+      if (m) openManualModal(m.id);
+    }
+
+    function openServiceManualForSelectedCategory() {
+      const catId = document.getElementById('svc-category')?.value || 'oil_filter';
+      openServiceManualByCategory(catId);
+    }
+
+    function renderActiveManualModalBody(manual) {
+      const body = document.getElementById('manual-modal-body');
+      if (!body || !manual) return;
+      const checksMap = loadManualStepChecksMap();
+      const doneSet = new Set(Array.isArray(checksMap[manual.id]) ? checksMap[manual.id] : []);
+      const steps = Array.isArray(manual.steps) ? manual.steps : [];
+
+      _setElText('manual-modal-title', manual.title);
+      const typePill = document.getElementById('manual-modal-type-pill');
+      if (typePill) {
+        typePill.textContent = manual.isCustom ? 'CUSTOM MANUAL' : (manual.type === 'issue' ? 'COMMON ISSUE FIX' : 'SERVICE MANUAL');
+        typePill.className = manual.type === 'issue'
+          ? 'px-2 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num text-[10px] font-bold'
+          : 'px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num text-[10px] font-bold';
+      }
+      _setElText('manual-modal-diff-pill', manual.difficulty || 'DIY');
+      _setElText('manual-modal-time-pill', manual.estTime || '30 min');
+      _setElText('manual-modal-progress-pill', `${doneSet.size} / ${steps.length} steps`);
+
+      const delBtn = document.getElementById('manual-modal-delete-btn');
+      if (delBtn) delBtn.classList.toggle('hidden', !manual.isCustom);
+
+      const logBtn = document.getElementById('manual-modal-log-btn');
+      if (logBtn) {
+        const catDef = getServiceCategoryDef(manual.categoryId || 'custom_repair');
+        logBtn.textContent = `Log ${catDef.label} →`;
+      }
+
+      const symptomsHtml = (manual.symptoms && manual.symptoms.length)
+        ? `<div class="acro-well rounded-xl p-3 space-y-1">
+             <div class="font-bold text-[#222222]">Common Symptoms &amp; Warning Signs</div>
+             <ul class="list-disc pl-4 space-y-0.5 text-[#4A4E57]">${manual.symptoms.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+           </div>`
+        : '';
+
+      const intervalHtml = manual.intervalLabel
+        ? `<div class="acro-well rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2">
+             <span class="font-semibold text-[#5A5F6A]">Recommended Interval</span>
+             <strong class="font-mono-num text-[#1473E6]">${escapeHtml(manual.intervalLabel)}</strong>
+           </div>`
+        : '';
+
+      const toolsHtml = (manual.tools && manual.tools.length)
+        ? `<div class="space-y-1">
+             <div class="font-bold text-[#222222]">Tools Required</div>
+             <div class="flex flex-wrap gap-1.5">${manual.tools.map(t => `<span class="px-2 py-0.5 rounded-full acro-well text-[11px] text-[#222222] font-medium">${escapeHtml(t)}</span>`).join('')}</div>
+           </div>`
+        : '';
+
+      const partsHtml = manual.partsSpec
+        ? `<div class="acro-well rounded-xl p-2.5 space-y-0.5">
+             <div class="font-bold text-[#222222]">Parts, Fluids &amp; Torque Specifications</div>
+             <div class="font-mono-num text-[11px] text-[#1473E6] leading-relaxed">${escapeHtml(manual.partsSpec)}</div>
+           </div>`
+        : '';
+
+      const safetyHtml = manual.safetyNote
+        ? `<div class="rounded-xl p-3 bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] leading-relaxed">
+             <strong>Safety Notice:</strong> ${escapeHtml(manual.safetyNote)}
+           </div>`
+        : '';
+
+      const stepsHtml = `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-[#222222]">Step-by-Step Interactive Checklist</strong>
+            <span class="text-[11px] text-[#5A5F6A]">Tap steps to mark completed</span>
+          </div>
+          <div class="space-y-1.5">
+            ${steps.map((st, idx) => {
+              const isDone = doneSet.has(idx);
+              return `
+                <div role="checkbox" aria-checked="${isDone ? 'true' : 'false'}" tabindex="0"
+                  onclick="toggleManualStepCheck('${escapeHtml(manual.id)}', ${idx})"
+                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleManualStepCheck('${escapeHtml(manual.id)}', ${idx});}"
+                  class="manual-step-item ${isDone ? 'done' : ''}">
+                  <span class="manual-step-num font-mono-num">${isDone ? '✓' : (idx + 1)}</span>
+                  <span class="manual-step-text text-[#222222] leading-relaxed flex-1">${escapeHtml(st)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      const obdHtml = (manual.obdVerify && manual.obdVerify.length)
+        ? `<div class="rounded-xl p-3 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] space-y-1">
+             <div class="font-bold">Read-Only PulseOBD Post-Check Verification</div>
+             <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${manual.obdVerify.map(v => `<li>${escapeHtml(v)}</li>`).join('')}</ul>
+           </div>`
+        : '';
+
+      body.innerHTML = [safetyHtml, intervalHtml, symptomsHtml, partsHtml, toolsHtml, stepsHtml, obdHtml].filter(Boolean).join('');
+    }
+
+    function openManualModal(manualId) {
+      const all = getAllAvailableManuals();
+      const manual = all.find(m => m.id === manualId);
+      if (!manual) return;
+      manualsUiState.activeManualId = manual.id;
+      renderActiveManualModalBody(manual);
+      const modal = document.getElementById('svc-manual-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeManualModal() {
+      const modal = document.getElementById('svc-manual-modal');
+      if (modal) modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      manualsUiState.activeManualId = '';
+    }
+
+    function toggleManualStepCheck(manualId, stepIdx) {
+      const checksMap = loadManualStepChecksMap();
+      const cur = new Set(Array.isArray(checksMap[manualId]) ? checksMap[manualId] : []);
+      if (cur.has(stepIdx)) cur.delete(stepIdx);
+      else cur.add(stepIdx);
+      checksMap[manualId] = Array.from(cur).sort((a, b) => a - b);
+      saveManualStepChecksMap(checksMap);
+      const manual = getAllAvailableManuals().find(m => m.id === manualId);
+      if (manual) renderActiveManualModalBody(manual);
+      renderManualsLibraryUi();
+    }
+
+    function resetActiveManualChecks() {
+      const id = manualsUiState.activeManualId;
+      if (!id) return;
+      const checksMap = loadManualStepChecksMap();
+      delete checksMap[id];
+      saveManualStepChecksMap(checksMap);
+      const manual = getAllAvailableManuals().find(m => m.id === id);
+      if (manual) renderActiveManualModalBody(manual);
+      renderManualsLibraryUi();
+    }
+
+    async function saveCustomManualFromForm() {
+      const vin = getServiceSelectedVin();
+      const type = document.getElementById('cm-type')?.value === 'service' ? 'service' : 'issue';
+      const difficulty = document.getElementById('cm-difficulty')?.value || 'Intermediate DIY';
+      const estTime = (document.getElementById('cm-time')?.value || '').trim() || '30 min';
+      const title = (document.getElementById('cm-title')?.value || '').trim();
+      const partsSpec = (document.getElementById('cm-parts')?.value || '').trim();
+      const stepsRaw = (document.getElementById('cm-steps')?.value || '').trim();
+      const safetyNote = (document.getElementById('cm-safety')?.value || '').trim();
+
+      if (!title) {
+        logTerminal('[MANUALS] Please enter a title for your custom manual.', 'text-[#B45309]');
+        document.getElementById('cm-title')?.focus();
+        return;
+      }
+      const steps = stepsRaw
+        .split(/\r?\n/)
+        .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
+        .filter(Boolean);
+      if (!steps.length) {
+        logTerminal('[MANUALS] Add at least one step-by-step instruction line.', 'text-[#B45309]');
+        document.getElementById('cm-steps')?.focus();
+        return;
+      }
+
+      const meta = await getServiceMetaForVin(vin);
+      const newManual = {
+        id: 'cman_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        isCustom: true,
+        type,
+        categoryId: 'custom_repair',
+        title,
+        difficulty,
+        estTime,
+        summary: steps[0].slice(0, 180),
+        tools: [],
+        partsSpec,
+        safetyNote: safetyNote || 'Park on level ground, set parking brake, allow hot parts to cool, and keep PulseOBD strictly read-only.',
+        steps,
+        obdVerify: ['Verify 0 DTCs in Mode 03/07 and log the completed job in Service History.'],
+        createdAt: new Date().toISOString()
+      };
+      meta.customManuals = normalizeCustomManualsArray([...(meta.customManuals || []), newManual]);
+      await saveServiceMetaForVin(meta);
+      manualsUiState.cachedCustomManuals = meta.customManuals;
+      ['cm-title', 'cm-parts', 'cm-steps', 'cm-safety', 'cm-time'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      toggleCustomManualForm(false);
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      renderManualsLibraryUi(vin, meta);
+      logTerminal(`[MANUALS] Saved custom manual "${newManual.title}" for ${vin}.`, 'text-[#047857] font-semibold');
+      openManualModal(newManual.id);
+    }
+
+    async function deleteActiveCustomManual() {
+      const id = manualsUiState.activeManualId;
+      if (!id) return;
+      const vin = getServiceSelectedVin();
+      const meta = await getServiceMetaForVin(vin);
+      meta.customManuals = (meta.customManuals || []).filter(m => m.id !== id);
+      meta.deletedIds = Array.from(new Set([...(meta.deletedIds || []), id]));
+      await saveServiceMetaForVin(meta);
+      manualsUiState.cachedCustomManuals = meta.customManuals;
+      closeManualModal();
+      await persistServiceLogToProjectFolder(vin, { quiet: true });
+      renderManualsLibraryUi(vin, meta);
+      logTerminal(`[MANUALS] Deleted custom manual ${id}.`, 'text-[#5A5F6A]');
+    }
+
+    function logServiceFromActiveManual() {
+      const manual = getAllAvailableManuals().find(m => m.id === manualsUiState.activeManualId);
+      const catId = manual?.categoryId || 'custom_repair';
+      closeManualModal();
+      prefillServiceCategory(catId);
+    }
+
+    function printActiveManual() {
+      const manual = getAllAvailableManuals().find(m => m.id === manualsUiState.activeManualId);
+      if (!manual) return;
+      const win = window.open('', '_blank', 'width=820,height=920');
+      if (!win) {
+        window.print();
+        return;
+      }
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(manual.title)} — PulseOBD Manual</title>
+        <style>body{font-family:system-ui,-apple-system,sans-serif;max-width:740px;margin:24px auto;padding:0 16px;color:#111;line-height:1.5}
+        h1{font-size:20px;margin:0 0 6px} .meta{font-size:12px;color:#555;margin-bottom:14px}
+        .box{border:1px solid #ddd;border-radius:8px;padding:10px 12px;margin:10px 0}
+        .warn{background:#FEF3C7;border-color:#F59E0B} ol{padding-left:20px} li{margin:6px 0}</style></head><body>
+        <h1>${escapeHtml(manual.title)}</h1>
+        <div class="meta">VIN: ${escapeHtml(getServiceSelectedVin())} · ${escapeHtml(manual.difficulty || '')} · ${escapeHtml(manual.estTime || '')}</div>
+        ${manual.safetyNote ? `<div class="box warn"><strong>Safety Notice:</strong> ${escapeHtml(manual.safetyNote)}</div>` : ''}
+        ${manual.partsSpec ? `<div class="box"><strong>Parts &amp; Specs:</strong> ${escapeHtml(manual.partsSpec)}</div>` : ''}
+        ${(manual.tools && manual.tools.length) ? `<div class="box"><strong>Tools:</strong> ${escapeHtml(manual.tools.join(', '))}</div>` : ''}
+        <h3>Step-by-Step Procedure</h3><ol>${(manual.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>
+        ${(manual.obdVerify && manual.obdVerify.length) ? `<div class="box"><strong>PulseOBD Read-Only Verification:</strong><ul>${manual.obdVerify.map(v => `<li>${escapeHtml(v)}</li>`).join('')}</ul></div>` : ''}
+        </body></html>`;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { try { win.print(); } catch (_) {} }, 250);
     }
 
     function commitLiveFrame() {
