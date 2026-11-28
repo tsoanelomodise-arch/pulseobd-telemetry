@@ -983,24 +983,36 @@ function Read-AllLiveTelemetry {
         $queryDtc  = (($script:PollCycleIndex % 20) -eq 0)
     }
 
+    $cycleHadValidCan = $false
+    $cycleMissedPids = @()
     foreach ($p in $pidsToQuery) {
         if ($script:BtManualUnlocked -or ([DateTime]::UtcNow -lt $script:BtYieldUntilUtc)) { break }
         $r = Send-ElmReadOnly $Port $p 950
         $script:CachedRawMap[$p] = $r
         $parsedB = Parse-CanDataBytes $r
         $script:CachedBytesMap[$p] = $parsedB
-        if ($parsedB.Count -eq 0 -and ($r -match 'NO\s*DATA|\?|STOPPED|ERROR|UNABLE')) {
-            $curM = if ($script:PidMissMap.ContainsKey($p)) { $script:PidMissMap[$p] } else { @{ Count = 0; SkipUntil = [DateTime]::MinValue } }
+        if ($parsedB.Count -gt 0) {
+            $cycleHadValidCan = $true
+            if ($script:PidMissMap.ContainsKey($p)) {
+                $script:PidMissMap.Remove($p)
+            }
+        } elseif ($r -match 'NO\s*DATA|\?|STOPPED|ERROR|UNABLE') {
+            $cycleMissedPids += $p
+        }
+        if ($GapMs -gt 0) { Start-Sleep -Milliseconds $GapMs }
+    }
+    # Only skip-blacklist individual PIDs when the ECU actually answered at least one PID this cycle.
+    # While ignition is OFF (all PIDs return NO DATA / UNABLE TO CONNECT), never poison PidMissMap!
+    if ($cycleHadValidCan -and $cycleMissedPids.Count -gt 0) {
+        foreach ($mp in $cycleMissedPids) {
+            $curM = if ($script:PidMissMap.ContainsKey($mp)) { $script:PidMissMap[$mp] } else { @{ Count = 0; SkipUntil = [DateTime]::MinValue } }
             $curM.Count++
             if ($curM.Count -ge 2) {
                 $curM.SkipUntil = [DateTime]::UtcNow.AddSeconds(90)
                 $curM.Count = 0
             }
-            $script:PidMissMap[$p] = $curM
-        } elseif ($parsedB.Count -gt 0 -and $script:PidMissMap.ContainsKey($p)) {
-            $script:PidMissMap.Remove($p)
+            $script:PidMissMap[$mp] = $curM
         }
-        if ($GapMs -gt 0) { Start-Sleep -Milliseconds $GapMs }
     }
     if (-not $script:BtManualUnlocked -and ([DateTime]::UtcNow -ge $script:BtYieldUntilUtc)) {
         if ($queryAtrv -or -not $script:CachedAtrv) {
@@ -1154,153 +1166,268 @@ $lastLocalDiskSw = [System.Diagnostics.Stopwatch]::StartNew()
 $script:DynamicRestMs = $PollIntervalMs
 $latestPayload = $null
 $cloudTxCount = 0
+$script:ElmInitialized = $false
+$script:EcuDiscovered = $false
+$script:EcuOffCycles = 0
+$script:StandbyLogged = $false
+$script:CachedAti = ''
+$script:CachedAtdp = ''
+
+function Get-FallbackVehicleIdentity {
+    param([string]$HistoryRoot)
+    try {
+        $idxPath = Join-Path $HistoryRoot 'vehicles_index.json'
+        if (Test-Path $idxPath) {
+            $idxObj = ConvertTo-PlainOrdered (Get-Content $idxPath -Raw | ConvertFrom-Json)
+            if ($idxObj -and $idxObj['vehicles'] -and $idxObj['vehicles'].Count -gt 0) {
+                $firstV = $idxObj['vehicles'][0]
+                if ($firstV -and $firstV['vin']) {
+                    return [ordered]@{
+                        vin             = [string]$firstV['vin']
+                        label           = if ($firstV['label']) { [string]$firstV['label'] } else { "Vehicle $($firstV['vin'])" }
+                        engine          = [string]$firstV['engine']
+                        ecuName         = [string]$firstV['ecuName']
+                        partNumber      = [string]$firstV['partNumber']
+                        softwareVersion = [string]$firstV['softwareVersion']
+                        hardwarePart    = [string]$firstV['hardwarePart']
+                        hardwareVersion = [string]$firstV['hardwareVersion']
+                        asamDataset     = [string]$firstV['asamDataset']
+                        asamVersion     = [string]$firstV['asamVersion']
+                        calid           = [string]$firstV['calid']
+                        cvn             = [string]$firstV['cvn']
+                        protocol        = [string]$firstV['protocol']
+                        adapter         = [ordered]@{ ATI = $script:CachedAti; ATDP = $script:CachedAtdp }
+                    }
+                }
+            }
+        }
+    } catch {}
+    return [ordered]@{
+        vin             = 'AAVZZZ6RZHU112564'
+        label           = 'VW Polo 1.2L TSI (Standby)'
+        engine          = 'R4 1.2l TFS'
+        ecuName         = 'ECM-EngineControl'
+        partNumber      = '04E906027LH'
+        softwareVersion = '3997'
+        hardwarePart    = ''
+        hardwareVersion = ''
+        asamDataset     = ''
+        asamVersion     = ''
+        calid           = ''
+        cvn             = ''
+        protocol        = 'ISO 15765-4 CAN (11 bit ID, 500 kbaud)'
+        adapter         = [ordered]@{ ATI = $script:CachedAti; ATDP = $script:CachedAtdp }
+    }
+}
+
+function Initialize-BridgeElmAdapter {
+    param([System.IO.Ports.SerialPort]$Port)
+    $initGapMs = [Math]::Max(40, [Math]::Min(75, $script:CoexistGapMs))
+    $null = Send-ElmReadOnly $Port 'ATZ' 4000
+    Start-Sleep -Milliseconds $initGapMs
+    foreach ($cmd in @('ATE0','ATL0','ATS1','ATH1','ATSP6')) {
+        $null = Send-ElmReadOnly $Port $cmd 1500
+        Start-Sleep -Milliseconds $initGapMs
+    }
+    try { $null = Send-ElmReadOnly $Port 'ATAT2' 1000 } catch {}
+    Start-Sleep -Milliseconds $initGapMs
+    try { $null = Send-ElmReadOnly $Port 'ATST16' 1000 } catch {}
+    Start-Sleep -Milliseconds $initGapMs
+    $script:CachedAti = Send-ElmReadOnly $Port 'ATI' 1500
+    $script:CachedAtdp = Send-ElmReadOnly $Port 'ATDP' 1500
+    $script:ElmInitialized = $true
+}
+
+function Invoke-BridgeEcuDiscovery {
+    param(
+        [System.IO.Ports.SerialPort]$Port,
+        [hashtable]$StaticSession,
+        [switch]$FullSweep
+    )
+    $initGapMs = [Math]::Max(40, [Math]::Min(75, $script:CoexistGapMs))
+    # Temporarily enable headers/spaces for reliable ISO-TP VIN/bitmask parsing
+    $null = Send-ElmReadOnly $Port 'ATS1' 1200
+    Start-Sleep -Milliseconds $initGapMs
+    $null = Send-ElmReadOnly $Port 'ATH1' 1200
+    Start-Sleep -Milliseconds $initGapMs
+    $null = Send-ElmReadOnly $Port 'ATSP6' 1200
+    Start-Sleep -Milliseconds $initGapMs
+
+    $m0100 = Send-ElmReadOnly $Port '0100' 2500
+    Start-Sleep -Milliseconds $initGapMs
+    $m0120 = Send-ElmReadOnly $Port '0120' 2000
+    Start-Sleep -Milliseconds $initGapMs
+    $m0140 = Send-ElmReadOnly $Port '0140' 2000
+    Start-Sleep -Milliseconds $initGapMs
+
+    $parsed00 = @(Parse-SupportedPidMask -BasePidHex '00' -RawResp $m0100)
+    $parsed20 = @(Parse-SupportedPidMask -BasePidHex '20' -RawResp $m0120)
+    $parsed40 = @(Parse-SupportedPidMask -BasePidHex '40' -RawResp $m0140)
+    $ecuResponded = (($parsed00.Count + $parsed20.Count + $parsed40.Count) -gt 0)
+
+    if ($ecuResponded) {
+        $script:SupportedMode01Set.Clear()
+        $script:PidMissMap.Clear()
+        foreach ($sp in $parsed00) { $null = $script:SupportedMode01Set.Add($sp) }
+        foreach ($sp in $parsed20) { $null = $script:SupportedMode01Set.Add($sp) }
+        foreach ($sp in $parsed40) { $null = $script:SupportedMode01Set.Add($sp) }
+    }
+
+    $m03Init = ''
+    $m0902Init = ''
+    if ($ecuResponded) {
+        $m03Init = Send-ElmReadOnly $Port '03' 2000
+        $script:CachedM03 = $m03Init
+        Start-Sleep -Milliseconds $initGapMs
+        $m0902Init = Send-ElmReadOnly $Port '0902' 2500
+        Start-Sleep -Milliseconds $initGapMs
+    }
+
+    $StaticSession['ATI']         = $script:CachedAti
+    $StaticSession['AT1']         = ''
+    $StaticSession['ATDP']        = $script:CachedAtdp
+    $StaticSession['ATDPN']       = ''
+    $StaticSession['Mode01_0100'] = $m0100
+    $StaticSession['Mode01_0120'] = $m0120
+    $StaticSession['Mode01_0140'] = $m0140
+    if ($m03Init) { $StaticSession['Mode03'] = $m03Init }
+    if (-not $StaticSession.ContainsKey('Mode06')) { $StaticSession['Mode06'] = [ordered]@{} }
+    if (-not $StaticSession.ContainsKey('Mode09')) { $StaticSession['Mode09'] = [ordered]@{} }
+    if ($m0902Init) { $StaticSession['Mode09']['0902'] = $m0902Init }
+    if (-not $StaticSession.ContainsKey('Uds7E0')) { $StaticSession['Uds7E0'] = [ordered]@{} }
+
+    $resolvedVehicle = $null
+    if ($ecuResponded) {
+        $quickVinRaw = Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $m0902Init) -SkipCount 3
+        $quickVin = Get-SafeVinName -RawVin $quickVinRaw -FallbackPart ''
+        $cachedProfPath = Join-Path (Join-Path $VehicleHistoryRoot $quickVin) 'vehicle_profile.json'
+        $loadedCachedProfile = $null
+        if (-not $FullSweep -and $quickVin -and (Test-Path $cachedProfPath)) {
+            try {
+                $loadedCachedProfile = ConvertTo-PlainOrdered (Get-Content $cachedProfPath -Raw | ConvertFrom-Json)
+            } catch {}
+        }
+
+        if ($loadedCachedProfile -and $loadedCachedProfile['vin']) {
+            $resolvedVehicle = [ordered]@{
+                vin             = [string]$loadedCachedProfile['vin']
+                label           = if ($loadedCachedProfile['label']) { [string]$loadedCachedProfile['label'] } else { "Vehicle $quickVin" }
+                engine          = [string]$loadedCachedProfile['engine']
+                ecuName         = [string]$loadedCachedProfile['ecuName']
+                partNumber      = [string]$loadedCachedProfile['partNumber']
+                softwareVersion = [string]$loadedCachedProfile['softwareVersion']
+                hardwarePart    = [string]$loadedCachedProfile['hardwarePart']
+                hardwareVersion = [string]$loadedCachedProfile['hardwareVersion']
+                asamDataset     = [string]$loadedCachedProfile['asamDataset']
+                asamVersion     = [string]$loadedCachedProfile['asamVersion']
+                calid           = [string]$loadedCachedProfile['calid']
+                cvn             = [string]$loadedCachedProfile['cvn']
+                protocol        = "$($script:CachedAtdp)"
+                adapter         = [ordered]@{ ATI = $script:CachedAti; ATDP = $script:CachedAtdp }
+            }
+            Write-Host "Fast cached VIN match ($($resolvedVehicle.vin)) — skipped 34 slow Mode 06/UDS queries to keep Bluetooth free for other devices." -ForegroundColor Green
+        } else {
+            Write-Host "New vehicle or -FullStartupSweep — running gently paced Mode 06/09/UDS discovery..." -ForegroundColor Cyan
+            $sweepGapMs = [Math]::Max(55, $initGapMs)
+            foreach ($m6 in @('0600','0620','0640','0660','0680','06A0','0601','0602','0621','0635','063D','0641','0642','06A2','06A3','06A4','06A5')) {
+                $StaticSession.Mode06[$m6] = Send-ElmReadOnly $Port $m6 2200
+                Start-Sleep -Milliseconds $sweepGapMs
+            }
+            foreach ($m9 in @('0900','0904','0906','0908','090A')) {
+                $StaticSession.Mode09[$m9] = Send-ElmReadOnly $Port $m9 2500
+                Start-Sleep -Milliseconds $sweepGapMs
+            }
+            $null = Send-ElmReadOnly $Port 'ATSH 7E0'
+            $null = Send-ElmReadOnly $Port 'ATCRA 7E8'
+            $null = Send-ElmReadOnly $Port 'ATFCSH 7E0'
+            $null = Send-ElmReadOnly $Port 'ATFCSD 30 00 00'
+            $null = Send-ElmReadOnly $Port 'ATFCSM 1'
+            foreach ($did in @('F187','F189','F190','F191','F197','F19E','F1A2','F1A3')) {
+                $StaticSession.Uds7E0[$did] = Send-ElmReadOnly $Port ("22" + $did) 1800
+                Start-Sleep -Milliseconds $sweepGapMs
+            }
+            $null = Send-ElmReadOnly $Port 'ATFCSM 0'
+            $null = Send-ElmReadOnly $Port 'ATD'
+            $resolvedVehicle = Resolve-VehicleIdentity -StaticSession $StaticSession
+        }
+        $script:EcuDiscovered = $true
+        $script:EcuOffCycles = 0
+    }
+
+    # Switch back to compact headerless/spaceless CAN frames (ATH0/ATS0/ATST14) to cut BT RF airtime by ~65%
+    Invoke-FastElmInit -Port $Port
+    return $resolvedVehicle
+}
+
+$staticSession = [ordered]@{
+    ATI         = ''
+    AT1         = ''
+    ATDP        = ''
+    ATDPN       = ''
+    Mode01_0100 = ''
+    Mode01_0120 = ''
+    Mode01_0140 = ''
+    Mode03      = ''
+    Mode06      = [ordered]@{}
+    Mode09      = [ordered]@{}
+    Uds7E0      = [ordered]@{}
+}
+$ActiveVehicle = Get-FallbackVehicleIdentity -HistoryRoot $VehicleHistoryRoot
 
 try {
-    Write-Host "Opening $ComPort @ $BaudRate baud (Strictly Read-Only + Low-Duty BT Coexistence [$BtCoexistMode] Gap ${CoexistGapMs}ms / Rest ${PollIntervalMs}ms)..." -ForegroundColor Cyan
-    $null = Open-ObdComPort -Port $port
-
-    $initGapMs = [Math]::Max(40, [Math]::Min(75, $CoexistGapMs))
-    $null  = Send-ElmReadOnly $port 'ATZ' 4000
-    Start-Sleep -Milliseconds $initGapMs
-    $null  = Send-ElmReadOnly $port 'ATE0'
-    Start-Sleep -Milliseconds $initGapMs
-    $null  = Send-ElmReadOnly $port 'ATL0'
-    Start-Sleep -Milliseconds $initGapMs
-    $null  = Send-ElmReadOnly $port 'ATS1'
-    Start-Sleep -Milliseconds $initGapMs
-    $null  = Send-ElmReadOnly $port 'ATH1'
-    Start-Sleep -Milliseconds $initGapMs
-    $null  = Send-ElmReadOnly $port 'ATSP6'
-    Start-Sleep -Milliseconds $initGapMs
-    try { $null = Send-ElmReadOnly $port 'ATAT2' 1000 } catch {}
-    Start-Sleep -Milliseconds $initGapMs
-    try { $null = Send-ElmReadOnly $port 'ATST16' 1000 } catch {}
-    Start-Sleep -Milliseconds $initGapMs
-    $ati   = Send-ElmReadOnly $port 'ATI'
-    $at1   = ''
-    $atdp  = Send-ElmReadOnly $port 'ATDP'
-    $atdpn = ''
-
-    Write-Host "Performing gentle low-RF startup probe (supported PID bitmask + VIN)..." -ForegroundColor Cyan
-    $m0100 = Send-ElmReadOnly $port '0100' 2500
-    Start-Sleep -Milliseconds $initGapMs
-    $m0120 = Send-ElmReadOnly $port '0120' 2000
-    Start-Sleep -Milliseconds $initGapMs
-    $m0140 = Send-ElmReadOnly $port '0140' 2000
-    Start-Sleep -Milliseconds $initGapMs
-    foreach ($sp in (Parse-SupportedPidMask -BasePidHex '00' -RawResp $m0100)) { $null = $script:SupportedMode01Set.Add($sp) }
-    foreach ($sp in (Parse-SupportedPidMask -BasePidHex '20' -RawResp $m0120)) { $null = $script:SupportedMode01Set.Add($sp) }
-    foreach ($sp in (Parse-SupportedPidMask -BasePidHex '40' -RawResp $m0140)) { $null = $script:SupportedMode01Set.Add($sp) }
-
-    $m03Init = Send-ElmReadOnly $port '03' 2000
-    $script:CachedM03 = $m03Init
-    Start-Sleep -Milliseconds $initGapMs
-    $m0902Init = Send-ElmReadOnly $port '0902' 2500
-    Start-Sleep -Milliseconds $initGapMs
-
-    $staticSession = [ordered]@{
-        ATI     = $ati
-        AT1     = $at1
-        ATDP    = $atdp
-        ATDPN   = $atdpn
-        Mode01_0100 = $m0100
-        Mode01_0120 = $m0120
-        Mode01_0140 = $m0140
-        Mode03      = $m03Init
-        Mode06      = [ordered]@{}
-        Mode09      = [ordered]@{ '0902' = $m0902Init }
-        Uds7E0      = [ordered]@{}
-    }
-
-    $quickVinRaw = Decode-IsoTpAscii -Bytes (Parse-IsoTpAllBytes $m0902Init) -SkipCount 3
-    $quickVin = Get-SafeVinName -RawVin $quickVinRaw -FallbackPart ''
-    $cachedProfPath = Join-Path (Join-Path $VehicleHistoryRoot $quickVin) 'vehicle_profile.json'
-    $loadedCachedProfile = $null
-    if (-not $FullStartupSweep -and $quickVin -and (Test-Path $cachedProfPath)) {
-        try {
-            $loadedCachedProfile = ConvertTo-PlainOrdered (Get-Content $cachedProfPath -Raw | ConvertFrom-Json)
-        } catch {}
-    }
-
-    if ($loadedCachedProfile -and $loadedCachedProfile['vin']) {
-        $ActiveVehicle = [ordered]@{
-            vin             = [string]$loadedCachedProfile['vin']
-            label           = if ($loadedCachedProfile['label']) { [string]$loadedCachedProfile['label'] } else { "Vehicle $quickVin" }
-            engine          = [string]$loadedCachedProfile['engine']
-            ecuName         = [string]$loadedCachedProfile['ecuName']
-            partNumber      = [string]$loadedCachedProfile['partNumber']
-            softwareVersion = [string]$loadedCachedProfile['softwareVersion']
-            hardwarePart    = [string]$loadedCachedProfile['hardwarePart']
-            hardwareVersion = [string]$loadedCachedProfile['hardwareVersion']
-            asamDataset     = [string]$loadedCachedProfile['asamDataset']
-            asamVersion     = [string]$loadedCachedProfile['asamVersion']
-            calid           = [string]$loadedCachedProfile['calid']
-            cvn             = [string]$loadedCachedProfile['cvn']
-            protocol        = "$atdp"
-            adapter         = [ordered]@{ ATI = $ati; ATDP = $atdp }
-        }
-        Write-Host "Fast cached VIN match ($($ActiveVehicle.vin)) — skipped 34 slow Mode 06/UDS queries to keep Bluetooth free for other devices." -ForegroundColor Green
-    } else {
-        Write-Host "New vehicle or -FullStartupSweep — running gently paced Mode 06/09/UDS discovery..." -ForegroundColor Cyan
-        $sweepGapMs = [Math]::Max(55, $initGapMs)
-        foreach ($m6 in @('0600','0620','0640','0660','0680','06A0','0601','0602','0621','0635','063D','0641','0642','06A2','06A3','06A4','06A5')) {
-            $staticSession.Mode06[$m6] = Send-ElmReadOnly $port $m6 2200
-            Start-Sleep -Milliseconds $sweepGapMs
-        }
-        foreach ($m9 in @('0900','0904','0906','0908','090A')) {
-            $staticSession.Mode09[$m9] = Send-ElmReadOnly $port $m9 2500
-            Start-Sleep -Milliseconds $sweepGapMs
-        }
-        $null = Send-ElmReadOnly $port 'ATSH 7E0'
-        $null = Send-ElmReadOnly $port 'ATCRA 7E8'
-        $null = Send-ElmReadOnly $port 'ATFCSH 7E0'
-        $null = Send-ElmReadOnly $port 'ATFCSD 30 00 00'
-        $null = Send-ElmReadOnly $port 'ATFCSM 1'
-        foreach ($did in @('F187','F189','F190','F191','F197','F19E','F1A2','F1A3')) {
-            $staticSession.Uds7E0[$did] = Send-ElmReadOnly $port ("22" + $did) 1800
-            Start-Sleep -Milliseconds $sweepGapMs
-        }
-        $null = Send-ElmReadOnly $port 'ATFCSM 0'
-        $null = Send-ElmReadOnly $port 'ATD'
-        $ActiveVehicle = Resolve-VehicleIdentity -StaticSession $staticSession
-    }
-
-    # Switch to compact headerless/spaceless CAN frames (ATH0/ATS0/ATST14) to cut BT RF airtime by ~65%
-    Invoke-FastElmInit -Port $port
-
-    Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
-    Write-Host "Identified Vehicle VIN: $($ActiveVehicle.vin) | $($ActiveVehicle.label) | Supported PIDs: $($script:SupportedMode01Set.Count) | Archive -> $VehicleHistoryRoot\$($ActiveVehicle.vin)" -ForegroundColor Cyan
-
-    # Initial lean core read (no 37-PID BT saturation burst unless -FullStartupSweep)
-    $latestPayload = if ($FullStartupSweep) {
-        Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs -FullSweep
-    } else {
-        Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
-    }
-    if ($ReleaseBetweenPolls) {
-        Close-ObdComPort -Port $port
-        Write-Host "Shared Release Mode active: $ComPort unlocked between bursts so other Bluetooth devices connect freely." -ForegroundColor Yellow
-    }
-    $lastPollSw.Restart()
-
-    try {
-        $startupEngineOn = ($latestPayload -and ($latestPayload.engineRunning -eq $true -or [double]$latestPayload.rpm -ge 50))
-        if ($startupEngineOn) {
-            Start-BridgeAutoTrip -VehicleInfo $ActiveVehicle -StartRpm ([double]$latestPayload.rpm)
-            Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $script:TripSessionId -SessionStartedAt $script:SessionStartedAt -Payload $latestPayload -ForceJsonFlush
-        } elseif ($latestPayload) {
-            $null = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId '' -SessionStartedAt '' -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray @() -LatestMetrics $latestPayload -StaticDump $latestPayload.staticDump -SourceTag 'com3_bridge'
-            Write-Host "[AUTO-TRIP] Engine OFF at startup (RPM=$($latestPayload.rpm)) -> standing by until engine runs (RPM >= 50)." -ForegroundColor Yellow
-        }
-    } catch {
-        Write-Warning "Project folder archive note: $($_.Exception.Message)"
-    }
-
+    # Start local HTTP server FIRST so PulseOBD Studio auto-connects immediately even if vehicle ignition is OFF!
     $listener.Start()
     Write-Host "PulseOBD Bridge listening on http://localhost:$HttpPort/api/live" -ForegroundColor Green
     Write-Host "BT Coexistence API -> /api/bt-yield | /api/bt-unlock | /api/bt-resume | /api/bt-config" -ForegroundColor Green
     Write-Host "Project Folder Archive API -> http://localhost:$HttpPort/api/vehicles" -ForegroundColor Green
     Write-Host "Service Log API -> http://localhost:$HttpPort/api/service-log & /api/save-service" -ForegroundColor Green
+
+    Write-Host "Checking paired $ComPort @ $BaudRate baud (Strictly Read-Only · Zero Re-Pairing · Auto-Wake on Ignition ON)..." -ForegroundColor Cyan
+    try {
+        $null = Open-ObdComPort -Port $port
+        Initialize-BridgeElmAdapter -Port $port
+        Write-Host "Performing gentle low-RF startup probe (supported PID bitmask + VIN)..." -ForegroundColor Cyan
+        $discoveredV = Invoke-BridgeEcuDiscovery -Port $port -StaticSession $staticSession -FullSweep:$FullStartupSweep
+        if ($discoveredV) {
+            $ActiveVehicle = $discoveredV
+            Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
+            Write-Host "Identified Vehicle VIN: $($ActiveVehicle.vin) | $($ActiveVehicle.label) | Supported PIDs: $($script:SupportedMode01Set.Count) | Archive -> $VehicleHistoryRoot\$($ActiveVehicle.vin)" -ForegroundColor Cyan
+        } else {
+            Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
+            Write-Host "[IGNITION STANDBY] Paired adapter on $ComPort is online, vehicle ignition is OFF — waiting automatically for ignition ON..." -ForegroundColor Yellow
+        }
+
+        # Initial lean core read (no 37-PID BT saturation burst unless -FullStartupSweep)
+        $latestPayload = if ($FullStartupSweep -and $script:EcuDiscovered) {
+            Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs -FullSweep
+        } else {
+            Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+        }
+        if ($ReleaseBetweenPolls) {
+            Close-ObdComPort -Port $port
+            Write-Host "Shared Release Mode active: $ComPort unlocked between bursts so other Bluetooth devices connect freely." -ForegroundColor Yellow
+        }
+        $lastPollSw.Restart()
+
+        try {
+            $startupEngineOn = ($latestPayload -and ($latestPayload.engineRunning -eq $true -or [double]$latestPayload.rpm -ge 50))
+            if ($startupEngineOn) {
+                Start-BridgeAutoTrip -VehicleInfo $ActiveVehicle -StartRpm ([double]$latestPayload.rpm)
+                Save-BridgeFrameToProjectFolder -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId $script:TripSessionId -SessionStartedAt $script:SessionStartedAt -Payload $latestPayload -ForceJsonFlush
+            } elseif ($latestPayload) {
+                $null = Upsert-ProjectVehicleFiles -HistoryRoot $VehicleHistoryRoot -VehicleInfo $ActiveVehicle -SessionId '' -SessionStartedAt '' -TransportLabel 'COM3 · ELM327 v2.1 (38400 8N1)' -FramesArray @() -LatestMetrics $latestPayload -StaticDump $latestPayload.staticDump -SourceTag 'com3_bridge'
+                Write-Host "[AUTO-TRIP] Engine OFF at startup (RPM=$($latestPayload.rpm), ECU Awake=$($latestPayload.ecuAwake)) -> standing by until ignition & engine turn ON." -ForegroundColor Yellow
+            }
+        } catch {
+            Write-Warning "Project folder archive note: $($_.Exception.Message)"
+        }
+    } catch {
+        Close-ObdComPort -Port $port
+        Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
+        $script:StandbyLogged = $true
+        Write-Host "[IGNITION STANDBY] $ComPort is currently sleeping (ignition OFF or out of range) — bridge stays running and will auto-activate the moment ignition turns ON!" -ForegroundColor Yellow
+    }
+
     if ($EnableCloudStream -and $ResolvedCloudUrl) {
         Write-Host "Auto Cloud Relay ACTIVE [$CloudProvider] -> $ResolvedCloudUrl" -ForegroundColor Cyan
         if ($CloudProvider -eq 'firebase' -and $SaveCloudHistory) {
@@ -1665,13 +1792,47 @@ try {
             try {
                 if (-not $port.IsOpen) {
                     $null = Open-ObdComPort -Port $port -FastReopen
+                    if (-not $script:ElmInitialized) {
+                        Initialize-BridgeElmAdapter -Port $port
+                    }
                     Invoke-FastElmInit -Port $port
+                    if ($script:StandbyLogged) {
+                        $script:StandbyLogged = $false
+                        Write-Host "[IGNITION WATCH] $ComPort reconnected automatically — monitoring vehicle ignition..." -ForegroundColor Green
+                    }
                 }
                 $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                if ($latestPayload -and $latestPayload.ecuAwake) {
+                    $script:EcuOffCycles = 0
+                    if (-not $script:EcuDiscovered) {
+                        Write-Host "[IGNITION ON] Vehicle ECU woke up — discovering VIN & supported Mode 01 PIDs automatically..." -ForegroundColor Green
+                        $script:PidMissMap.Clear()
+                        $discoveredNow = Invoke-BridgeEcuDiscovery -Port $port -StaticSession $staticSession
+                        if ($discoveredNow) {
+                            $ActiveVehicle = $discoveredNow
+                            Initialize-CloudEndpointUrls -ActiveVin $ActiveVehicle.vin
+                            Write-Host "[IGNITION ON] Active Vehicle VIN: $($ActiveVehicle.vin) | $($ActiveVehicle.label) | Supported PIDs: $($script:SupportedMode01Set.Count)" -ForegroundColor Cyan
+                        }
+                        # Refresh lean core telemetry immediately with the newly discovered vehicle & PID mask
+                        $script:IdleOffCycles = 0
+                        $latestPayload = Read-AllLiveTelemetry -Port $port -PidList $allMode01Pids -StaticSession $staticSession -VehicleInfo $ActiveVehicle -GapMs $CoexistGapMs
+                    }
+                } elseif ($latestPayload) {
+                    $script:EcuOffCycles = [Math]::Min(20, $script:EcuOffCycles + 1)
+                    if ($script:EcuOffCycles -ge 3 -and $script:EcuDiscovered) {
+                        $script:EcuDiscovered = $false
+                        Write-Host "[IGNITION STANDBY] Vehicle ignition turned OFF — standing by to auto-activate on next ignition ON." -ForegroundColor Yellow
+                    }
+                }
                 $polledOk = $true
             } catch {
-                Write-Warning "COM3 transient BT coexistence note: $($_.Exception.Message)"
+                if (-not $script:StandbyLogged) {
+                    $script:StandbyLogged = $true
+                    Write-Host "[IGNITION STANDBY] $ComPort sleeping/out of range ($($_.Exception.Message)) — waiting silently for vehicle ignition ON..." -ForegroundColor Yellow
+                }
                 Close-ObdComPort -Port $port
+                $script:ElmInitialized = $false
+                $script:EcuDiscovered = $false
             } finally {
                 $burstSw.Stop()
                 if ($ReleaseBetweenPolls -and $port.IsOpen) {
@@ -1694,8 +1855,12 @@ try {
                 $backoffMs = if ($script:AvgElmRttMs -gt 300) { [Math]::Min(2200, [int](($script:AvgElmRttMs - 260) * 4)) } else { 0 }
                 $dutyRestMs = [int][Math]::Round($burstMs * $dutyMult)
                 $nextRest = [Math]::Max($baseRestMs, $dutyRestMs) + $backoffMs
-                if ($script:IdleOffCycles -ge 2) { $nextRest = [Math]::Max($nextRest, 4000) }
-                $script:DynamicRestMs = [Math]::Min(6500, $nextRest)
+                if (-not $polledOk) {
+                    $nextRest = 3000
+                } elseif ($script:IdleOffCycles -ge 2) {
+                    $nextRest = [Math]::Max($nextRest, 3000)
+                }
+                $script:DynamicRestMs = [Math]::Min(5000, $nextRest)
                 $script:LastRfDutyPct = [Math]::Max(1, [Math]::Min(99, [int][Math]::Round(($burstMs / [double]($burstMs + $script:DynamicRestMs)) * 100.0)))
                 # Restart rest timer AFTER poll completes so Windows Bluetooth enters Sniff Mode and stays free for other BT & Wi-Fi devices!
                 $lastPollSw.Restart()

@@ -2157,7 +2157,7 @@
               </div>
               <h3 class="text-base font-bold text-[#222222]">Web Bluetooth (Phone / Web)</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Pair once — stays paired &amp; auto-reconnects automatically until you explicitly disconnect or unpair.
+                Pair once — stays permanently paired and auto-connects automatically as soon as vehicle ignition turns ON.
               </p>
               <div id="ble-paired-banner" class="hidden mt-2 px-2.5 py-1.5 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] text-[#047857] font-mono-num flex items-center justify-between gap-2">
                 <span id="ble-paired-banner-text" class="truncate font-semibold">Paired: OBD-II</span>
@@ -2191,7 +2191,7 @@
               </div>
               <h3 class="text-base font-bold text-[#222222]">PC Bridge → Mobile &amp; Cloud</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Streams COM3 telemetry over local Wi-Fi and syncs your VIN channel without mobile BT load.
+                Streams COM3 telemetry over local Wi-Fi and auto-resumes as soon as ignition turns ON.
               </p>
               <div class="mt-2.5">
                 <input id="bridge-url-input" type="text" value="http://localhost:8765" placeholder="http://192.168.1.x:8765" class="w-full text-xs font-mono-num bg-[#F7F8FA] border border-[#D4D6DC] rounded-lg px-3 py-1.5 text-[#222222] focus:outline-none focus:border-[#222222]" />
@@ -2215,15 +2215,27 @@
               </div>
               <h3 class="text-base font-bold text-[#222222]">Web Serial SPP (Desktop)</h3>
               <p class="text-xs text-[#5A5F6A] mt-1">
-                Chrome/Edge desktop COM3 SPP connection (<span class="font-mono-num">OBDII</span>) with safe port unlock.
+                Select COM3 once — remembered permanently and auto-reconnects automatically when vehicle ignition turns ON.
               </p>
+              <div id="serial-paired-banner" class="hidden mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2">
+                <span id="serial-paired-banner-text" class="truncate font-semibold">Paired: COM3 SPP</span>
+                <span id="serial-paired-banner-pill" class="px-1.5 py-0.5 rounded-full bg-white border border-[#E6E8EE] text-[10px] font-bold shrink-0">AUTO-LINK</span>
+              </div>
             </div>
             <div class="mt-3 space-y-2">
-              <button onclick="connectWebSerial()" class="w-full py-2.5 px-4 acro-pill-primary text-xs shadow-sm">
+              <button id="btn-serial-primary" type="button" onclick="connectWebSerial()" class="w-full py-2.5 px-4 acro-pill-primary text-xs shadow-sm">
                 Connect Web Serial (COM3)
               </button>
-              <button onclick="disconnectActivePort()" class="w-full py-2 px-4 acro-pill-secondary text-xs">
-                Disconnect &amp; Unlock Port
+              <div id="serial-paired-actions" class="hidden grid grid-cols-2 gap-1.5">
+                <button type="button" onclick="connectWebSerial({ forceNewPicker: true })" class="py-1.5 px-2.5 acro-pill-secondary text-[11px] whitespace-nowrap">
+                  Pair Different
+                </button>
+                <button type="button" onclick="forgetPairedSerialPort()" class="py-1.5 px-2.5 rounded-lg bg-[#FEE2E2] text-[#B91C1C] border border-[#FCA5A5] text-[11px] font-semibold hover:bg-[#FECACA] transition whitespace-nowrap">
+                  Unpair / Forget
+                </button>
+              </div>
+              <button type="button" onclick="disconnectActivePort()" class="w-full py-2 px-4 acro-pill-secondary text-xs">
+                Pause / Unlock Port
               </button>
             </div>
           </div>
@@ -5231,6 +5243,8 @@
     const PASSIVE_PREFS_KEY = 'pulseobd_passive_prefs_v1';
     const LAST_FRAME_KEY = 'pulseobd_last_live_frame_v1';
     const PAIRED_BLE_KEY = 'pulseobd_paired_ble_v1';
+    const PAIRED_SERIAL_KEY = 'pulseobd_paired_serial_v1';
+    const PAIRED_BRIDGE_KEY = 'pulseobd_paired_bridge_v1';
     const DRIVE_DB_NAME = 'PulseOBD_DriveDB';
     const DRIVE_DB_VERSION = 4;
 
@@ -5243,6 +5257,8 @@
       sampleCount: 0,
       lastWriteMs: 0,
       engineRunning: false,
+      ecuOnline: false,
+      ecuDiscoveredThisIgnition: false,
       engineStoppedSinceMs: 0,
       engineOffFrames: 0,
       lastLiveFrameMs: 0,
@@ -5269,7 +5285,18 @@
       bleReconnectResolve: null,
       bleReconnectAttempt: 0,
       bleAutoRestoring: false,
+      bleAdvWatchCtrl: null,
+      bleAdvWatchDev: null,
+      bleAdvWatching: false,
+      serialUserDisconnected: false,
+      serialReconnecting: false,
+      serialAbortReconnect: false,
+      serialReconnectTimer: null,
+      serialReconnectResolve: null,
+      serialReconnectAttempt: 0,
+      serialAutoRestoring: false,
       lastAutoRestoreMs: 0,
+      lastBridgeProbeMs: 0,
       bleListenerAttached: new WeakSet()
     };
 
@@ -5299,6 +5326,58 @@
       try { localStorage.removeItem(PAIRED_BLE_KEY); } catch (_) {}
     }
 
+    function loadPairedSerialRecord() {
+      try {
+        const raw = localStorage.getItem(PAIRED_SERIAL_KEY);
+        if (!raw) return null;
+        const rec = JSON.parse(raw);
+        return (rec && typeof rec === 'object') ? rec : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function savePairedSerialRecord(patch) {
+      try {
+        const prev = loadPairedSerialRecord() || {};
+        const next = { ...prev, ...patch };
+        localStorage.setItem(PAIRED_SERIAL_KEY, JSON.stringify(next));
+        return next;
+      } catch (_) {
+        return patch || null;
+      }
+    }
+
+    function clearPairedSerialRecord() {
+      try { localStorage.removeItem(PAIRED_SERIAL_KEY); } catch (_) {}
+    }
+
+    function loadPairedBridgeRecord() {
+      try {
+        const raw = localStorage.getItem(PAIRED_BRIDGE_KEY);
+        if (!raw) return null;
+        const rec = JSON.parse(raw);
+        return (rec && rec.url) ? rec : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function savePairedBridgeRecord(patch) {
+      try {
+        const prev = loadPairedBridgeRecord() || {};
+        const next = { ...prev, ...patch };
+        localStorage.setItem(PAIRED_BRIDGE_KEY, JSON.stringify(next));
+        return next;
+      } catch (_) {
+        return patch || null;
+      }
+    }
+
+    function clearPairedBridgeRecord() {
+      try { localStorage.removeItem(PAIRED_BRIDGE_KEY); } catch (_) {}
+    }
+
     function isBleAutoReconnectEnabled() {
       const cb = document.getElementById('passive-autoreconnect-cb');
       return cb ? Boolean(cb.checked) : true;
@@ -5308,12 +5387,22 @@
       savePassivePrefs();
       const saved = loadPairedBleRecord();
       if (saved) {
-        savePairedBleRecord({ keepPaired: Boolean(checked) && !passiveState.bleUserDisconnected });
+        savePairedBleRecord({ keepPaired: Boolean(checked) });
+      }
+      const savedSer = loadPairedSerialRecord();
+      if (savedSer) {
+        savePairedSerialRecord({ keepPaired: Boolean(checked) });
       }
       if (!checked) {
         cancelPendingBleReconnect();
-      } else if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && typeof wakeBleReconnectIfPaired === 'function') {
-        wakeBleReconnectIfPaired('checkbox');
+        if (typeof cancelPendingSerialReconnect === 'function') cancelPendingSerialReconnect();
+        if (typeof stopBleIgnitionBeaconWatch === 'function') stopBleIgnitionBeaconWatch();
+      } else {
+        passiveState.bleUserDisconnected = false;
+        passiveState.serialUserDisconnected = false;
+        if (!appState.bleManualUnlock && typeof wakeBleReconnectIfPaired === 'function') {
+          wakeBleReconnectIfPaired('checkbox');
+        }
       }
       if (typeof updatePairedBleUi === 'function') updatePairedBleUi();
     }
@@ -10706,6 +10795,93 @@
       });
     }
 
+    function stopBleIgnitionBeaconWatch() {
+      if (passiveState.bleAdvWatchCtrl) {
+        try { passiveState.bleAdvWatchCtrl.abort(); } catch (_) {}
+        passiveState.bleAdvWatchCtrl = null;
+      }
+      passiveState.bleAdvWatchDev = null;
+      passiveState.bleAdvWatching = false;
+    }
+
+    async function startBleIgnitionBeaconWatch(dev) {
+      if (!dev || typeof dev.watchAdvertisements !== 'function') return false;
+      if (passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return false;
+      if (dev.gatt && dev.gatt.connected && appState.blePollingActive) return false;
+      if (passiveState.bleAdvWatching && passiveState.bleAdvWatchDev === dev) return true;
+
+      stopBleIgnitionBeaconWatch();
+      const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      passiveState.bleAdvWatchCtrl = ctrl;
+      passiveState.bleAdvWatchDev = dev;
+      passiveState.bleAdvWatching = true;
+
+      const onBeacon = () => {
+        stopBleIgnitionBeaconWatch();
+        if (passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
+        if (dev.gatt && dev.gatt.connected && appState.blePollingActive) return;
+        logTerminal(`[BLE IGNITION] Detected paired adapter "${dev.name || 'OBD-II BLE'}" waking up — connecting automatically...`, 'text-[#047857] font-semibold');
+        if (passiveState.bleReconnecting) {
+          wakePendingBleReconnectSleep();
+        } else {
+          appState.bleDevice = dev;
+          appState.lastBleDevice = dev;
+          connectBleGattDevice(dev, { isReconnect: true, useWatchAdv: false }).catch(() => {
+            if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
+              attemptBleAutoReconnect();
+            }
+          });
+        }
+      };
+
+      try {
+        dev.addEventListener('advertisementreceived', onBeacon, { once: true, signal: ctrl ? ctrl.signal : undefined });
+        await dev.watchAdvertisements(ctrl ? { signal: ctrl.signal } : undefined);
+        return true;
+      } catch (_) {
+        stopBleIgnitionBeaconWatch();
+        return false;
+      }
+    }
+
+    function cancelPendingSerialReconnect() {
+      passiveState.serialAbortReconnect = true;
+      passiveState.serialReconnecting = false;
+      passiveState.serialReconnectAttempt = 0;
+      if (passiveState.serialReconnectTimer) {
+        clearTimeout(passiveState.serialReconnectTimer);
+        passiveState.serialReconnectTimer = null;
+      }
+      if (typeof passiveState.serialReconnectResolve === 'function') {
+        const res = passiveState.serialReconnectResolve;
+        passiveState.serialReconnectResolve = null;
+        try { res(); } catch (_) {}
+      }
+    }
+
+    function wakePendingSerialReconnectSleep() {
+      if (passiveState.serialReconnectTimer) {
+        clearTimeout(passiveState.serialReconnectTimer);
+        passiveState.serialReconnectTimer = null;
+      }
+      if (typeof passiveState.serialReconnectResolve === 'function') {
+        const res = passiveState.serialReconnectResolve;
+        passiveState.serialReconnectResolve = null;
+        try { res(); } catch (_) {}
+      }
+    }
+
+    async function cancellableSerialReconnectSleep(ms) {
+      return await new Promise((resolve) => {
+        passiveState.serialReconnectResolve = resolve;
+        passiveState.serialReconnectTimer = setTimeout(() => {
+          passiveState.serialReconnectTimer = null;
+          passiveState.serialReconnectResolve = null;
+          resolve();
+        }, ms);
+      });
+    }
+
     async function gattConnectWithTimeout(dev, timeoutMs = 8000) {
       if (!dev || !dev.gatt) throw new Error('BLE GATT unavailable on selected device');
       if (dev.gatt.connected) return dev.gatt;
@@ -11195,49 +11371,90 @@
           if (connected) {
             banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] text-[#047857] font-mono-num flex items-center justify-between gap-2';
             _setElTextObj(bannerTxt, `Paired: ${devName}`);
-            _setElTextObj(bannerPill, isBleAutoReconnectEnabled() ? 'STAYING PAIRED' : 'CONNECTED');
-          } else if (reconnecting) {
-            banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[11px] text-[#B45309] font-mono-num flex items-center justify-between gap-2';
-            _setElTextObj(bannerTxt, `Reconnecting: ${devName}`);
-            _setElTextObj(bannerPill, `RETRY #${Math.max(1, passiveState.bleReconnectAttempt || 1)}`);
+            _setElTextObj(bannerPill, passiveState.ecuOnline ? 'IGNITION ON' : 'IGNITION STANDBY');
+          } else if (reconnecting || passiveState.bleAdvWatching) {
+            banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2';
+            _setElTextObj(bannerTxt, `Auto-Link Armed: ${devName}`);
+            _setElTextObj(bannerPill, passiveState.bleAdvWatching ? 'IGNITION WATCH' : `AUTO #${Math.max(1, passiveState.bleReconnectAttempt || 1)}`);
           } else if (unlocked) {
             banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2';
             _setElTextObj(bannerTxt, `Paused (BT Free): ${devName}`);
             _setElTextObj(bannerPill, 'PAUSED');
-          } else if (saved?.keepPaired && !passiveState.bleUserDisconnected) {
+          } else if (saved?.keepPaired !== false && !passiveState.bleUserDisconnected) {
             banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2';
-            _setElTextObj(bannerTxt, `Remembered: ${devName}`);
-            _setElTextObj(bannerPill, 'AUTO-LINK ON');
+            _setElTextObj(bannerTxt, `Paired: ${devName}`);
+            _setElTextObj(bannerPill, 'IGNITION AUTO');
           } else {
             banner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#F7F8FA] border border-[#E6E8EE] text-[11px] text-[#5A5F6A] font-mono-num flex items-center justify-between gap-2';
             _setElTextObj(bannerTxt, `Saved: ${devName}`);
-            _setElTextObj(bannerPill, 'DISCONNECTED');
+            _setElTextObj(bannerPill, 'PAUSED');
           }
         }
       }
       if (actionsRow) actionsRow.classList.toggle('hidden', !hasPaired);
       if (primaryBtn) {
         if (connected) {
-          _setElTextObj(primaryBtn, `Connected: ${devName} (Active)`);
-        } else if (reconnecting) {
-          _setElTextObj(primaryBtn, `Reconnect ${devName} Now`);
+          _setElTextObj(primaryBtn, `Connected: ${devName} (${passiveState.ecuOnline ? 'Live' : 'Ignition Standby'})`);
+        } else if (reconnecting || passiveState.bleAdvWatching) {
+          _setElTextObj(primaryBtn, `Connect ${devName} Now`);
         } else if (hasPaired) {
           _setElTextObj(primaryBtn, `Reconnect ${devName}`);
         } else {
           _setElTextObj(primaryBtn, 'Pair / Connect Web Bluetooth');
         }
       }
+
+      // Also update Web Serial (COM3 SPP) paired status banner & controls
+      const savedSer = loadPairedSerialRecord();
+      const serConnected = Boolean(appState.serialPort && appState.serialPollingActive);
+      const serReconnecting = Boolean(passiveState.serialReconnecting);
+      const hasSerialPaired = Boolean(serConnected || appState.serialPort || appState.lastSerialPort || savedSer);
+      const serBanner = document.getElementById('serial-paired-banner');
+      const serTxt = document.getElementById('serial-paired-banner-text');
+      const serPill = document.getElementById('serial-paired-banner-pill');
+      const serBtn = document.getElementById('btn-serial-primary');
+      const serActions = document.getElementById('serial-paired-actions');
+      const serLabel = savedSer?.label || 'COM3 SPP';
+      if (serBanner) {
+        serBanner.classList.toggle('hidden', !hasSerialPaired);
+        if (hasSerialPaired) {
+          if (serConnected) {
+            serBanner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] text-[#047857] font-mono-num flex items-center justify-between gap-2';
+            _setElTextObj(serTxt, `Paired: ${serLabel}`);
+            _setElTextObj(serPill, passiveState.ecuOnline ? 'IGNITION ON' : 'IGNITION STANDBY');
+          } else if (serReconnecting) {
+            serBanner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2';
+            _setElTextObj(serTxt, `Waiting for Ignition: ${serLabel}`);
+            _setElTextObj(serPill, `AUTO #${Math.max(1, passiveState.serialReconnectAttempt || 1)}`);
+          } else {
+            serBanner.className = 'mt-2 px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] text-[#1473E6] font-mono-num flex items-center justify-between gap-2';
+            _setElTextObj(serTxt, `Remembered: ${serLabel}`);
+            _setElTextObj(serPill, 'IGNITION AUTO');
+          }
+        }
+      }
+      if (serActions) serActions.classList.toggle('hidden', !hasSerialPaired);
+      if (serBtn) {
+        if (serConnected) {
+          _setElTextObj(serBtn, `Connected: ${serLabel} (${passiveState.ecuOnline ? 'Live' : 'Ignition Standby'})`);
+        } else if (hasSerialPaired) {
+          _setElTextObj(serBtn, `Reconnect ${serLabel} (No Re-Pair)`);
+        } else {
+          _setElTextObj(serBtn, 'Connect Web Serial (COM3)');
+        }
+      }
+
       if (rcLbl) {
-        if (connected) {
-          _setElTextObj(rcLbl, isBleAutoReconnectEnabled() ? 'Connected (Stay Paired)' : 'Connected');
-        } else if (reconnecting) {
-          _setElTextObj(rcLbl, `Auto-Reconnecting (#${Math.max(1, passiveState.bleReconnectAttempt || 1)})`);
+        if (connected || serConnected) {
+          _setElTextObj(rcLbl, passiveState.ecuOnline ? 'Connected (Ignition ON)' : 'Paired (Waiting for Ignition)');
+        } else if (reconnecting || serReconnecting || passiveState.bleAdvWatching) {
+          _setElTextObj(rcLbl, passiveState.bleAdvWatching ? 'Ignition Watch (Auto-Connect)' : `Auto-Reconnecting (#${Math.max(1, passiveState.bleReconnectAttempt || passiveState.serialReconnectAttempt || 1)})`);
         } else if (unlocked) {
           _setElTextObj(rcLbl, 'Paused (BT Unlocked)');
-        } else if (passiveState.bleUserDisconnected) {
-          _setElTextObj(rcLbl, 'Off (User Disconnected)');
-        } else if (saved?.keepPaired && isBleAutoReconnectEnabled()) {
-          _setElTextObj(rcLbl, 'Armed (Watching)');
+        } else if (passiveState.bleUserDisconnected && passiveState.serialUserDisconnected) {
+          _setElTextObj(rcLbl, 'Paused (Tap Reconnect)');
+        } else if ((saved?.keepPaired !== false || savedSer?.keepPaired !== false) && isBleAutoReconnectEnabled()) {
+          _setElTextObj(rcLbl, 'Armed (Ignition Auto)');
         } else {
           _setElTextObj(rcLbl, isBleAutoReconnectEnabled() ? 'Armed' : 'Off');
         }
@@ -11613,11 +11830,97 @@
       try { if (appState.serialPort) { await appState.serialPort.close(); } } catch (_) {}
     }
 
-    async function runSerialPollingLoop() {
+    async function findPermittedSerialPort(saved) {
+      const inMem = appState.serialPort || appState.lastSerialPort;
+      if (inMem) return inMem;
+      if (!('serial' in navigator) || typeof navigator.serial.getPorts !== 'function') return null;
+      try {
+        const ports = await navigator.serial.getPorts();
+        if (!Array.isArray(ports) || !ports.length) return null;
+        if (saved && (saved.usbVendorId !== undefined || saved.usbProductId !== undefined)) {
+          const match = ports.find(p => {
+            try {
+              const info = typeof p.getInfo === 'function' ? p.getInfo() : {};
+              return info.usbVendorId === saved.usbVendorId && info.usbProductId === saved.usbProductId;
+            } catch (_) { return false; }
+          });
+          if (match) return match;
+        }
+        return ports[0];
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function openSerialPortSession(port, { isReconnect = false } = {}) {
+      if (!port) throw new Error('No Serial port available');
+      if (appState.serialPort && appState.serialPort !== port) {
+        appState.serialPollingActive = false;
+        await waitForSerialCmdIdle(1000);
+        await closeSerialPortQuietly();
+      }
+      if (!port.readable || !port.writable) {
+        await port.open({ baudRate: 38400, dataBits: 8, stopBits: 1, parity: 'none' });
+      }
+      appState.serialPort = port;
+      appState.lastSerialPort = port;
+      appState.lastBtTransport = 'serial';
+      appState.serialReader = port.readable.getReader();
+      appState.serialWriter = port.writable.getWriter();
+      appState.serialPollingActive = true;
+      passiveState.serialReconnecting = false;
+      passiveState.serialReconnectAttempt = 0;
+
+      let info = {};
+      try { info = typeof port.getInfo === 'function' ? (port.getInfo() || {}) : {}; } catch (_) {}
+      const prevSer = loadPairedSerialRecord();
+      savePairedSerialRecord({
+        label: prevSer?.label || 'COM3 SPP',
+        usbVendorId: info.usbVendorId,
+        usbProductId: info.usbProductId,
+        pairedAt: prevSer?.pairedAt || new Date().toISOString(),
+        lastConnectedAt: new Date().toISOString(),
+        keepPaired: isBleAutoReconnectEnabled()
+      });
+
+      changeDataSource('live_obd');
+      document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 · Ignition Watch';
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+      logTerminal(`[SERIAL] ${isReconnect ? 'Auto-reconnected' : 'Connected & remembered'} COM3 (38400 8N1) without re-pairing — auto-activates as soon as ignition is ON.`, 'text-[#047857] font-semibold');
+      runSerialPollingLoop(isReconnect).catch(err => {
+        logTerminal(`[SERIAL LOOP] Note: ${err.message}`, 'text-[#B45309]');
+      });
+    }
+
+    async function runSerialPollingLoop(isReconnect = false) {
       let extIdx = 0;
       let cycleCount = 0;
       let idleOffCycles = 0;
+      let consecutiveErrors = 0;
+      let needsReconnect = false;
       const initGap = Math.max(35, getBtPacingConfig().gapMs);
+      passiveState.ecuOnline = false;
+      passiveState.ecuDiscoveredThisIgnition = false;
+
+      const runSerialEcuWakeDiscovery = async () => {
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+        appState.btRfStats.pidMisses = {};
+        for (const hdrCmd of ['ATH1', 'ATS1']) {
+          if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+          try { await sendSerialElm(hdrCmd, 900); } catch (_) {}
+        }
+        await discoverLiveVehicleIdentity(sendSerialElm, 'Web Serial COM3', initGap);
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+        await discoverSupportedMode01Pids(sendSerialElm, initGap);
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+        for (const compactCmd of ['ATH0', 'ATS0']) {
+          if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+          try { await sendSerialElm(compactCmd, 900); } catch (_) {}
+        }
+        passiveState.ecuDiscoveredThisIgnition = true;
+      };
+
       try {
         for (const initCmd of ['ATZ', 'ATE0', 'ATL0', 'ATH1', 'ATS1', 'ATSP0']) {
           if (!appState.serialPollingActive || appState.bleManualUnlock) return;
@@ -11633,28 +11936,38 @@
           } catch (_) {}
           if (initGap > 0) await new Promise(w => setTimeout(w, initGap));
         }
-        await discoverLiveVehicleIdentity(sendSerialElm, 'Web Serial COM3', initGap);
-        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
-        await discoverSupportedMode01Pids(sendSerialElm, initGap);
-        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
-        for (const compactCmd of ['ATH0', 'ATS0']) {
-          if (!appState.serialPollingActive || appState.bleManualUnlock) return;
-          try { await sendSerialElm(compactCmd, 900); } catch (_) {}
+        // Quick ignition check before full ECU discovery so ignition-OFF startup never blocks
+        let wakeProbe = '';
+        try { wakeProbe = await sendSerialElm('0100', 1800); } catch (_) {}
+        if (parseElmCanBytes(wakeProbe).length > 0) {
+          passiveState.ecuOnline = true;
+          await runSerialEcuWakeDiscovery();
+        } else {
+          for (const compactCmd of ['ATH0', 'ATS0']) {
+            if (!appState.serialPollingActive || appState.bleManualUnlock) return;
+            try { await sendSerialElm(compactCmd, 900); } catch (_) {}
+          }
+          logTerminal('[SERIAL] Adapter paired & ready — ignition is OFF. Standing by to auto-start as soon as ignition turns ON.', 'text-[#1473E6] font-semibold');
         }
+        if (!appState.serialPollingActive || appState.bleManualUnlock) return;
         passiveState.currentTransportLabel = 'Web Serial COM3';
         requestDriveWakeLock({ reason: 'serial-loop' });
         if (passiveState.activeSessionId) {
           updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+        } else if (passiveState.ecuOnline) {
+          updatePassiveStatusUi('IGNITION ON · ARMED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Ignition ON — trip records automatically at RPM ≥ 50');
         } else {
-          updatePassiveStatusUi('ARMED · ENGINE WATCH', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
-          _setElText('passive-session-label', 'Waiting for engine start (RPM ≥ 50)');
+          updatePassiveStatusUi('PAIRED · IGNITION STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for vehicle ignition ON...');
         }
+        updatePairedBleUi();
         updateTripStatusUi();
-        maybeAutoStartCloudTx('Web Serial COM3');
+        if (passiveState.ecuOnline) maybeAutoStartCloudTx('Web Serial COM3');
 
-        for (let s = 0; s < 3; s++) {
+        for (let s = 0; s < 2; s++) {
           if (!appState.serialPollingActive || appState.bleManualUnlock) return;
-          await new Promise(r => setTimeout(r, 150));
+          await new Promise(r => setTimeout(r, 120));
         }
 
         while (appState.serialPollingActive && (appState.serialPort || appState.lastSerialPort) && !appState.bleManualUnlock) {
@@ -11685,10 +11998,14 @@
               continue;
             }
           }
-          if (!appState.serialPort || !appState.serialReader) break;
+          if (!appState.serialPort || !appState.serialReader) {
+            needsReconnect = true;
+            break;
+          }
 
           cycleCount++;
-          const isParkedLowPower = (appState.current.rpm || 0) < 50 && idleOffCycles >= 2;
+          const isIgnitionStandby = !passiveState.ecuOnline;
+          const isParkedLowPower = isIgnitionStandby || ((appState.current.rpm || 0) < 50 && idleOffCycles >= 2);
           const pidList = isParkedLowPower
             ? ['010C']
             : (isHidden
@@ -11697,33 +12014,68 @@
 
           const burstStart = Date.now();
           try {
+            let sawValidEcuBytes = false;
             for (const pid of pidList) {
               if (!appState.serialPollingActive || appState.bleManualUnlock || Date.now() < appState.bleYieldUntil) break;
               const r = await sendSerialElm(pid, 900);
-              trackPidResponseMiss(pid, r);
+              const parsedBytes = parseElmCanBytes(r);
+              if (parsedBytes.length > 0) sawValidEcuBytes = true;
+              if (passiveState.ecuOnline || parsedBytes.length > 0) {
+                trackPidResponseMiss(pid, r);
+              }
               applyElmResponseToState(pid, r, { deferDerived: true });
               if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
             }
-            const extEvery = isParkedLowPower ? 1 : (pacing.extEvery || 2);
+
+            if (sawValidEcuBytes && !passiveState.ecuOnline) {
+              passiveState.ecuOnline = true;
+              idleOffCycles = 0;
+              logTerminal('[IGNITION ON] Vehicle ECU awakened on COM3 — activating live telemetry & auto-trip!', 'text-[#047857] font-semibold');
+              document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 · IGNITION ON';
+              if (!passiveState.ecuDiscoveredThisIgnition) {
+                try { await runSerialEcuWakeDiscovery(); } catch (_) {}
+              }
+              maybeAutoStartCloudTx('Web Serial COM3');
+              updatePairedBleUi();
+            } else if (!sawValidEcuBytes && passiveState.ecuOnline && (appState.current.rpm || 0) < 50 && idleOffCycles >= 3) {
+              passiveState.ecuOnline = false;
+              passiveState.ecuDiscoveredThisIgnition = false;
+              document.getElementById('conn-badge').textContent = 'PAIRED · COM3 · IGNITION STANDBY';
+              updatePairedBleUi();
+            }
+
+            const extEvery = isIgnitionStandby ? 3 : (isParkedLowPower ? 1 : (pacing.extEvery || 2));
             if (!isHidden && (cycleCount % extEvery === 0) && appState.serialPollingActive && !appState.bleManualUnlock && Date.now() >= appState.bleYieldUntil) {
-              const extPool = isParkedLowPower ? ['ATRV', '0142', '0105', '012F'] : getFilteredExtendedPids();
+              const extPool = isIgnitionStandby ? ['ATRV'] : (isParkedLowPower ? ['ATRV', '0142', '0105', '012F'] : getFilteredExtendedPids());
               const extPid = extPool[extIdx % extPool.length];
               extIdx++;
               if (extPid) {
                 const rExt = await sendSerialElm(extPid, 900);
-                trackPidResponseMiss(extPid, rExt);
+                if (passiveState.ecuOnline || extPid === 'ATRV') {
+                  trackPidResponseMiss(extPid, rExt);
+                }
                 applyElmResponseToState(extPid, rExt, { deferDerived: true });
               }
             }
             commitLiveFrame();
+            consecutiveErrors = 0;
             idleOffCycles = (appState.current.rpm || 0) < 50 ? Math.min(10, idleOffCycles + 1) : 0;
           } catch (err) {
-            if (!appState.serialPollingActive || appState.bleManualUnlock) return;
-            throw err;
+            if (!appState.serialPollingActive || appState.bleManualUnlock || passiveState.serialUserDisconnected) return;
+            consecutiveErrors++;
+            if (consecutiveErrors >= 3) {
+              logTerminal(`[SERIAL] Link interrupted (${err.message}) — keeping COM3 paired & waiting for ignition ON...`, 'text-[#B45309] font-semibold');
+              needsReconnect = true;
+              break;
+            }
+            await new Promise(r => setTimeout(r, 400 * consecutiveErrors));
+            continue;
           }
 
           const burstActiveMs = Date.now() - burstStart;
-          const effectiveRestMs = computeCoexistRestMs(pacing, burstActiveMs, isParkedLowPower, isHidden);
+          const effectiveRestMs = isIgnitionStandby
+            ? 2400
+            : computeCoexistRestMs(pacing, burstActiveMs, isParkedLowPower, isHidden);
           if (appState.activeTab === 'bluetooth') updateBtCoexistUi();
 
           // True COM3 RFCOMM port release between bursts in shared_release mode
@@ -11733,45 +12085,157 @@
           }
           await new Promise(r => setTimeout(r, effectiveRestMs));
         }
+      } catch (fatalErr) {
+        if (!passiveState.serialUserDisconnected && !appState.bleManualUnlock) {
+          logTerminal(`[SERIAL] Recovering paired COM3 link (${fatalErr.message})...`, 'text-[#B45309]');
+          needsReconnect = true;
+        }
       } finally {
         appState.serialPollingActive = false;
+        if (needsReconnect) {
+          await closeSerialPortQuietly();
+          appState.serialPort = null;
+        }
         updateBtCoexistUi();
+        renderConnectedBtDevicesUi();
+        if (needsReconnect && !passiveState.serialUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
+          attemptSerialAutoReconnect();
+        }
       }
     }
 
-    async function connectWebSerial() {
+    async function autoRestorePairedSerialPort({ reason = 'startup' } = {}) {
+      if (!('serial' in navigator) || typeof navigator.serial.getPorts !== 'function') return false;
+      if (passiveState.serialUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return false;
+      if (appState.serialPort && appState.serialPollingActive) return true;
+      if (appState.blePollingActive || appState.bleDevice?.gatt?.connected) return false;
+      if (passiveState.serialAutoRestoring || passiveState.serialReconnecting) return false;
+
+      const saved = loadPairedSerialRecord();
+      if (saved && saved.keepPaired === false) return false;
+      passiveState.serialAutoRestoring = true;
+      try {
+        const port = await findPermittedSerialPort(saved);
+        if (!port) return false;
+        appState.lastSerialPort = port;
+        logTerminal(`[SERIAL] Auto-connecting remembered Bluetooth SPP port (${reason}) without re-pairing...`, 'text-[#1473E6] font-semibold');
+        try {
+          await openSerialPortSession(port, { isReconnect: true });
+          return true;
+        } catch (err) {
+          logTerminal('[SERIAL] Remembered COM3 adapter sleeping (ignition off) — auto-reconnect armed for ignition ON.', 'text-[#5A5F6A]');
+          attemptSerialAutoReconnect();
+          return false;
+        }
+      } finally {
+        passiveState.serialAutoRestoring = false;
+        updatePairedBleUi();
+      }
+    }
+
+    async function attemptSerialAutoReconnect() {
+      if (passiveState.serialUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
+      if (passiveState.serialReconnecting || appState.serialPollingActive) return;
+      const saved = loadPairedSerialRecord();
+      const port = await findPermittedSerialPort(saved);
+      if (!port) return;
+      appState.lastSerialPort = port;
+
+      passiveState.serialReconnecting = true;
+      passiveState.serialAbortReconnect = false;
+      passiveState.serialReconnectAttempt = 0;
+      updatePassiveStatusUi('IGNITION WATCH (COM3)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+      renderConnectedBtDevicesUi();
+
+      const backoffs = [2500, 3500, 5000, 6500, 8000];
+      while (!passiveState.serialUserDisconnected && !passiveState.serialAbortReconnect && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
+        while (Date.now() < (appState.bleYieldUntil || 0)) {
+          if (passiveState.serialUserDisconnected || passiveState.serialAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
+          await cancellableSerialReconnectSleep(1500);
+        }
+        if (passiveState.serialUserDisconnected || passiveState.serialAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
+
+        passiveState.serialReconnectAttempt++;
+        const attempt = passiveState.serialReconnectAttempt;
+        const delayMs = backoffs[Math.min(attempt - 1, backoffs.length - 1)];
+        updatePairedBleUi();
+        if (attempt <= 3 || attempt % 6 === 0) {
+          logTerminal(`[SERIAL IGNITION-WATCH] Checking paired COM3 (#${attempt} in ${(delayMs / 1000).toFixed(1)}s)...`, 'text-[#5A5F6A]');
+        }
+        await cancellableSerialReconnectSleep(delayMs);
+        if (passiveState.serialUserDisconnected || passiveState.serialAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
+
+        const targetPort = await findPermittedSerialPort(loadPairedSerialRecord());
+        if (!targetPort) break;
+        try {
+          await openSerialPortSession(targetPort, { isReconnect: true });
+          passiveState.serialReconnecting = false;
+          passiveState.serialReconnectAttempt = 0;
+          return;
+        } catch (_) {}
+      }
+
+      passiveState.serialReconnecting = false;
+      passiveState.serialReconnectAttempt = 0;
+      renderConnectedBtDevicesUi();
+    }
+
+    async function forgetPairedSerialPort() {
+      const targetPort = appState.serialPort || appState.lastSerialPort;
+      await disconnectActivePort({ forgetPaired: true });
+      if (targetPort && typeof targetPort.forget === 'function') {
+        try { await targetPort.forget(); } catch (_) {}
+      }
+      appState.serialPort = null;
+      appState.lastSerialPort = null;
+      clearPairedSerialRecord();
+      updateBtCoexistUi();
+      renderConnectedBtDevicesUi();
+      logTerminal('[SERIAL] Unpaired and forgot saved COM3 serial port at your request.', 'text-[#B45309] font-semibold');
+    }
+
+    async function connectWebSerial(opts = {}) {
+      const forceNewPicker = Boolean(opts && opts.forceNewPicker);
       if (!('serial' in navigator)) {
         logTerminal('[INFO] Web Serial API requires Chrome or Edge on Desktop/Android. On iPhone/iOS, use Web Bluetooth (Bluefy), Wi-Fi COM3 Bridge, or Remote Cloud Stream.', 'text-[#B45309]');
         return;
       }
       appState.bleManualUnlock = false;
+      passiveState.serialUserDisconnected = false;
+      passiveState.serialAbortReconnect = false;
+      cancelPendingSerialReconnect();
+
+      if (!forceNewPicker && appState.serialPort && appState.serialPollingActive) {
+        logTerminal('[SERIAL] Already paired & connected to COM3 SPP.', 'text-[#047857] font-semibold');
+        renderConnectedBtDevicesUi();
+        return;
+      }
+
+      // 1. Reuse already-permitted COM3 port without reopening the OS port selector!
+      if (!forceNewPicker) {
+        const existingPort = await findPermittedSerialPort(loadPairedSerialRecord());
+        if (existingPort) {
+          requestDriveWakeLock({ fromGesture: true, reason: 'serial-reconnect' });
+          logTerminal('[SERIAL] Reconnecting remembered COM3 SPP port without re-pairing...', 'text-[#1473E6] font-semibold');
+          try {
+            await openSerialPortSession(existingPort, { isReconnect: true });
+            return;
+          } catch (err) {
+            logTerminal(`[SERIAL] COM3 adapter not awake yet (${err.message}) — ignition auto-reconnect armed (or tap "Pair Different").`, 'text-[#B45309]');
+            if (isBleAutoReconnectEnabled()) attemptSerialAutoReconnect();
+            renderConnectedBtDevicesUi();
+            return;
+          }
+        }
+      }
+
+      // 2. First-time setup (or user explicitly clicked "Pair Different")
       const didYield = await prepareBluetoothRadioForScan();
       try {
         requestDriveWakeLock({ fromGesture: true, reason: 'serial-connect' });
-        logTerminal('[SERIAL] Requesting Bluetooth SPP COM port (select COM3 at 38400 baud)...', 'text-[#1473E6]');
+        logTerminal('[SERIAL] Selecting Bluetooth SPP COM port once (COM3 @ 38400 baud — remembered automatically)...', 'text-[#1473E6]');
         const port = await navigator.serial.requestPort();
-        if (appState.serialPort && appState.serialPort !== port) {
-          appState.serialPollingActive = false;
-          await waitForSerialCmdIdle(1000);
-          try { if (appState.serialReader) { await appState.serialReader.cancel(); appState.serialReader.releaseLock(); appState.serialReader = null; } } catch (_) {}
-          try { if (appState.serialWriter) { appState.serialWriter.releaseLock(); appState.serialWriter = null; } } catch (_) {}
-          try { await appState.serialPort.close(); } catch (_) {}
-        }
-        await port.open({ baudRate: 38400, dataBits: 8, stopBits: 1, parity: 'none' });
-        appState.serialPort = port;
-        appState.lastSerialPort = port;
-        appState.lastBtTransport = 'serial';
-        appState.serialReader = port.readable.getReader();
-        appState.serialWriter = port.writable.getWriter();
-        appState.serialPollingActive = true;
-        changeDataSource('live_obd');
-        document.getElementById('conn-badge').textContent = 'LIVE · Web Serial COM3 · Auto-Trip Armed';
-        updateBtCoexistUi();
-        renderConnectedBtDevicesUi();
-        logTerminal('[SERIAL] COM3 opened at 38400 8N1. Auto-trip armed — recording starts automatically when the engine runs.', 'text-[#047857] font-semibold');
-        runSerialPollingLoop().catch(err => {
-          logTerminal(`[SERIAL LOOP] Stopped: ${err.message}`, 'text-[#B45309]');
-        });
+        await openSerialPortSession(port, { isReconnect: false });
       } catch (err) {
         logTerminal(`[SERIAL] Connection canceled or unavailable: ${err.message}`, 'text-[#B45309]');
       } finally {
@@ -11782,7 +12246,12 @@
 
     async function disconnectActivePort(opts = {}) {
       cancelPendingBleReconnect();
+      cancelPendingSerialReconnect();
+      stopBleIgnitionBeaconWatch();
       passiveState.bleUserDisconnected = true;
+      passiveState.serialUserDisconnected = true;
+      passiveState.ecuOnline = false;
+      passiveState.ecuDiscoveredThisIgnition = false;
       appState.bleManualUnlock = false;
       appState.serialPollingActive = false;
       appState.blePollingActive = false;
@@ -11795,11 +12264,10 @@
         clearInterval(appState.bleYieldTimer);
         appState.bleYieldTimer = null;
       }
-      const savedPaired = loadPairedBleRecord();
       if (opts && opts.forgetPaired) {
         clearPairedBleRecord();
-      } else if (savedPaired) {
-        savePairedBleRecord({ keepPaired: false });
+        clearPairedSerialRecord();
+        clearPairedBridgeRecord();
       }
       const hadWifiTimer = Boolean(appState.wifiPollTimer || appState.bridgeBtState);
       if (appState.wifiPollTimer) {
@@ -11915,7 +12383,7 @@
     async function autoRestorePairedBleDevice({ reason = 'startup' } = {}) {
       updatePairedBleUi();
       const saved = loadPairedBleRecord();
-      if (!saved || !saved.keepPaired || passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) {
+      if ((saved && saved.keepPaired === false) || passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) {
         return false;
       }
       if (appState.bleDevice && appState.bleDevice.gatt?.connected && appState.blePollingActive) {
@@ -11925,24 +12393,34 @@
       passiveState.bleAutoRestoring = true;
       passiveState.lastAutoRestoreMs = Date.now();
       try {
+        // Check browser-permitted BLE devices even if localStorage was empty so user never has to re-pair
         const dev = await findPermittedBleDevice(saved);
         if (!dev) {
-          if (reason === 'startup') {
-            logTerminal(`[BLE] Remembered adapter "${saved.name || 'OBD-II BLE'}" — tap Reconnect once to restore browser BLE permission.`, 'text-[#1473E6]');
+          if (saved && reason === 'startup') {
+            logTerminal(`[BLE] Remembered adapter "${saved.name || 'OBD-II BLE'}" — tap Reconnect once if browser cleared BLE device cache.`, 'text-[#1473E6]');
           }
           renderConnectedBtDevicesUi();
           return false;
         }
+        if (!saved) {
+          savePairedBleRecord({
+            id: dev.id || ('ble_' + Date.now()),
+            name: dev.name || 'OBD-II BLE',
+            pairedAt: new Date().toISOString(),
+            keepPaired: true
+          });
+        }
         attachBleDisconnectListener(dev);
         appState.bleDevice = dev;
         appState.lastBleDevice = dev;
-        logTerminal(`[BLE] Restoring paired OBD-II adapter "${dev.name || saved.name || 'OBD-II BLE'}" (${reason}) without re-pairing...`, 'text-[#1473E6] font-semibold');
+        logTerminal(`[BLE] Auto-connecting paired adapter "${dev.name || saved?.name || 'OBD-II BLE'}" (${reason}) without re-pairing...`, 'text-[#1473E6] font-semibold');
         try {
           await connectBleGattDevice(dev, { isReconnect: true, useWatchAdv: true });
           return true;
         } catch (err) {
-          logTerminal(`[BLE] Paired adapter "${dev.name || saved.name || 'OBD-II BLE'}" currently sleeping/out of range — keeping auto-reconnect active.`, 'text-[#5A5F6A]');
+          logTerminal(`[BLE] Paired adapter "${dev.name || saved?.name || 'OBD-II BLE'}" sleeping (ignition off) — armed for instant auto-connect on ignition ON.`, 'text-[#5A5F6A]');
           if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
+            startBleIgnitionBeaconWatch(dev).catch(() => {});
             attemptBleAutoReconnect();
           }
           return false;
@@ -11954,24 +12432,41 @@
     }
 
     function wakeBleReconnectIfPaired(reason = 'visibility') {
-      if (passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
+      if (appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
       if (Date.now() < (appState.bleYieldUntil || 0)) return;
-      if (passiveState.bleReconnecting) {
-        wakePendingBleReconnectSleep();
-        return;
+      if (reason === 'manual-btn' || reason === 'checkbox' || reason === 'bt-available') {
+        passiveState.bleUserDisconnected = false;
+        passiveState.serialUserDisconnected = false;
       }
-      if (appState.bleDevice) {
-        if (!appState.bleDevice.gatt?.connected || !appState.blePollingActive) {
-          logTerminal(`[BLE] Resuming paired link (${reason})...`, 'text-[#1473E6]');
-          attemptBleAutoReconnect();
+      if (!passiveState.bleUserDisconnected) {
+        if (passiveState.bleReconnecting) {
+          wakePendingBleReconnectSleep();
+          return;
         }
-        return;
+        if (appState.bleDevice) {
+          if (!appState.bleDevice.gatt?.connected || !appState.blePollingActive) {
+            logTerminal(`[BLE] Resuming paired link (${reason})...`, 'text-[#1473E6]');
+            attemptBleAutoReconnect();
+          }
+          return;
+        }
       }
-      const saved = loadPairedBleRecord();
-      if (saved && saved.keepPaired) {
-        const throttleMs = (reason === 'manual-btn' || reason === 'checkbox') ? 0 : 15000;
-        if (Date.now() - (passiveState.lastAutoRestoreMs || 0) >= throttleMs) {
-          autoRestorePairedBleDevice({ reason });
+      if (!passiveState.serialUserDisconnected) {
+        if (passiveState.serialReconnecting) {
+          wakePendingSerialReconnectSleep();
+          return;
+        }
+        if (appState.lastSerialPort && !appState.serialPollingActive) {
+          attemptSerialAutoReconnect();
+          return;
+        }
+      }
+      const throttleMs = (reason === 'manual-btn' || reason === 'checkbox' || reason === 'bt-available') ? 0 : 8000;
+      if (Date.now() - (passiveState.lastAutoRestoreMs || 0) >= throttleMs) {
+        if (typeof autoRestoreAllPairedObd === 'function') {
+          autoRestoreAllPairedObd({ reason }).catch(() => {});
+        } else {
+          autoRestorePairedBleDevice({ reason }).catch(() => {});
         }
       }
     }
@@ -11983,6 +12478,27 @@
       let consecutiveErrors = 0;
       let needsReconnect = false;
       const initGap = Math.max(35, getBtPacingConfig().gapMs);
+      passiveState.ecuOnline = false;
+      passiveState.ecuDiscoveredThisIgnition = false;
+
+      const runBleEcuWakeDiscovery = async () => {
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
+        appState.btRfStats.pidMisses = {};
+        for (const hdrCmd of ['ATH1', 'ATS1']) {
+          if (!appState.blePollingActive || appState.bleManualUnlock) return;
+          try { await sendBleElm(hdrCmd, 900); } catch (_) {}
+        }
+        await discoverLiveVehicleIdentity(sendBleElm, `BLE · ${appState.bleDevice?.name || 'OBDII'}`, initGap);
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
+        await discoverSupportedMode01Pids(sendBleElm, initGap);
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
+        for (const compactCmd of ['ATH0', 'ATS0']) {
+          if (!appState.blePollingActive || appState.bleManualUnlock) return;
+          try { await sendBleElm(compactCmd, 800); } catch (_) {}
+        }
+        passiveState.ecuDiscoveredThisIgnition = true;
+      };
+
       try {
         let fastInitOk = false;
         if (isReconnect) {
@@ -12019,25 +12535,42 @@
             } catch (_) {}
             if (initGap > 0) await new Promise(w => setTimeout(w, initGap));
           }
-          await discoverLiveVehicleIdentity(sendBleElm, `BLE · ${appState.bleDevice?.name || 'OBDII'}`, initGap);
-          if (!appState.blePollingActive || appState.bleManualUnlock) return;
-          await discoverSupportedMode01Pids(sendBleElm, initGap);
-          if (!appState.blePollingActive || appState.bleManualUnlock) return;
+        }
+        // Quick ignition check before full ECU discovery so ignition-OFF startup never blocks or poisons PIDs
+        let wakeProbe = '';
+        try { wakeProbe = await sendBleElm('0100', 1600); } catch (_) {}
+        if (parseElmCanBytes(wakeProbe).length > 0) {
+          passiveState.ecuOnline = true;
+          if (!fastInitOk || !appState.btRfStats.supportedPids) {
+            await runBleEcuWakeDiscovery();
+          } else {
+            passiveState.ecuDiscoveredThisIgnition = true;
+          }
+        } else {
           for (const compactCmd of ['ATH0', 'ATS0']) {
             if (!appState.blePollingActive || appState.bleManualUnlock) return;
             try { await sendBleElm(compactCmd, 800); } catch (_) {}
           }
+          logTerminal('[BLE] Adapter paired & connected — ignition is OFF. Standing by to auto-activate as soon as ignition turns ON.', 'text-[#1473E6] font-semibold');
         }
+        if (!appState.blePollingActive || appState.bleManualUnlock) return;
+
         passiveState.currentTransportLabel = `BLE · ${appState.bleDevice?.name || 'OBDII'}`;
         requestDriveWakeLock({ reason: 'ble-loop-resume' });
         if (passiveState.activeSessionId) {
           updatePassiveStatusUi('TRIP RECORDING', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+        } else if (passiveState.ecuOnline) {
+          updatePassiveStatusUi('IGNITION ON · ARMED', 'text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#047857] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Ignition ON — trip records automatically at RPM ≥ 50');
+          document.getElementById('conn-badge').textContent = `LIVE BLE · ${appState.bleDevice?.name || 'OBDII'} · IGNITION ON`;
         } else {
-          updatePassiveStatusUi('ARMED · ENGINE WATCH', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
-          _setElText('passive-session-label', 'Waiting for engine start (RPM ≥ 50)');
+          updatePassiveStatusUi('PAIRED · IGNITION STANDBY', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+          _setElText('passive-session-label', 'Waiting for vehicle ignition ON...');
+          document.getElementById('conn-badge').textContent = `PAIRED BLE · ${appState.bleDevice?.name || 'OBDII'} · IGNITION STANDBY`;
         }
+        updatePairedBleUi();
         updateTripStatusUi();
-        maybeAutoStartCloudTx('Bluetooth BLE GATT');
+        if (passiveState.ecuOnline) maybeAutoStartCloudTx('Bluetooth BLE GATT');
 
         for (let s = 0; s < 2; s++) {
           if (!appState.blePollingActive || appState.bleManualUnlock) return;
@@ -12061,7 +12594,8 @@
           }
           cycleCount++;
           const pacing = getBtPacingConfig();
-          const isParkedLowPower = (appState.current.rpm || 0) < 50 && idleOffCycles >= 2;
+          const isIgnitionStandby = !passiveState.ecuOnline;
+          const isParkedLowPower = isIgnitionStandby || ((appState.current.rpm || 0) < 50 && idleOffCycles >= 2);
           const pidList = isParkedLowPower
             ? ['010C']
             : (isHidden
@@ -12070,21 +12604,46 @@
 
           const burstStart = Date.now();
           try {
+            let sawValidEcuBytes = false;
             for (const pid of pidList) {
               if (!appState.blePollingActive || appState.bleManualUnlock || Date.now() < appState.bleYieldUntil) break;
               const r = await sendBleElm(pid, 850);
-              trackPidResponseMiss(pid, r);
+              const parsedBytes = parseElmCanBytes(r);
+              if (parsedBytes.length > 0) sawValidEcuBytes = true;
+              if (passiveState.ecuOnline || parsedBytes.length > 0) {
+                trackPidResponseMiss(pid, r);
+              }
               applyElmResponseToState(pid, r, { deferDerived: true });
               if (pacing.gapMs > 0) await new Promise(r2 => setTimeout(r2, pacing.gapMs));
             }
-            const extEvery = isParkedLowPower ? 1 : (pacing.extEvery || 2);
+
+            if (sawValidEcuBytes && !passiveState.ecuOnline) {
+              passiveState.ecuOnline = true;
+              idleOffCycles = 0;
+              logTerminal('[IGNITION ON] Vehicle ECU awakened over BLE — activating live telemetry & auto-trip!', 'text-[#047857] font-semibold');
+              document.getElementById('conn-badge').textContent = `LIVE BLE · ${appState.bleDevice?.name || 'OBDII'} · IGNITION ON`;
+              if (!passiveState.ecuDiscoveredThisIgnition) {
+                try { await runBleEcuWakeDiscovery(); } catch (_) {}
+              }
+              maybeAutoStartCloudTx('Bluetooth BLE GATT');
+              updatePairedBleUi();
+            } else if (!sawValidEcuBytes && passiveState.ecuOnline && (appState.current.rpm || 0) < 50 && idleOffCycles >= 3) {
+              passiveState.ecuOnline = false;
+              passiveState.ecuDiscoveredThisIgnition = false;
+              document.getElementById('conn-badge').textContent = `PAIRED BLE · ${appState.bleDevice?.name || 'OBDII'} · IGNITION STANDBY`;
+              updatePairedBleUi();
+            }
+
+            const extEvery = isIgnitionStandby ? 3 : (isParkedLowPower ? 1 : (pacing.extEvery || 2));
             if (!isHidden && (cycleCount % extEvery === 0) && appState.blePollingActive && !appState.bleManualUnlock && Date.now() >= appState.bleYieldUntil) {
-              const extPool = isParkedLowPower ? ['ATRV', '0142', '0105', '012F'] : getFilteredExtendedPids();
+              const extPool = isIgnitionStandby ? ['ATRV'] : (isParkedLowPower ? ['ATRV', '0142', '0105', '012F'] : getFilteredExtendedPids());
               const extPid = extPool[extIdx % extPool.length];
               extIdx++;
               if (extPid) {
                 const rExt = await sendBleElm(extPid, 850);
-                trackPidResponseMiss(extPid, rExt);
+                if (passiveState.ecuOnline || extPid === 'ATRV') {
+                  trackPidResponseMiss(extPid, rExt);
+                }
                 applyElmResponseToState(extPid, rExt, { deferDerived: true });
               }
             }
@@ -12100,7 +12659,7 @@
             bleRxBuffer = '';
             const stillLinked = Boolean(appState.bleDevice && appState.bleDevice.gatt?.connected);
             if (!stillLinked || consecutiveErrors >= 4) {
-              logTerminal(`[BLE LOOP] Link interrupted (${err.message}) — auto-reconnecting paired adapter...`, 'text-[#B45309] font-semibold');
+              logTerminal(`[BLE LOOP] Link interrupted (${err.message}) — keeping adapter paired & auto-reconnecting on ignition...`, 'text-[#B45309] font-semibold');
               needsReconnect = true;
               break;
             }
@@ -12110,7 +12669,9 @@
           }
 
           const burstActiveMs = Date.now() - burstStart;
-          const effectiveRestMs = computeCoexistRestMs(pacing, burstActiveMs, isParkedLowPower, isHidden);
+          const effectiveRestMs = isIgnitionStandby
+            ? 2400
+            : computeCoexistRestMs(pacing, burstActiveMs, isParkedLowPower, isHidden);
           if (appState.activeTab === 'bluetooth') updateBtCoexistUi();
           await new Promise(r => setTimeout(r, effectiveRestMs));
         }
@@ -12130,6 +12691,7 @@
     }
 
     async function connectBleGattDevice(dev, opts = {}) {
+      stopBleIgnitionBeaconWatch();
       if (bleWaiter) {
         try { bleWaiter(); } catch (_) { bleWaiter = null; }
       }
@@ -12235,7 +12797,7 @@
       updateBtCoexistUi();
       renderConnectedBtDevicesUi();
       requestDriveWakeLock({ reason: 'ble-connected' });
-      logTerminal(`[BLE] Connected & paired to ${dev.name || dev.id}! Stays paired until you disconnect (<15% RF · ${appState.bleCanWriteWithoutResp ? 'writeWithoutResponse' : 'writeWithResponse'}).`, 'text-[#047857] font-semibold');
+      logTerminal(`[BLE] Connected & paired to ${dev.name || dev.id}! Auto-connects on ignition ON without re-pairing (<15% RF · ${appState.bleCanWriteWithoutResp ? 'writeWithoutResponse' : 'writeWithResponse'}).`, 'text-[#047857] font-semibold');
       await new Promise(r => setTimeout(r, 120));
       runBlePollingLoop(Boolean(opts.isReconnect)).catch(err => logTerminal(`[BLE LOOP] ${err.message}`, 'text-[#B45309]'));
     }
@@ -12243,7 +12805,7 @@
     async function attemptBleAutoReconnect() {
       if (passiveState.bleUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
       const saved = loadPairedBleRecord();
-      if (!appState.bleDevice && saved?.keepPaired) {
+      if (!appState.bleDevice && (!saved || saved.keepPaired !== false)) {
         appState.bleDevice = await findPermittedBleDevice(saved);
       }
       if (!appState.bleDevice) return;
@@ -12253,15 +12815,20 @@
       passiveState.bleAbortReconnect = false;
       passiveState.bleReconnectAttempt = 0;
       appState.blePollingActive = false;
-      updatePassiveStatusUi('RECONNECTING (PAIRED)...', 'text-xs px-2.5 py-0.5 rounded-full bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] font-mono-num font-bold');
+      updatePassiveStatusUi('IGNITION WATCH (PAIRED)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
       renderConnectedBtDevicesUi();
 
-      // Persistent, coexistence-safe exponential backoff (never gives up until user disconnects/unpairs!)
-      const backoffs = [2000, 4000, 8000, 15000, 25000, 30000];
+      // Persistent passive beacon watcher + snappy coexistence-safe backoff so ignition ON connects immediately!
+      const backoffs = [1500, 2500, 4000, 6000, 8000, 10000];
       while (!passiveState.bleUserDisconnected && !passiveState.bleAbortReconnect && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
-        while (Date.now() < (appState.bleYieldUntil || 0) || (typeof document !== 'undefined' && document.hidden)) {
+        const watchDev = appState.bleDevice || await findPermittedBleDevice(loadPairedBleRecord());
+        if (watchDev) {
+          appState.bleDevice = watchDev;
+          startBleIgnitionBeaconWatch(watchDev).catch(() => {});
+        }
+        while (Date.now() < (appState.bleYieldUntil || 0)) {
           if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
-          await cancellableReconnectSleep(1500);
+          await cancellableReconnectSleep(1200);
         }
         if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
 
@@ -12269,12 +12836,11 @@
         const attempt = passiveState.bleReconnectAttempt;
         const delayMs = backoffs[Math.min(attempt - 1, backoffs.length - 1)];
         updatePairedBleUi();
-        if (attempt <= 4 || attempt % 5 === 0) {
-          logTerminal(`[BLE STAY-PAIRED] Reconnect attempt #${attempt} in ${(delayMs / 1000).toFixed(0)}s (low-scan, other BT/Wi-Fi safe)...`, 'text-[#B45309]');
+        if (attempt <= 3 || attempt % 6 === 0) {
+          logTerminal(`[BLE IGNITION-WATCH] Listening for paired adapter (#${attempt} · next poll in ${(delayMs / 1000).toFixed(1)}s)...`, 'text-[#5A5F6A]');
         }
         await cancellableReconnectSleep(delayMs);
         if (passiveState.bleUserDisconnected || passiveState.bleAbortReconnect || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) break;
-        if (typeof document !== 'undefined' && document.hidden) continue;
 
         const targetDev = appState.bleDevice || await findPermittedBleDevice(loadPairedBleRecord());
         if (!targetDev) break;
@@ -12291,7 +12857,7 @@
       passiveState.bleReconnectAttempt = 0;
       renderConnectedBtDevicesUi();
       if (!appState.bleManualUnlock && !passiveState.bleUserDisconnected) {
-        updatePassiveStatusUi('WAITING FOR ADAPTER', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
+        updatePassiveStatusUi('IGNITION WATCH (PAIRED)', 'text-xs px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1473E6] font-mono-num font-bold');
       }
     }
 
@@ -12405,13 +12971,34 @@
             }
           }
         }
-        const merged = { ...appState.current, ...data };
-        delete merged.staticDump;
-        delete merged.mode01Raw;
-        const derived = computeDerivedMetrics(merged);
-        appState.current = { ...merged, ...derived };
-        pushCompactHistory(appState.current);
-        recordPassiveSample(appState.current);
+        const prevEcuOnline = Boolean(passiveState.ecuOnline);
+        const engineOnNow = (Number(data?.rpm) || 0) >= ENGINE_RUN_RPM_THRESHOLD;
+        const ecuOnNow = Boolean(data?.ecuAwake || engineOnNow);
+        passiveState.ecuOnline = ecuOnNow;
+        if (data && (data.timestamp || data.rpm !== undefined || data.volt !== undefined)) {
+          const merged = { ...appState.current, ...data };
+          delete merged.staticDump;
+          delete merged.mode01Raw;
+          const derived = computeDerivedMetrics(merged);
+          appState.current = { ...merged, ...derived };
+          pushCompactHistory(appState.current);
+          recordPassiveSample(appState.current);
+        }
+        if (appState.wifiPollTimer) {
+          const badge = document.getElementById('conn-badge');
+          if (badge) {
+            badge.textContent = engineOnNow
+              ? `LIVE · Bridge (${getActiveVin()}) · TRIP REC`
+              : (ecuOnNow ? `LIVE · Bridge (${getActiveVin()}) · IGNITION ON` : `PAIRED · Bridge (${getActiveVin()}) · IGNITION STANDBY`);
+          }
+          if (ecuOnNow && !prevEcuOnline) {
+            logTerminal(`[BRIDGE] Vehicle ignition ON detected (RPM=${data?.rpm ?? 0}, ${data?.volt ?? 0}V) — live telemetry activated automatically!`, 'text-[#047857] font-semibold');
+            maybeAutoStartCloudTx('Wi-Fi COM3 Bridge');
+            updatePairedBleUi();
+          } else if (!ecuOnNow && prevEcuOnline) {
+            updatePairedBleUi();
+          }
+        }
         if (!document.hidden) {
           updateDomMetrics(appState.current);
           renderAllCharts();
@@ -12435,36 +13022,69 @@
       }, delayMs);
     }
 
-    async function connectWifiBridge() {
-      requestDriveWakeLock({ fromGesture: true, reason: 'wifi-bridge' });
+    async function connectWifiBridge(opts = {}) {
+      const quiet = Boolean(opts && opts.quiet);
+      if (!quiet) requestDriveWakeLock({ fromGesture: true, reason: 'wifi-bridge' });
       const urlInput = document.getElementById('bridge-url-input');
-      const baseUrl = (urlInput ? urlInput.value : 'http://localhost:8765').replace(/\/$/, '');
+      const savedBridge = loadPairedBridgeRecord();
+      const baseUrl = String(opts.url || (urlInput ? urlInput.value : '') || savedBridge?.url || 'http://localhost:8765').replace(/\/$/, '');
+      if (urlInput && baseUrl) urlInput.value = baseUrl;
       if (appState.wifiPollTimer) {
         clearTimeout(appState.wifiPollTimer);
         appState.wifiPollTimer = null;
       }
-      logTerminal(`[BRIDGE] Connecting to Windows COM3 read-only bridge at ${baseUrl}/api/live ...`, 'text-[#047857]');
+      if (!quiet) logTerminal(`[BRIDGE] Connecting to Windows COM3 read-only bridge at ${baseUrl}/api/live ...`, 'text-[#047857]');
       try {
         passiveState.currentTransportLabel = 'Wi-Fi COM3 Bridge';
         const data = await pollWifiBridgeOnce(baseUrl);
         appState.bridgeAutoSync = true;
         appState.lastBtTransport = 'bridge';
+        savePairedBridgeRecord({ url: baseUrl, keepConnected: true, lastConnectedAt: new Date().toISOString() });
         updateBtCoexistUi();
         renderConnectedBtDevicesUi();
         updateProjectFolderBadge();
         await loadProjectHistoryManifest();
         changeDataSource('live_obd');
         const engineOnNow = (Number(data?.rpm) || 0) >= ENGINE_RUN_RPM_THRESHOLD;
+        const ecuOnNow = Boolean(data?.ecuAwake || engineOnNow);
+        passiveState.ecuOnline = ecuOnNow;
         document.getElementById('conn-badge').textContent = engineOnNow
           ? `LIVE · Bridge (${getActiveVin()}) · TRIP REC`
-          : `LIVE · Bridge (${getActiveVin()}) · ENGINE OFF`;
+          : (ecuOnNow ? `LIVE · Bridge (${getActiveVin()}) · IGNITION ON` : `PAIRED · Bridge (${getActiveVin()}) · IGNITION STANDBY`);
         updateTripStatusUi();
-        logTerminal(`[BRIDGE] Connected! VIN ${getActiveVin()} · Auto-trip ${engineOnNow ? 'RECORDING' : 'STANDBY (engine off)'} · Non-overlapping 1.5s poll (RPM=${data?.rpm ?? 0}, Coolant=${data?.coolant ?? 0}°C)`, 'text-[#047857] font-semibold');
+        logTerminal(`[BRIDGE] ${quiet ? 'Auto-connected' : 'Connected'}! VIN ${getActiveVin()} · ${engineOnNow ? 'TRIP RECORDING' : (ecuOnNow ? 'IGNITION ON' : 'IGNITION STANDBY')} · 1.5s poll (RPM=${data?.rpm ?? 0}, Coolant=${data?.coolant ?? 0}°C)`, 'text-[#047857] font-semibold');
         scheduleNextWifiBridgePoll(baseUrl, true);
         maybeAutoStartCloudTx('Wi-Fi COM3 Bridge');
+        return true;
       } catch (err) {
-        logTerminal(`[BRIDGE] Could not reach ${baseUrl}. Run Launch_PulseOBD.bat on your Windows PC or use the Cloud Stream tab.`, 'text-[#B45309]');
+        if (!quiet) {
+          logTerminal(`[BRIDGE] Could not reach ${baseUrl}. Run Launch_PulseOBD.bat on your Windows PC or use the Cloud Stream tab.`, 'text-[#B45309]');
+        }
+        return false;
       }
+    }
+
+    async function autoRestoreBridgeIfAvailable({ reason = 'startup' } = {}) {
+      if (appState.wifiPollTimer || appState.blePollingActive || appState.serialPollingActive) return false;
+      if (appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return false;
+      const isHostedOnBridge = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
+      const savedBridge = loadPairedBridgeRecord();
+      if (!isHostedOnBridge && (!savedBridge || !savedBridge.keepConnected)) return false;
+      const targetUrl = isHostedOnBridge ? window.location.origin : savedBridge.url;
+      if (!targetUrl) return false;
+      passiveState.lastBridgeProbeMs = Date.now();
+      return await connectWifiBridge({ quiet: true, url: targetUrl });
+    }
+
+    async function autoRestoreAllPairedObd({ reason = 'startup' } = {}) {
+      if (appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return false;
+      if (isLiveObdTransportConnected()) return true;
+      const bleOk = await autoRestorePairedBleDevice({ reason }).catch(() => false);
+      if (bleOk) return true;
+      const serOk = await autoRestorePairedSerialPort({ reason }).catch(() => false);
+      if (serOk) return true;
+      const bridgeOk = await autoRestoreBridgeIfAvailable({ reason }).catch(() => false);
+      return Boolean(bridgeOk);
     }
 
     async function importJsonDump(ev) {
@@ -13079,11 +13699,38 @@
         if (appState.activeTab === 'history') refreshHistoryTab();
         if (appState.activeTab === 'service' && typeof refreshServiceTab === 'function') refreshServiceTab();
         evaluateAutoCloudConnection('startup');
-        autoRestorePairedBleDevice({ reason: 'startup' }).catch(() => {});
+        autoRestoreAllPairedObd({ reason: 'startup' }).catch(() => {});
       })
       .catch(() => {});
 
-    // Lightweight 5s Auto-Trip, Dual-Layer Screen Keep-Awake & Stay-Paired BLE Watchdog
+    // Instant OS-level Bluetooth radio & Serial COM port hotplug wakeups (zero re-pairing!)
+    try {
+      if ('bluetooth' in navigator && navigator.bluetooth && typeof navigator.bluetooth.addEventListener === 'function') {
+        navigator.bluetooth.addEventListener('availabilitychanged', (ev) => {
+          if (ev && ev.value === true && !appState.bleManualUnlock && isBleAutoReconnectEnabled()) {
+            logTerminal('[BLE AUTO] Bluetooth radio became available — waking paired adapter ignition watcher...', 'text-[#047857]');
+            wakeBleReconnectIfPaired('bt-available');
+          }
+        });
+      }
+    } catch (_) {}
+    try {
+      if ('serial' in navigator && navigator.serial && typeof navigator.serial.addEventListener === 'function') {
+        navigator.serial.addEventListener('connect', (ev) => {
+          if (passiveState.serialUserDisconnected || appState.bleManualUnlock || !isBleAutoReconnectEnabled()) return;
+          if (isLiveObdTransportConnected()) return;
+          if (ev && ev.target) appState.lastSerialPort = ev.target;
+          logTerminal('[SERIAL AUTO] Paired Bluetooth SPP COM port appeared — connecting automatically...', 'text-[#047857]');
+          if (passiveState.serialReconnecting) {
+            wakePendingSerialReconnectSleep();
+          } else {
+            autoRestorePairedSerialPort({ reason: 'serial-connect-event' }).catch(() => {});
+          }
+        });
+      }
+    } catch (_) {}
+
+    // Lightweight 5s Auto-Trip, Dual-Layer Screen Keep-Awake & Unified Stay-Paired Ignition Watchdog (BLE + Serial + Bridge)
     setInterval(() => {
       const nowMs = Date.now();
       if (passiveState.activeSessionId && !passiveState.stoppingSession) {
@@ -13096,21 +13743,45 @@
           updateTripStatusUi();
         }
       }
-      if (document.visibilityState !== 'visible') return;
-      if (isKeepScreenEnabled()) {
+      if (document.visibilityState === 'visible' && isKeepScreenEnabled()) {
         const needsNative = ('wakeLock' in navigator) && navigator.wakeLock && !isNativeWakeLockActive();
         const needsVideo = !isNoSleepVideoPlaying();
         if (needsNative || needsVideo) {
           requestDriveWakeLock({ reason: 'watchdog' });
         }
       }
-      if (!passiveState.bleUserDisconnected && !appState.bleManualUnlock && isBleAutoReconnectEnabled() && !appState.blePollingActive && !passiveState.bleReconnecting && nowMs >= (appState.bleYieldUntil || 0)) {
-        if (appState.bleDevice && !appState.bleDevice.gatt?.connected) {
-          attemptBleAutoReconnect();
-        } else if (!appState.bleDevice) {
-          const saved = loadPairedBleRecord();
-          if (saved && saved.keepPaired && nowMs - (passiveState.lastAutoRestoreMs || 0) >= 30000) {
-            autoRestorePairedBleDevice({ reason: 'watchdog' }).catch(() => {});
+      if (!appState.bleManualUnlock && isBleAutoReconnectEnabled() && !isLiveObdTransportConnected() && nowMs >= (appState.bleYieldUntil || 0)) {
+        // 1) Web Bluetooth (BLE) stay-paired & passive ignition beacon watchdog
+        if (!passiveState.bleUserDisconnected && !appState.blePollingActive) {
+          if (appState.bleDevice && !appState.bleDevice.gatt?.connected) {
+            if (!passiveState.bleAdvWatching) {
+              startBleIgnitionBeaconWatch(appState.bleDevice).catch(() => {});
+            }
+            if (!passiveState.bleReconnecting) {
+              attemptBleAutoReconnect();
+            }
+          } else if (!appState.bleDevice && !passiveState.bleReconnecting) {
+            const savedBle = loadPairedBleRecord();
+            if (savedBle && savedBle.keepPaired && nowMs - (passiveState.lastAutoRestoreMs || 0) >= 8000) {
+              autoRestorePairedBleDevice({ reason: 'watchdog' }).catch(() => {});
+            }
+          }
+        }
+        // 2) Web Serial (Classic BT SPP COM3) stay-paired watchdog
+        if (!passiveState.serialUserDisconnected && !appState.serialPollingActive && !passiveState.serialReconnecting && !passiveState.serialAutoRestoring) {
+          const savedSer = loadPairedSerialRecord();
+          if (appState.lastSerialPort && (!savedSer || savedSer.keepPaired !== false)) {
+            attemptSerialAutoReconnect();
+          } else if (savedSer && savedSer.keepPaired && nowMs - (passiveState.lastAutoRestoreMs || 0) >= 8000) {
+            autoRestorePairedSerialPort({ reason: 'watchdog' }).catch(() => {});
+          }
+        }
+        // 3) Local Windows COM3 Bridge auto-connect watchdog
+        if (!appState.wifiPollTimer && nowMs - (passiveState.lastBridgeProbeMs || 0) >= 10000) {
+          const isHostedOnBridge = (typeof window !== 'undefined' && window.location && window.location.port === '8765');
+          const savedBridge = loadPairedBridgeRecord();
+          if (isHostedOnBridge || (savedBridge && savedBridge.keepConnected)) {
+            autoRestoreBridgeIfAvailable({ reason: 'watchdog' }).catch(() => {});
           }
         }
       }
